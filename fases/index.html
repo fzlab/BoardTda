@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-900">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Consultor de Fases</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            accent: '#0d9488'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        -webkit-tap-highlight-color: transparent;
+        body { user-select: none; -webkit-user-select: none; }
+        input, select { user-select: text; -webkit-user-select: text; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+        .dark ::-webkit-scrollbar-thumb { background: #334155; }
+        mark { background-color: #fef08a; color: #854d0e; padding: 0 2px; border-radius: 2px; }
+        .dark mark { background-color: #fde047; color: #713f12; }
+    </style>
+</head>
+<body class="h-full bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 flex flex-col font-sans overflow-hidden antialiased transition-colors duration-200">
+
+    <header class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-700/60 px-4 py-3 flex items-center justify-between shrink-0 z-10">
+        <div class="flex items-center space-x-3">
+            <div class="p-2 bg-teal-500/10 rounded-xl border border-teal-500/20 text-teal-600 shadow-md dark:text-teal-400">
+                <i data-lucide="list-ordered" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg leading-tight text-slate-900 dark:text-slate-100">Consultor de Fases</h1>
+                <p id="data-status-text" class="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                    <span class="w-2 h-2 rounded-full bg-amber-500 dark:bg-amber-400 inline-block animate-pulse"></span>
+                    Sin datos cargados
+                </p>
+            </div>
+        </div>
+        
+        <div class="flex flex-col items-end gap-1.5">
+            <button id="btn-theme-toggle" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 transition-colors shadow-md">
+                <i id="theme-icon" data-lucide="moon" class="w-4 h-4"></i>
+                <span id="theme-text">Modo oscuro</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-1 overflow-y-auto p-4 pb-24 relative" id="main-container">
+
+        <section id="sec-code" class="space-y-4 max-w-lg mx-auto">
+            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-4 shadow-xl">
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Búsqueda por código</label>
+                <div class="relative flex items-center gap-2">
+                    <div class="relative flex-1">
+                        <input type="text" id="input-code" placeholder="SKU o BarCode..." autocomplete="off"
+                            class="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 focus:border-teal-500 rounded-xl px-4 py-3.5 pl-11 pr-10 text-lg font-medium text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 outline-none transition-all duration-200">
+                        <i data-lucide="barcode" class="w-5 h-5 absolute left-3.5 top-4 text-slate-400"></i>
+                        <button id="btn-clear-code" class="hidden absolute right-3 top-3.5 p-1 bg-slate-200 dark:bg-slate-800 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    <button id="btn-scan-camera" class="py-2.5 px-2 bg-teal-500/10 border border-teal-500/30 text-teal-600 dark:text-teal-400 rounded-lg hover:bg-teal-500/20 transition-all shadow-md font-semibold text-sm flex items-center gap-1.5 cursor-pointer shadow-sm shrink-0">
+                        <i data-lucide="camera" class="w-9 h-9"></i>
+                    </button>
+                </div>
+
+                <div id="camera-scanner-container" class="hidden mt-4 overflow-hidden rounded-xl border-2 border-teal-500/50 bg-slate-900 relative">
+                    <div id="camera-reader" class="w-full"></div>
+                    <button id="btn-stop-camera" class="w-full py-2.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 font-semibold text-xs border-t border-red-500/30 transition-colors flex items-center justify-center gap-2">
+                        <i data-lucide="camera-off" class="w-4 h-4"></i>
+                        Cerrar Cámara
+                    </button>
+                </div>
+            </div>
+
+            <div id="code-result" class="hidden space-y-3"></div>
+            <div id="code-empty" class="text-center py-12 text-slate-400 dark:text-slate-500">
+                <i data-lucide="scan-line" class="w-12 h-12 mx-auto mb-3 opacity-40"></i>
+                <p class="text-sm">Ingresa un código de barras o SKU para consultar los detalles del artículo.</p>
+            </div>
+        </section>
+
+        <section id="sec-name" class="hidden space-y-4 max-w-2xl mx-auto">
+            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-4 shadow-xl space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Búsqueda por Descripción</label>
+                    <div class="relative">
+                        <input type="text" id="input-name" placeholder="Ej: taza, plato, cuaderno..." autocomplete="off"
+                            class="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 focus:border-teal-500 rounded-xl px-4 py-3.5 pl-11 text-lg font-medium text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 outline-none transition-all duration-200">
+                        <i data-lucide="search" class="w-5 h-5 absolute left-3.5 top-4 text-slate-400"></i>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-200 dark:border-slate-700/50">
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Categoría</label>
+                        <select id="filter-name-cat" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs rounded-lg px-2.5 py-2 text-slate-800 dark:text-slate-200 outline-none">
+                            <option value="">Todas las categorías</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Fases Regulares</label>
+                        <select id="filter-name-phase" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs rounded-lg px-2.5 py-2 text-slate-800 dark:text-slate-200 outline-none">
+                            <option value="">Todas las fases</option>
+                            <option value="EXCLUDE">No incluir (Sin Fase regular)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Fases SALE</label>
+                        <select id="filter-name-sale" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs rounded-lg px-2.5 py-2 text-slate-800 dark:text-slate-200 outline-none">
+                            <option value="">Todas las fases SALE</option>
+                            <option value="EXCLUDE">No incluir (Sin Fase SALE)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div id="name-results-count" class="text-xs font-semibold text-slate-500 dark:text-slate-400 px-1 hidden"></div>
+            <div id="name-results-list" class="space-y-3"></div>
+            <div id="name-empty" class="text-center py-12 text-slate-400 dark:text-slate-500">
+                <i data-lucide="type" class="w-12 h-12 mx-auto mb-3 opacity-40"></i>
+                <p class="text-sm">Escribe palabras clave o aplica filtros para consultar los productos.</p>
+            </div>
+        </section>
+
+        <section id="sec-phase" class="hidden space-y-4 max-w-2xl mx-auto">
+            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-4 shadow-xl">
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Seleccionar Fase</label>
+                <div class="relative">
+                    <select id="select-phase" 
+                        class="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 focus:border-teal-500 rounded-xl px-4 py-3.5 text-base font-semibold text-slate-900 dark:text-white outline-none appearance-none cursor-pointer transition-all">
+                        <option value="">--Desplegar lista--</option>
+                    </select>
+                    <i data-lucide="chevron-down" class="w-5 h-5 absolute right-4 top-4 text-slate-400 pointer-events-none"></i>
+                </div>
+            </div>
+
+            <div id="phase-results-count" class="text-xs font-semibold text-slate-500 dark:text-slate-400 px-1 hidden"></div>
+            <div id="phase-results-list" class="space-y-3"></div>
+            <div id="phase-empty" class="text-center py-12 text-slate-400 dark:text-slate-500">
+                <i data-lucide="filter" class="w-12 h-12 mx-auto mb-3 opacity-40"></i>
+                <p class="text-sm">Selecciona una fase de la lista para ver todos los artículos asignados.</p>
+            </div>
+        </section>
+
+        <section id="sec-sale" class="hidden space-y-4 max-w-2xl mx-auto">
+            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-4 shadow-xl">
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Seleccionar Fase SALE</label>
+                <div class="relative">
+                    <select id="select-sale" 
+                        class="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 focus:border-teal-500 rounded-xl px-4 py-3.5 text-base font-semibold text-slate-900 dark:text-white outline-none appearance-none cursor-pointer transition-all">
+                        <option value="">--Desplegar lista SALE--</option>
+                    </select>
+                    <i data-lucide="chevron-down" class="w-5 h-5 absolute right-4 top-4 text-slate-400 pointer-events-none"></i>
+                </div>
+            </div>
+
+            <div id="sale-results-count" class="text-xs font-semibold text-slate-500 dark:text-slate-400 px-1 hidden"></div>
+            <div id="sale-results-list" class="space-y-3"></div>
+            <div id="sale-empty" class="text-center py-12 text-slate-400 dark:text-slate-500">
+                <i data-lucide="tag" class="w-12 h-12 mx-auto mb-3 opacity-40"></i>
+                <p class="text-sm">Selecciona una fase SALE de la lista para ver todos los artículos asignados.</p>
+            </div>
+        </section>
+
+        <section id="sec-settings" class="hidden space-y-4 max-w-md mx-auto">
+            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-5 shadow-xl text-center">
+                <div class="w-14 h-14 bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="refresh-cw" class="w-7 h-7"></i>
+                </div>
+                <h2 class="text-lg font-bold text-slate-900 dark:text-slate-100 mb-2">Sincronizar Catálogo</h2>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mb-5">Obtén la versión más reciente de la información publicada en la Base de Datos.</p>
+ 
+                <button id="btn-update-sheets" class="w-full py-3.5 px-4 rounded-lg bg-teal-500/10 hover:bg-teal-500/20 text-teal-600 dark:text-teal-400 border border-teal-500/30 shadow-lg transition-all flex items-center justify-center gap-2">
+                    <i data-lucide="refresh-cw" id="icon-btn-update" class="w-5 h-5"></i>
+                    <span id="text-btn-update">Actualizar Base de Datos</span>
+                </button>
+            </div>
+
+            <div id="storage-info" class="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 text-xs space-y-2">
+                <div class="flex justify-between items-center text-slate-500 dark:text-slate-400">
+                    <span>Estado de Almacenamiento:</span>
+                    <span id="storage-status" class="font-semibold text-slate-800 dark:text-slate-200">Sin datos</span>
+                </div>
+                <div class="flex justify-between items-center text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700/50 pt-2">
+                    <span>Última Actualización:</span>
+                    <span id="last-update-time" class="font-semibold text-teal-600 dark:text-teal-400">Nunca</span>
+                </div>
+                <button id="btn-clear-data" class="w-full mt-2 py-2 px-3 bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 rounded-xl hover:bg-red-500/20 transition-all font-semibold shadow-md  flex items-center justify-center gap-2">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    Borrar Datos Guardados
+                </button>
+            </div>
+
+            <div class="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 text-xs flex items-center gap-3">
+                <div class="p-2 bg-teal-500/10 rounded-xl border border-teal-500/20 text-teal-600 dark:text-teal-400 shrink-0">
+                    <i data-lucide="code-2" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-800 dark:text-slate-200 text-sm">Consultor de Fases</h3>
+                    <p class="text-slate-500 dark:text-slate-400 text-xs">desarrollado por J. Fritz</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Botones Flotantes de Navegación Rápida -->
+    <div id="floating-scroll-buttons" class="hidden fixed right-4 bottom-20 z-30 flex flex-col gap-2">
+        <button id="btn-scroll-top" class="p-3 bg-teal-600 hover:bg-teal-500 text-white rounded-full shadow-lg transition-transform active:scale-95 flex items-center justify-center" title="Ir arriba">
+            <i data-lucide="arrow-up" class="w-5 h-5"></i>
+        </button>
+        <button id="btn-scroll-bottom" class="p-3 bg-teal-600 hover:bg-teal-500 text-white rounded-full shadow-lg transition-transform active:scale-95 flex items-center justify-center" title="Ir abajo">
+            <i data-lucide="arrow-down" class="w-5 h-5"></i>
+        </button>
+    </div>
+
+    <div id="barcode-modal" class="hidden fixed inset-0 bg-white dark:bg-slate-950 z-50 flex flex-col items-center justify-center p-6 text-center select-none">
+        <button id="btn-close-barcode" class="absolute top-4 right-4 p-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-full">
+            <i data-lucide="x" class="w-6 h-6"></i>
+        </button>
+        <div class="w-full max-w-sm space-y-4 bg-white p-6 rounded-2xl shadow-2xl flex flex-col items-center justify-center">
+            <h3 id="modal-barcode-title" class="text-base font-bold text-slate-900 leading-snug"></h3>
+            <div class="w-full flex items-center justify-center overflow-hidden py-2 bg-white">
+                <svg id="barcode-canvas" class="max-w-full h-auto"></svg>
+            </div>
+            <p id="modal-barcode-num" class="font-mono text-lg font-black tracking-widest text-slate-800"></p>
+        </div>
+        <p class="mt-6 text-xs text-slate-400 dark:text-slate-500 font-medium">Pantalla configurada a máximo contraste para lectura POS</p>
+    </div>
+
+    <!-- Modal de Confirmación para Borrar Datos (Diseño Copiado del Código 1) -->
+    <div id="confirmDeleteModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[10005] flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 w-full max-w-sm shadow-2xl text-center space-y-4">
+            <div class="w-10 h-10 bg-rose-500/10 border border-rose-500/20 text-rose-500 rounded-full flex items-center justify-center mx-auto">
+                <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+            </div>
+            <p class="text-xs font-semibold text-slate-700 dark:text-slate-200 leading-relaxed">
+                ¡Esta acción no se puede deshacer! <br> ¿Desea continuar?
+            </p>
+            <div class="flex justify-center gap-2">
+                <button onclick="cerrarConfirmacionLimpiar()" class="py-1 px-3 bg-teal-500/10 border border-teal-500/30 text-teal-600 dark:text-teal-400 rounded-lg hover:bg-teal-500/20 transition-all font-semibold text-xs shadow-md  flex items-center gap-2 cursor-pointer shrink-0">
+                    Cancelar
+                </button>
+                <button onclick="limpiarTodosLosDatos()" class="py-2 px-4 bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 rounded-xl hover:bg-red-500/20 transition-all font-semibold text-xs shadow-md flex items-center gap-2 cursor-pointer shrink-0">
+                    Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Alerta / Mensaje Unificado (Diseño Copiado del Código 1) -->
+    <div id="alertModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[10010] flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 w-full max-w-sm shadow-2xl text-center space-y-4">
+            <div id="alertModalIconContainer" class="w-10 h-10 bg-teal-500/10 border border-teal-500/20 text-teal-600 dark:text-teal-400 rounded-full flex items-center justify-center mx-auto">
+                <i data-lucide="check-circle-2" id="alertModalIcon" class="w-5 h-5"></i>
+            </div>
+            <p id="alertModalText" class="text-xs font-semibold text-slate-700 dark:text-slate-200 leading-relaxed">
+                Mensaje
+            </p>
+            <div class="flex justify-center gap-2">
+                <button onclick="cerrarModalAlerta()" class="py-2 px-4 rounded-lg bg-teal-500/10 hover:bg-teal-500/20 text-teal-600 dark:text-teal-400 border border-teal-500/30 shadow-md text-xs font-semibold flex items-center gap-1.5 cursor-pointer">
+                    Aceptar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <nav class="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-800/95 backdrop-blur-lg border-t border-slate-200 dark:border-slate-700/80 px-2 py-2 z-20">
+        <div class="max-w-md mx-auto grid grid-cols-5 gap-1">
+            <button data-target="sec-code" class="nav-btn flex flex-col items-center justify-center py-2 px-1 rounded-xl transition-all text-teal-600 dark:text-teal-400 bg-slate-200/80 dark:bg-slate-700/60">
+                <i data-lucide="binary" class="w-6 h-6 mb-0.5"></i>
+                <span class="text-[10px] font-bold tracking-tight">Código</span>
+            </button>
+
+            <button data-target="sec-name" class="nav-btn flex flex-col items-center justify-center py-2 px-1 rounded-xl transition-all text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200">
+                <i data-lucide="case-sensitive" class="w-6 h-6 mb-0.5"></i>
+                <span class="text-[10px] font-bold tracking-tight">Nombre</span>
+            </button>
+
+            <button data-target="sec-phase" class="nav-btn flex flex-col items-center justify-center py-2 px-1 rounded-xl transition-all text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200">
+                <i data-lucide="layers-3" class="w-6 h-6 mb-0.5"></i>
+                <span class="text-[10px] font-bold tracking-tight">Fase</span>
+            </button>
+
+            <button data-target="sec-sale" class="nav-btn flex flex-col items-center justify-center py-2 px-1 rounded-xl transition-all text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200">
+                <i data-lucide="tag" class="w-6 h-6 mb-0.5"></i>
+                <span class="text-[10px] font-bold tracking-tight">SALE</span>
+            </button>
+
+            <button data-target="sec-settings" class="nav-btn flex flex-col items-center justify-center py-2 px-1 rounded-xl transition-all text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200">
+                <i data-lucide="refresh-cw" class="w-6 h-6 mb-0.5"></i>
+                <span class="text-[10px] font-bold tracking-tight">Actualizar</span>
+            </button>
+        </div>
+    </nav>
+
+    <script>
+        const GOOGLE_SHEETS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSUkqdsnKKLfqisN-gmd_RrEvOPf1NGUnSAiXiTXReS7a-JXKcoCY1Lk1dxTND8dn2WZySrVdNohXh7/pub?output=csv";
+
+        // Global State & Fast Lookup Indexes
+        let catalogData = [];
+        let catalogIndexMap = new Map(); // O(1) instant search for Code & SKU
+        let html5QrCode = null;
+
+        // Utility: Debounce Function
+        function debounce(func, wait = 180) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+
+        // Web Audio API & Haptic Feedback
+        function playScanFeedback() {
+            if ('vibrate' in navigator) {
+                navigator.vibrate(200);
+            }
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (AudioCtx) {
+                    const ctx = new AudioCtx();
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(1800, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.12);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.12);
+                }
+            } catch (e) {
+                console.warn("Audio feedback no soportado", e);
+            }
+        }
+
+        // Theme Toggle Handler
+        const btnThemeToggle = document.getElementById('btn-theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
+        const themeText = document.getElementById('theme-text');
+        const htmlElement = document.documentElement;
+
+        function setTheme(isDark) {
+            if (isDark) {
+                htmlElement.classList.add('dark');
+                themeText.textContent = 'Modo claro';
+                themeIcon.setAttribute('data-lucide', 'sun');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                htmlElement.classList.remove('dark');
+                themeText.textContent = 'Modo oscuro';
+                themeIcon.setAttribute('data-lucide', 'moon');
+                localStorage.setItem('theme', 'light');
+            }
+            lucide.createIcons();
+        }
+
+        const savedTheme = localStorage.getItem('theme');
+        setTheme(savedTheme !== 'light');
+
+        btnThemeToggle.addEventListener('click', () => {
+            const isDarkActive = htmlElement.classList.contains('dark');
+            setTheme(!isDarkActive);
+        });
+
+        // --- FLOATING SCROLL BUTTONS LOGIC ---
+        const mainContainer = document.getElementById('main-container');
+        const floatingScrollButtons = document.getElementById('floating-scroll-buttons');
+        const btnScrollTop = document.getElementById('btn-scroll-top');
+        const btnScrollBottom = document.getElementById('btn-scroll-bottom');
+
+        function updateFloatingButtonsVisibility() {
+            const activeSec = document.querySelector('main > section:not(.hidden)');
+            if (!activeSec) return;
+
+            const isSecName = activeSec.id === 'sec-name' && nameResultsList.children.length > 0;
+            const isSecPhase = activeSec.id === 'sec-phase' && phaseResultsList.children.length > 0;
+            const isSecSale = activeSec.id === 'sec-sale' && saleResultsList.children.length > 0;
+            const isSecCode = activeSec.id === 'sec-code' && !codeResult.classList.contains('hidden');
+
+            if (isSecName || isSecPhase || isSecSale || isSecCode) {
+                if (mainContainer.scrollHeight > mainContainer.clientHeight + 100) {
+                    floatingScrollButtons.classList.remove('hidden');
+                } else {
+                    floatingScrollButtons.classList.add('hidden');
+                }
+            } else {
+                floatingScrollButtons.classList.add('hidden');
+            }
+        }
+
+        btnScrollTop.addEventListener('click', () => {
+            mainContainer.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        btnScrollBottom.addEventListener('click', () => {
+            mainContainer.scrollTo({ top: mainContainer.scrollHeight, behavior: 'smooth' });
+        });
+
+        mainContainer.addEventListener('scroll', updateFloatingButtonsVisibility);
+
+        // DOM Elements
+        const navButtons = document.querySelectorAll('.nav-btn');
+        const sections = document.querySelectorAll('main > section');
+        
+        const inputCode = document.getElementById('input-code');
+        const btnClearCode = document.getElementById('btn-clear-code');
+        const codeResult = document.getElementById('code-result');
+        const codeEmpty = document.getElementById('code-empty');
+
+        const btnScanCamera = document.getElementById('btn-scan-camera');
+        const cameraContainer = document.getElementById('camera-scanner-container');
+        const btnStopCamera = document.getElementById('btn-stop-camera');
+
+        const inputName = document.getElementById('input-name');
+        const filterNameCat = document.getElementById('filter-name-cat');
+        const filterNamePhase = document.getElementById('filter-name-phase');
+        const filterNameSale = document.getElementById('filter-name-sale');
+        const nameResultsList = document.getElementById('name-results-list');
+        const nameResultsCount = document.getElementById('name-results-count');
+        const nameEmpty = document.getElementById('name-empty');
+
+        const selectPhase = document.getElementById('select-phase');
+        const phaseResultsList = document.getElementById('phase-results-list');
+        const phaseResultsCount = document.getElementById('phase-results-count');
+        const phaseEmpty = document.getElementById('phase-empty');
+
+        const selectSale = document.getElementById('select-sale');
+        const saleResultsList = document.getElementById('sale-results-list');
+        const saleResultsCount = document.getElementById('sale-results-count');
+        const saleEmpty = document.getElementById('sale-empty');
+
+        const btnUpdateSheets = document.getElementById('btn-update-sheets');
+        const iconBtnUpdate = document.getElementById('icon-btn-update');
+        const textBtnUpdate = document.getElementById('text-btn-update');
+        const dataStatusText = document.getElementById('data-status-text');
+        const storageStatus = document.getElementById('storage-status');
+        const lastUpdateTime = document.getElementById('last-update-time');
+        const btnClearData = document.getElementById('btn-clear-data');
+
+        const barcodeModal = document.getElementById('barcode-modal');
+        const btnCloseBarcode = document.getElementById('btn-close-barcode');
+        const modalBarcodeTitle = document.getElementById('modal-barcode-title');
+        const modalBarcodeNum = document.getElementById('modal-barcode-num');
+
+        lucide.createIcons();
+
+        function populateCategoryDropdowns() {
+            const categories = new Set();
+            catalogData.forEach(item => {
+                if (item.cat && item.cat.trim() !== '') {
+                    categories.add(item.cat.trim());
+                }
+            });
+
+            filterNameCat.innerHTML = '<option value="">Todas las categorías</option>';
+            Array.from(categories).sort().forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat.toLowerCase();
+                opt.textContent = cat;
+                filterNameCat.appendChild(opt);
+            });
+        }
+
+        function initPhaseSelect() {
+            selectPhase.innerHTML = '<option value="">--Desplegar lista--</option>';
+            filterNamePhase.innerHTML = '<option value="">Todas las fases</option><option value="EXCLUDE">No incluir (Sin Fase regular)</option>';
+
+            for (let i = 1; i <= 21; i++) {
+                const val = `fase ${i}`;
+                const text = `Fase ${i}`;
+                
+                const opt1 = document.createElement('option');
+                opt1.value = val;
+                opt1.textContent = text;
+                selectPhase.appendChild(opt1);
+
+                const opt2 = document.createElement('option');
+                opt2.value = val;
+                opt2.textContent = text;
+                filterNamePhase.appendChild(opt2);
+            }
+        }
+
+        function initSaleSelect() {
+            selectSale.innerHTML = '<option value="">--Desplegar lista SALE--</option>';
+            filterNameSale.innerHTML = '<option value="">Todas las fases SALE</option><option value="EXCLUDE">No incluir (Sin Fase SALE)</option>';
+
+            for (let i = 1; i <= 6; i++) {
+                const val = `sale fase ${i}`;
+                const text = `SALE Fase ${i}`;
+
+                const opt1 = document.createElement('option');
+                opt1.value = val;
+                opt1.textContent = text;
+                selectSale.appendChild(opt1);
+
+                const opt2 = document.createElement('option');
+                opt2.value = val;
+                opt2.textContent = text;
+                filterNameSale.appendChild(opt2);
+            }
+        }
+
+        navButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetId = btn.getAttribute('data-target');
+                if (targetId !== 'sec-code') stopCameraScanner();
+
+                navButtons.forEach(b => {
+                    b.classList.remove('text-teal-600', 'dark:text-teal-400', 'bg-slate-200/80', 'dark:bg-slate-700/60');
+                    b.classList.add('text-slate-500', 'dark:text-slate-400');
+                });
+                btn.classList.add('text-teal-600', 'dark:text-teal-400', 'bg-slate-200/80', 'dark:bg-slate-700/60');
+                btn.classList.remove('text-slate-500', 'dark:text-slate-400');
+
+                sections.forEach(sec => {
+                    sec.classList.toggle('hidden', sec.id !== targetId);
+                });
+                setTimeout(updateFloatingButtonsVisibility, 50);
+            });
+        });
+
+        function saveCatalogToStorage(data) {
+            const now = new Date();
+            const formattedDate = now.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' }) + ' ' + now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+            
+            try {
+                localStorage.setItem('consultor_catalog_data', JSON.stringify(data));
+                localStorage.setItem('consultor_last_update', formattedDate);
+            } catch (e) {
+                console.warn('LocalStorage lleno. Operando en memoria.');
+            }
+            updateAppWithData(data, formattedDate);
+        }
+
+        function loadCatalogFromStorage() {
+            const stored = localStorage.getItem('consultor_catalog_data');
+            const storedTime = localStorage.getItem('consultor_last_update') || 'Nunca';
+            if (stored) {
+                try {
+                    updateAppWithData(JSON.parse(stored), storedTime);
+                } catch (e) {
+                    console.error("Error cargando caché local", e);
+                    fetchGoogleSheetsData();
+                }
+            } else {
+                fetchGoogleSheetsData();
+            }
+        }
+
+        function updateAppWithData(data, updateTimeStr = 'Nunca') {
+            catalogData = data;
+            catalogIndexMap.clear();
+
+            data.forEach(item => {
+                if (item.barcode) catalogIndexMap.set(item.barcode.toLowerCase(), item);
+                if (item.sku) catalogIndexMap.set(item.sku.toLowerCase(), item);
+            });
+
+            populateCategoryDropdowns();
+            lastUpdateTime.textContent = updateTimeStr;
+
+            if (catalogData.length > 0) {
+                dataStatusText.className = "text-xs text-teal-600 dark:text-teal-400 flex items-center gap-1 font-medium";
+                dataStatusText.innerHTML = `<span class="w-2 h-2 rounded-full bg-teal-500 dark:bg-teal-400 inline-block"></span> Base de Datos Activa`;
+                storageStatus.textContent = `${catalogData.length} artículos cargados`;
+            } else {
+                dataStatusText.className = "text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1";
+                dataStatusText.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500 dark:bg-amber-400 inline-block animate-pulse"></span> Sin datos cargados`;
+                storageStatus.textContent = 'Sin datos';
+            }
+        }
+
+        function fetchGoogleSheetsData() {
+            iconBtnUpdate.classList.add('animate-spin');
+            textBtnUpdate.textContent = 'Actualizando Base de Datos';
+            btnUpdateSheets.disabled = true;
+
+            dataStatusText.className = "text-xs text-teal-600 dark:text-teal-400 flex items-center gap-1 font-medium";
+            dataStatusText.innerHTML = `<i data-lucide="refresh-cw" class="w-3 h-3 animate-spin"></i> Actualizando Base de Datos`;
+            lucide.createIcons({ root: dataStatusText });
+
+            Papa.parse(GOOGLE_SHEETS_CSV_URL, {
+                download: true,
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    iconBtnUpdate.classList.remove('animate-spin');
+                    textBtnUpdate.textContent = 'Actualizar Base de Datos';
+                    btnUpdateSheets.disabled = false;
+
+                    const processed = [];
+                    results.data.forEach(row => {
+                        const getValue = (keys) => {
+                            for (let k of keys) {
+                                const found = Object.keys(row).find(rk => rk.trim().toLowerCase() === k.toLowerCase());
+                                if (found && row[found] !== undefined && row[found] !== null) {
+                                    return String(row[found]).trim();
+                                }
+                            }
+                            return '';
+                        };
+
+                        const sku = getValue(['sku', 'codigo sku']);
+                        const barcode = getValue(['barcode', 'código de barras', 'codigo de barras', 'ean']);
+                        const desc = getValue(['descripcion', 'descripción', 'desc']);
+                        const cat = getValue(['categoria', 'categoría', 'cat']);
+                        const price = getValue(['precio actual', 'precio', 'price']);
+                        const phase = getValue(['fase', 'phase']);
+                        const salePhase = getValue(['fase sale', 'sale phase', 'sale']);
+                        const normalPrice = getValue(['precio normal', 'normalprice']);
+
+                        if (sku || barcode || desc) {
+                            processed.push({ sku, barcode, desc, cat, price, phase, salePhase, normalPrice });
+                        }
+                    });
+
+                    if (processed.length > 0) {
+                        saveCatalogToStorage(processed);
+                        mostrarModalAlerta(`¡Base de datos actualizada! ${processed.length} artículos cargados.`, 'success');
+                    } else {
+                        updateAppWithData(catalogData, localStorage.getItem('consultor_last_update') || 'Nunca');
+                        mostrarModalAlerta('No se encontraron datos válidos en el archivo publicado.', 'error');
+                    }
+                },
+                error: function(err) {
+                    iconBtnUpdate.classList.remove('animate-spin');
+                    textBtnUpdate.textContent = 'Actualizar Base de Datos';
+                    btnUpdateSheets.disabled = false;
+                    updateAppWithData(catalogData, localStorage.getItem('consultor_last_update') || 'Nunca');
+                    mostrarModalAlerta('Error al conectar con Google Sheets. Verifica tu conexión.', 'error');
+                }
+            });
+        }
+
+        btnUpdateSheets.addEventListener('click', fetchGoogleSheetsData);
+
+        btnClearData.addEventListener('click', () => {
+            mostrarConfirmacionLimpiar();
+        });
+
+        // BARCODE MODAL GENERATOR (EAN-13 / CODE128 FALLBACK)
+        function generateBarcodeEAN13(code) {
+            let cleanCode = String(code || '').replace(/\D/g, '');
+            if (cleanCode.length < 12) {
+                cleanCode = cleanCode.padStart(12, '0');
+            } else if (cleanCode.length > 13) {
+                cleanCode = cleanCode.substring(0, 13);
+            }
+
+            if (cleanCode.length === 12) {
+                let sum = 0;
+                for (let i = 0; i < 12; i++) {
+                    sum += parseInt(cleanCode[i]) * (i % 2 === 0 ? 1 : 3);
+                }
+                const checksum = (10 - (sum % 10)) % 10;
+                cleanCode += checksum;
+            }
+
+            return cleanCode;
+        }
+
+        function showBarcodeModal(title, code) {
+            const ean13Code = generateBarcodeEAN13(code);
+            modalBarcodeTitle.textContent = title || 'Código de Barras';
+            modalBarcodeNum.textContent = ean13Code;
+
+            try {
+                JsBarcode("#barcode-canvas", ean13Code, {
+                    format: "EAN13",
+                    flat: true,
+                    width: 2.5,
+                    height: 90,
+                    displayValue: false,
+                    margin: 10
+                });
+            } catch (e) {
+                JsBarcode("#barcode-canvas", code || "000000000000", {
+                    format: "CODE128",
+                    width: 2,
+                    height: 90,
+                    displayValue: false,
+                    margin: 10
+                });
+            }
+
+            barcodeModal.classList.remove('hidden');
+            lucide.createIcons({ root: barcodeModal });
+        }
+
+        btnCloseBarcode.addEventListener('click', () => {
+            barcodeModal.classList.add('hidden');
+        });
+
+        // --- OPTIMIZED CAMERA SCANNER ---
+        btnScanCamera.addEventListener('click', () => {
+            if (cameraContainer.classList.contains('hidden')) {
+                startCameraScanner();
+            } else {
+                stopCameraScanner();
+            }
+        });
+
+        btnStopCamera.addEventListener('click', stopCameraScanner);
+
+        function startCameraScanner() {
+            cameraContainer.classList.remove('hidden');
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("camera-reader", {
+                    formatsToSupport: [
+                        Html5QrcodeSupportedFormats.EAN_13,
+                        Html5QrcodeSupportedFormats.EAN_8,
+                        Html5QrcodeSupportedFormats.CODE_128,
+                        Html5QrcodeSupportedFormats.UPC_A,
+                        Html5QrcodeSupportedFormats.UPC_E
+                    ]
+                });
+            }
+
+            const config = { 
+                fps: 25, 
+                qrbox: { width: 280, height: 160 },
+                aspectRatio: 1.333333,
+                videoConstraints: {
+                    facingMode: { exact: "environment" },
+                    width: { min: 1280, ideal: 1920 },
+                    height: { min: 720, ideal: 1080 },
+                    focusMode: "continuous"
+                }
+            };
+
+            const onScanSuccess = (decodedText) => {
+                playScanFeedback();
+                const numericOnly = decodedText.replace(/\D/g, '');
+                inputCode.value = numericOnly;
+                btnClearCode.classList.remove('hidden');
+                performCodeSearch(numericOnly);
+                stopCameraScanner();
+            };
+
+            html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, () => {})
+            .catch(() => {
+                delete config.videoConstraints.facingMode;
+                html5QrCode.start({ facingMode: "user" }, config, onScanSuccess, () => {})
+                .catch(err => {
+                    mostrarModalAlerta("No se pudo iniciar la cámara. Verifica permisos HTTPS o la cámara del dispositivo.", "error");
+                    stopCameraScanner();
+                });
+            });
+        }
+
+        function stopCameraScanner() {
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().then(() => {
+                    cameraContainer.classList.add('hidden');
+                }).catch(() => {
+                    cameraContainer.classList.add('hidden');
+                });
+            } else {
+                cameraContainer.classList.add('hidden');
+            }
+        }
+
+        // --- SECTION 1: CODE SEARCH ---
+        inputCode.addEventListener('input', debounce(() => {
+            const sanitized = inputCode.value.replace(/\D/g, '');
+            if (inputCode.value !== sanitized) {
+                inputCode.value = sanitized;
+            }
+
+            const val = inputCode.value.trim();
+            if (val.length > 0) {
+                btnClearCode.classList.remove('hidden');
+                performCodeSearch(val);
+            } else {
+                clearCodeSearch();
+            }
+        }, 150));
+
+        btnClearCode.addEventListener('click', () => {
+            inputCode.value = '';
+            clearCodeSearch();
+            inputCode.focus();
+        });
+
+        function clearCodeSearch() {
+            btnClearCode.classList.add('hidden');
+            codeResult.classList.add('hidden');
+            codeResult.innerHTML = '';
+            codeEmpty.classList.remove('hidden');
+            updateFloatingButtonsVisibility();
+        }
+
+        function performCodeSearch(query) {
+            if (catalogData.length === 0) {
+                renderCodeError("No hay datos cargados. Presiona 'Actualizar Base de Datos' en el menú 🔄.");
+                return;
+            }
+
+            const cleanQuery = query.toLowerCase();
+            let matches = [];
+
+            for (let i = 0; i < catalogData.length && matches.length < 50; i++) {
+                const item = catalogData[i];
+                const itemBarcode = (item.barcode || '').toLowerCase();
+                const itemSku = (item.sku || '').toLowerCase();
+                if (itemBarcode === cleanQuery || itemSku === cleanQuery || itemBarcode.includes(cleanQuery) || itemSku.includes(cleanQuery)) {
+                    matches.push(item);
+                }
+            }
+
+            if (matches.length > 0) {
+                codeEmpty.classList.add('hidden');
+                codeResult.classList.remove('hidden');
+
+                codeResult.innerHTML = matches.map((match) => {
+                    const isMatchedByBarcode = (match.barcode || '').toLowerCase().includes(cleanQuery);
+                    const barcodeVal = match.barcode || match.sku || '000000000000';
+                    return `
+                        <div class="bg-white dark:bg-gradient-to-b dark:from-slate-800 dark:to-slate-800/90 border border-slate-200 dark:border-teal-500/30 rounded-2xl p-5 shadow-2xl relative overflow-hidden">
+                            <div class="absolute top-0 right-0 px-4 py-1.5 bg-teal-500/10 dark:bg-teal-500/20 border-b border-l border-teal-500/30 rounded-bl-xl text-teal-700 dark:text-teal-300 font-bold text-xs">
+                                ${match.phase || 'Sin Fase'}
+                            </div>
+
+                            <div class="mb-4 pr-16">
+                                <span class="text-xs font-semibold text-teal-600 dark:text-teal-400 uppercase tracking-wider">${match.cat || 'General'}</span>
+                                <h3 class="text-xl font-bold text-slate-900 dark:text-white mt-1 leading-snug">${match.desc || 'Sin descripción'}</h3>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3 mb-4">
+                                <div class="bg-slate-100 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200 dark:border-slate-700/50">
+                                    <span class="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 block mb-0.5">SKU</span>
+                                    <span class="text-sm font-mono font-bold text-slate-800 dark:text-slate-100 ${!isMatchedByBarcode ? 'text-teal-600 dark:text-teal-400' : ''}">${match.sku || 'N/A'}</span>
+                                </div>
+                                <div class="bg-slate-100 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200 dark:border-slate-700/50">
+                                    <span class="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 block mb-0.5">Código de Barras</span>
+                                    <span class="text-sm font-mono font-bold text-slate-800 dark:text-slate-100 ${isMatchedByBarcode ? 'text-teal-600 dark:text-teal-400' : ''}">${match.barcode || 'N/A'}</span>
+                                </div>
+                            </div>
+
+                            <button onclick="showBarcodeModal('${escapeQuotes(match.desc)}', '${barcodeVal}')" class="w-full mb-4 py-1.5 px-3 bg-teal-500/10 border border-teal-500/30 text-teal-600 dark:text-teal-400 rounded-lg hover:bg-teal-500/20 transition-all font-semibold text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-sm">
+                                <i data-lucide="barcode" class="w-4 h-4"></i>
+                                Ver Código de Barras
+                            </button>
+
+                            <div class="grid grid-cols-2 gap-3 pt-3 border-t border-slate-200 dark:border-slate-700/60 text-center">
+                                <div>
+                                    <span class="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 block">Precio Normal</span>
+                                    <span class="text-xl font-bold text-slate-600 dark:text-slate-300">${formatPrice(match.normalPrice)}</span>
+                                </div>
+                                <div>
+                                    <span class="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 block">Precio Actual</span>
+                                    <span class="text-2xl font-black text-teal-600 dark:text-teal-400">${formatPrice(match.price)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                lucide.createIcons({ root: codeResult });
+            } else {
+                renderCodeError(`No se encontró ningún artículo con el código o SKU "${query}".`);
+            }
+            setTimeout(updateFloatingButtonsVisibility, 50);
+        }
+
+        function escapeQuotes(str) {
+            return String(str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        }
+
+        function renderCodeError(msg) {
+            codeEmpty.classList.add('hidden');
+            codeResult.classList.remove('hidden');
+            codeResult.innerHTML = `
+                <div class="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-6 text-center">
+                    <i data-lucide="alert-circle" class="w-10 h-10 text-amber-500 dark:text-amber-400 mx-auto mb-2"></i>
+                    <p class="text-sm text-slate-700 dark:text-slate-300 font-medium">${msg}</p>
+                </div>
+            `;
+            lucide.createIcons({ root: codeResult });
+            setTimeout(updateFloatingButtonsVisibility, 50);
+        }
+
+        // --- SECTION 2: COMBINED FILTER & TEXT SEARCH LOGIC ---
+        function executeNameSearch() {
+            const query = inputName.value.trim().toLowerCase();
+            const catVal = filterNameCat.value.trim().toLowerCase();
+            const phaseVal = filterNamePhase.value.trim().toLowerCase();
+            const saleVal = filterNameSale.value.trim().toLowerCase();
+
+            if (!query && !catVal && !phaseVal && !saleVal) {
+                nameResultsList.innerHTML = '';
+                nameResultsCount.classList.add('hidden');
+                nameEmpty.classList.remove('hidden');
+                updateFloatingButtonsVisibility();
+                return;
+            }
+
+            if (catalogData.length === 0) {
+                nameResultsList.innerHTML = `<div class="text-center py-8 text-amber-600 dark:text-amber-400 text-sm">Carga una base de datos primero.</div>`;
+                nameEmpty.classList.add('hidden');
+                updateFloatingButtonsVisibility();
+                return;
+            }
+
+            const matches = [];
+            for (let i = 0; i < catalogData.length; i++) {
+                const item = catalogData[i];
+                
+                if (query && !item.desc.toLowerCase().includes(query)) continue;
+                if (catVal && (item.cat || '').toLowerCase() !== catVal) continue;
+
+                const itemPhase = (item.phase || '').toLowerCase();
+                if (phaseVal === 'exclude') {
+                    if (itemPhase !== '' && itemPhase !== 'sin fase') continue;
+                } else if (phaseVal) {
+                    const num = phaseVal.replace('fase', '').trim();
+                    if (itemPhase !== phaseVal && itemPhase !== num && itemPhase !== `fase ${num}`) continue;
+                }
+
+                const itemSale = (item.salePhase || '').toLowerCase();
+                if (saleVal === 'exclude') {
+                    if (itemSale !== '' && itemSale !== 'sin sale') continue;
+                } else if (saleVal) {
+                    const num = saleVal.replace('sale fase', '').trim();
+                    if (itemSale !== saleVal && itemSale !== num && itemSale !== `sale fase ${num}` && itemSale !== `fase ${num}`) continue;
+                }
+
+                matches.push(item);
+                if (matches.length >= 80) break;
+            }
+
+            if (matches.length > 0) {
+                nameEmpty.classList.add('hidden');
+                nameResultsCount.classList.remove('hidden');
+                nameResultsCount.textContent = `Mostrando ${matches.length} coincidencia(s)`;
+                nameResultsList.innerHTML = matches.map(item => createItemCardHTML(item, false, query)).join('');
+                lucide.createIcons({ root: nameResultsList });
+            } else {
+                nameResultsCount.classList.add('hidden');
+                nameEmpty.classList.add('hidden');
+                nameResultsList.innerHTML = `
+                    <div class="text-center py-8 text-slate-500 dark:text-slate-400 text-sm">
+                        No se encontraron artículos con los criterios seleccionados.
+                    </div>
+                `;
+            }
+            setTimeout(updateFloatingButtonsVisibility, 50);
+        }
+
+        const debouncedExecuteNameSearch = debounce(executeNameSearch, 200);
+        inputName.addEventListener('input', debouncedExecuteNameSearch);
+        filterNameCat.addEventListener('change', executeNameSearch);
+        filterNamePhase.addEventListener('change', executeNameSearch);
+        filterNameSale.addEventListener('change', executeNameSearch);
+
+        // --- SECTION 3: PHASE SEARCH LOGIC ---
+        selectPhase.addEventListener('change', () => {
+            const phaseVal = selectPhase.value.trim().toLowerCase();
+
+            if (!phaseVal) {
+                phaseResultsList.innerHTML = '';
+                phaseResultsCount.classList.add('hidden');
+                phaseEmpty.classList.remove('hidden');
+                updateFloatingButtonsVisibility();
+                return;
+            }
+
+            if (catalogData.length === 0) {
+                phaseResultsList.innerHTML = `<div class="text-center py-8 text-amber-600 dark:text-amber-400 text-sm">Carga una base de datos primero.</div>`;
+                phaseEmpty.classList.add('hidden');
+                updateFloatingButtonsVisibility();
+                return;
+            }
+
+            const phaseNum = phaseVal.replace('fase', '').trim();
+            const matches = catalogData.filter(item => {
+                const itemPhase = (item.phase || '').toLowerCase();
+                return itemPhase === phaseVal || itemPhase === phaseNum || itemPhase === `fase ${phaseNum}`;
+            });
+
+            if (matches.length > 0) {
+                phaseEmpty.classList.add('hidden');
+                phaseResultsCount.classList.remove('hidden');
+                phaseResultsCount.textContent = `Artículos en ${selectPhase.options[selectPhase.selectedIndex].text}: ${matches.length}`;
+                phaseResultsList.innerHTML = matches.slice(0, 100).map(item => createItemCardHTML(item)).join('');
+                lucide.createIcons({ root: phaseResultsList });
+            } else {
+                phaseResultsCount.classList.add('hidden');
+                phaseEmpty.classList.add('hidden');
+                phaseResultsList.innerHTML = `
+                    <div class="text-center py-8 text-slate-500 dark:text-slate-400 text-sm">
+                        No hay artículos asignados a la <span class="text-slate-800 dark:text-slate-200 font-semibold">${selectPhase.options[selectPhase.selectedIndex].text}</span>.
+                    </div>
+                `;
+            }
+            setTimeout(updateFloatingButtonsVisibility, 50);
+        });
+
+        // --- SECTION 3.5: SALE PHASE SEARCH LOGIC ---
+        selectSale.addEventListener('change', () => {
+            const saleVal = selectSale.value.trim().toLowerCase();
+
+            if (!saleVal) {
+                saleResultsList.innerHTML = '';
+                saleResultsCount.classList.add('hidden');
+                saleEmpty.classList.remove('hidden');
+                updateFloatingButtonsVisibility();
+                return;
+            }
+
+            if (catalogData.length === 0) {
+                saleResultsList.innerHTML = `<div class="text-center py-8 text-amber-600 dark:text-amber-400 text-sm">Carga una base de datos primero.</div>`;
+                saleEmpty.classList.add('hidden');
+                updateFloatingButtonsVisibility();
+                return;
+            }
+
+            const saleNum = saleVal.replace('sale fase', '').trim();
+            const matches = catalogData.filter(item => {
+                const itemSalePhase = (item.salePhase || '').toLowerCase();
+                return itemSalePhase === saleVal || itemSalePhase === saleNum || itemSalePhase === `sale fase ${saleNum}` || itemSalePhase === `fase ${saleNum}`;
+            });
+
+            if (matches.length > 0) {
+                saleEmpty.classList.add('hidden');
+                saleResultsCount.classList.remove('hidden');
+                saleResultsCount.textContent = `Artículos en ${selectSale.options[selectSale.selectedIndex].text}: ${matches.length}`;
+                saleResultsList.innerHTML = matches.slice(0, 100).map(item => createItemCardHTML(item, true)).join('');
+                lucide.createIcons({ root: saleResultsList });
+            } else {
+                saleResultsCount.classList.add('hidden');
+                saleEmpty.classList.add('hidden');
+                saleResultsList.innerHTML = `
+                    <div class="text-center py-8 text-slate-500 dark:text-slate-400 text-sm">
+                        No hay artículos asignados a la <span class="text-slate-800 dark:text-slate-200 font-semibold">${selectSale.options[selectSale.selectedIndex].text}</span>.
+                    </div>
+                `;
+            }
+            setTimeout(updateFloatingButtonsVisibility, 50);
+        });
+
+        function highlightText(text, query) {
+            if (!query || !text) return text || 'Sin descripción';
+            const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(`(${escapedQuery})`, 'gi');
+            return text.replace(regex, '<mark>$1</mark>');
+        }
+
+        function createItemCardHTML(item, isSale = false, query = '') {
+            const badgeText = isSale ? (item.salePhase || 'Sin SALE') : (item.phase || 'Sin Fase');
+            const highlightedDesc = highlightText(item.desc, query);
+            const barcodeVal = item.barcode || item.sku || '000000000000';
+
+            return `
+                <div class="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/70 hover:border-slate-300 dark:hover:border-slate-600 rounded-xl p-4 shadow-md transition-all">
+                    <div class="flex items-start justify-between gap-2 mb-2">
+                        <div>
+                            <span class="text-[10px] font-bold text-teal-600 dark:text-teal-400 uppercase tracking-wider">${item.cat || 'General'}</span>
+                            <h4 class="text-sm font-bold text-slate-800 dark:text-slate-100 leading-snug">${highlightedDesc}</h4>
+                        </div>
+                        <div class="flex flex-col items-end gap-1.5 shrink-0">
+                            <span class="px-2.5 py-1 bg-slate-100 dark:bg-slate-700/80 border border-slate-200 dark:border-slate-600/80 text-slate-700 dark:text-slate-200 font-bold text-xs rounded-lg">
+                                ${badgeText}
+                            </span>
+                            <button onclick="showBarcodeModal('${escapeQuotes(item.desc)}', '${barcodeVal}')" title="Ver Código de Barras" class="py-1.5 px-3 bg-teal-500/10 border border-teal-500/30 text-teal-600 dark:text-teal-400 rounded-lg hover:bg-teal-500/20 transition-all font-semibold text-xs flex items-center gap-1.5 cursor-pointer shadow-sm">
+                                <i data-lucide="barcode" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between text-xs pt-2 border-t border-slate-100 dark:border-slate-700/40 text-slate-600 dark:text-slate-300">
+                        <div class="flex items-center gap-3 font-mono text-[11px]">
+                            <span><strong class="text-slate-400 dark:text-slate-500 font-sans">SKU:</strong> ${item.sku || '-'}</span>
+                            <span><strong class="text-slate-400 dark:text-slate-500 font-sans">EAN:</strong> ${item.barcode || '-'}</span>
+                        </div>
+                        <span class="font-bold text-teal-600 dark:text-teal-400 text-sm">${formatPrice(item.price)}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function formatPrice(val) {
+            if (val === undefined || val === null || val === '') return '-';
+            if (typeof val === 'string' && val.trim() === '-') return '-';
+            const num = parseFloat(val);
+            if (isNaN(num)) return val;
+            return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(num);
+        }
+
+        function mostrarConfirmacionLimpiar() {
+            document.getElementById('confirmDeleteModal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function cerrarConfirmacionLimpiar() {
+            document.getElementById('confirmDeleteModal').classList.add('hidden');
+        }
+
+        function mostrarModalAlerta(texto, tipo = 'success') {
+            document.getElementById('alertModalText').innerText = texto;
+            const iconContainer = document.getElementById('alertModalIconContainer');
+            const icon = document.getElementById('alertModalIcon');
+            
+            if (tipo === 'error') {
+                iconContainer.className = "w-10 h-10 bg-rose-500/10 border border-rose-500/20 text-rose-500 rounded-full flex items-center justify-center mx-auto";
+                icon.setAttribute('data-lucide', 'alert-circle');
+            } else {
+                iconContainer.className = "w-10 h-10 bg-teal-500/10 border border-teal-500/20 text-teal-600 dark:text-teal-400 rounded-full flex items-center justify-center mx-auto";
+                icon.setAttribute('data-lucide', 'check-circle-2');
+            }
+
+            document.getElementById('alertModal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function cerrarModalAlerta() {
+            document.getElementById('alertModal').classList.add('hidden');
+        }
+
+        function limpiarTodosLosDatos() {
+            cerrarConfirmacionLimpiar();
+            localStorage.removeItem('consultor_catalog_data');
+            localStorage.removeItem('consultor_last_update');
+            updateAppWithData([], 'Nunca');
+            clearCodeSearch();
+            inputName.value = '';
+            filterNameCat.value = '';
+            filterNamePhase.value = '';
+            filterNameSale.value = '';
+            nameResultsList.innerHTML = '';
+            nameEmpty.classList.remove('hidden');
+            selectPhase.value = '';
+            phaseResultsList.innerHTML = '';
+            phaseEmpty.classList.remove('hidden');
+            selectSale.value = '';
+            saleResultsList.innerHTML = '';
+            saleEmpty.classList.remove('hidden');
+            updateFloatingButtonsVisibility();
+            mostrarModalAlerta("Datos eliminados.", "success");
+        }
+
+        initPhaseSelect();
+        initSaleSelect();
+        loadCatalogFromStorage();
+    </script>
+</body>
+</html>
