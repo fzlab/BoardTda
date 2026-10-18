@@ -1,7 +1,7 @@
 {
-  "name": "FZ Board Hub",
-  "short_name": "FZ Hub",
-  "description": "Dashboard centralizador de proyectos web y PWAs",
+  "name": "FZ Board TDA",
+  "short_name": "Board TDA",
+  "description": "Dashboard centralizador de proyectos",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
