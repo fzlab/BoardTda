@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fz-board-tda-v1.6.6'; // <-- Incrementa este número con cada cambio importante
+const CACHE_NAME = 'fz-board-tda-v1.6.9'; // 
 
 // Archivos esenciales del núcleo que se precargan al instalar
 const STATIC_ASSETS = [
