@@ -514,8 +514,10 @@
                 ? (ROLE_PERMISSIONS[currentUserRole] || [])
                 : ['ventas_diarias', 'corte_cajas', 'consultor_fases', 'consultor_existencias'];
 
+            const predefinedIds = PREDEFINED_CATALOG.map(item => item.id);
+
             const filtered = projects.filter(p => {
-                const matchesRole = allowedProjectIds.includes(p.id);
+                const matchesRole = !predefinedIds.includes(p.id) || allowedProjectIds.includes(p.id);
                 const matchesCat = activeCategory === 'all' || p.category === activeCategory;
                 const matchesSearch = p.title.toLowerCase().includes(searchTerm) || 
                                      (p.desc && p.desc.toLowerCase().includes(searchTerm));
