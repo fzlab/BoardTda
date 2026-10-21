@@ -126,9 +126,13 @@
             <button onclick="exportarExcel()" class="flex-1 sm:flex-none py-1.5 px-3 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg transition-all font-semibold text-xs shadow-sm flex items-center justify-center gap-1.5 cursor-pointer" title="Exportar a CSV/Excel">
               <i class="fa-solid fa-file-excel text-emerald-600"></i> Exportar
             </button>
-            <button onclick="abrirModalTicket()" class="flex-1 sm:flex-none py-1.5 px-3 bg-teal-500/10 border border-teal-500/30 text-teal-600 dark:text-teal-400 rounded-lg hover:bg-teal-500/20 transition-all font-semibold text-xs shadow-md flex items-center justify-center gap-1.5 cursor-pointer">
+               <button onclick="abrirModalTicket()" class="flex-1 sm:flex-none py-1.5 px-3 bg-teal-500/10 border border-teal-500/30 text-teal-600 dark:text-teal-400 rounded-lg hover:bg-teal-500/20 transition-all font-semibold text-xs shadow-md flex items-center justify-center gap-1.5 cursor-pointer">
               <i class="fa-solid fa-plus"></i> Nuevo Ticket
             </button>
+            <button onclick="actualizarDatosManual()" class="flex-1 sm:flex-none py-1.5 px-3 bg-teal-500/10 border border-teal-500/30 text-teal-600 dark:text-teal-400 rounded-lg hover:bg-teal-500/20 transition-all font-semibold text-xs shadow-md flex items-center justify-center gap-1.5 cursor-pointer" title="Actualizar base de datos">
+              <i id="iconActualizar" class="fa-solid fa-rotate"></i> Actualizar
+            </button>
+         
           </div>
         </div>
 
@@ -212,8 +216,8 @@
 
       <div class="space-y-3 text-xs">
         <div>
-          <label class="font-semibold text-slate-600 dark:text-slate-400 block mb-1">Ticket</label>
-          <input type="text" id="inputFolio" placeholder="Ej. TCK-001" class="w-full bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/50 rounded-xl px-2.5 py-2 font-bold text-slate-800 dark:text-slate-200 outline-none">
+          <label class="font-semibold text-slate-600 dark:text-slate-400 block mb-1">Ticket (Solo números enteros)</label>
+          <input type="number" id="inputFolio" placeholder="Ej. 101" step="1" min="0" class="w-full bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/50 rounded-xl px-2.5 py-2 font-bold text-slate-800 dark:text-slate-200 outline-none">
         </div>
         <div>
           <label class="font-semibold text-slate-600 dark:text-slate-400 block mb-1">Fecha de Creación</label>
@@ -419,6 +423,7 @@
 
     function mostrarConfirmacion(texto, callback) {
         document.getElementById('confirmModalText').innerHTML = texto;
+        document.getElementById('confirmModal').classList.add('hidden'); // Fix safe check
         document.getElementById('confirmModal').classList.remove('hidden');
         confirmCallback = callback;
         lucide.createIcons();
@@ -446,8 +451,25 @@
     }
 
     // -------------------------------------------------------------
-    // MANEJO Y SINCRONIZACIÓN OFFLINE
+    // MANEJO Y SINCRONIZACIÓN OFFLINE Y MANUAL
     // -------------------------------------------------------------
+    async function actualizarDatosManual() {
+      const icono = document.getElementById('iconActualizar');
+      if (icono) icono.classList.add('fa-spin');
+
+      if (navigator.onLine) {
+        await procesarSincronizacionOffline();
+      }
+      
+      await filtrarTickets();
+
+      if (icono) {
+        setTimeout(() => {
+          icono.classList.remove('fa-spin');
+        }, 500);
+      }
+    }
+
     function obtenerColaPendiente() {
       return JSON.parse(localStorage.getItem('cola_tickets_offline') || '[]');
     }
@@ -568,17 +590,25 @@
     // -------------------------------------------------------------
     async function guardarTicket() {
       const editId = document.getElementById('editTicketId').value;
-      const folio = document.getElementById('inputFolio').value.trim();
+      const folioVal = document.getElementById('inputFolio').value.trim();
       const fecha = document.getElementById('inputFecha').value;
       const responsable = document.getElementById('inputResponsable').value;
       const falla = document.getElementById('inputFalla').value.trim();
       const estatus = document.getElementById('inputEstatus').value;
       let notasNuevas = document.getElementById('inputNotas').value.trim();
 
-      if (!folio || !falla || !fecha) {
-        mostrarAlerta('Por favor completa el folio, la fecha y la descripción.');
+      if (!folioVal || !falla || !fecha) {
+        mostrarAlerta('Por favor completa el número de ticket, la fecha y la descripción.');
         return;
       }
+
+      // Validar que el ticket sea estrictamente un número entero positivo
+      if (!/^\d+$/.test(folioVal)) {
+        mostrarAlerta('El campo Ticket solo debe contener números enteros positivos.');
+        return;
+      }
+
+      const folio = parseInt(folioVal, 10);
 
       if (notasNuevas) {
         const fechaHoraActual = new Date().toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
@@ -794,7 +824,7 @@
         if (fechaFin) filtrados = filtrados.filter(t => t.fecha <= fechaFin);
         if (textoBuscador) {
           filtrados = filtrados.filter(t => 
-            (t.folio && t.folio.toLowerCase().includes(textoBuscador)) || 
+            (t.folio && t.folio.toString().toLowerCase().includes(textoBuscador)) || 
             (t.falla && t.falla.toLowerCase().includes(textoBuscador))
           );
         }
@@ -832,7 +862,7 @@
       let filtrados = ticketsData;
       if (textoBuscador) {
         filtrados = ticketsData.filter(t => 
-          (t.folio && t.folio.toLowerCase().includes(textoBuscador)) || 
+          (t.folio && t.folio.toString().toLowerCase().includes(textoBuscador)) || 
           (t.falla && t.falla.toLowerCase().includes(textoBuscador))
         );
       }
