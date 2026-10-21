@@ -51,6 +51,21 @@
             -moz-appearance: textfield;
         }
 
+        /* Animación de pulso para totales */
+        @keyframes pulseScale {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
+        .pulse-effect {
+            animation: pulseScale 0.2s ease-in-out;
+        }
+
+        /* Ocultar ceros en modo compacto */
+        body.compact-mode .zero-row {
+            display: none !important;
+        }
+
         /* Transiciones suaves */
         body, .card, .topbar, input, button {
             transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
@@ -79,10 +94,19 @@
                 <span id="liveDate" class="text-[8px] sm:text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-wider">--,--</span>
             </div>
 
-            <button id="btn-theme-toggle" class="flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-semibold bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 shadow-md transition-colors">
-                <i id="theme-icon" data-lucide="moon" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i>
-                <span id="theme-text">Modo oscuro</span>
-            </button>
+            <div class="flex items-center gap-1.5">
+                <!-- Botón Modo Compacto / Ocultar Ceros -->
+                <button id="btn-compact-toggle" class="flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-semibold bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 shadow-md transition-colors" title="Ocultar filas con ceros">
+                    <i id="compact-icon" data-lucide="minimize-2" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i>
+                    <span id="compact-text">Compacto</span>
+                </button>
+
+                <!-- Botón Tema -->
+                <button id="btn-theme-toggle" class="flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-semibold bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 shadow-md transition-colors">
+                    <i id="theme-icon" data-lucide="moon" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i>
+                    <span id="theme-text">Oscuro</span>
+                </button>
+            </div>
         </div>
     </header>
 
@@ -113,7 +137,7 @@
                     <table class="w-full text-left text-sm border-collapse">
                         <thead>
                             <tr class="border-b border-slate-200 dark:border-slate-700/60 text-xs text-slate-500 dark:text-slate-400">
-                                <th class="py-2 px-2 font-semibold">Concepto</th>
+                                <th class="py-2 px-2 font-semibold"> </th>
                                 <th class="py-2 px-2 font-semibold text-center w-1/4">Caja 1</th>
                                 <th class="py-2 px-2 font-semibold text-center w-1/4">Caja 2</th>
                                 <th class="py-2 px-2 font-semibold text-center w-1/4">Caja 3</th>
@@ -150,65 +174,65 @@
                                     </div>
                                 </td>
                             </tr>
-                            <tr>
+                            <tr id="row_esp" class="op-row">
                                 <td class="py-2 px-2 text-slate-600 dark:text-slate-300 text-xs">Imp. Esperado</td>
-                                <td class="py-2 px-1"><input type="text" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="esp_c1" data-col="1" data-row="1"></td>
-                                <td class="py-2 px-1"><input type="text" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="esp_c2" data-col="2" data-row="1"></td>
-                                <td class="py-2 px-1"><input type="text" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="esp_c3" data-col="3" data-row="1"></td>
+                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="esp_c1" data-col="1" data-row="1"></td>
+                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="esp_c2" data-col="2" data-row="1"></td>
+                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="esp_c3" data-col="3" data-row="1"></td>
                             </tr>
-                            <tr>
+                            <tr id="row_rec" class="op-row">
                                 <td class="py-2 px-2 text-slate-600 dark:text-slate-300 text-xs">Imp. Recogido</td>
-                                <td class="py-2 px-1"><input type="text" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="rec_c1" data-col="1" data-row="2"></td>
-                                <td class="py-2 px-1"><input type="text" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="rec_c2" data-col="2" data-row="2"></td>
-                                <td class="py-2 px-1"><input type="text" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="rec_c3" data-col="3" data-row="2"></td>
+                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="rec_c1" data-col="1" data-row="2"></td>
+                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="rec_c2" data-col="2" data-row="2"></td>
+                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="rec_c3" data-col="3" data-row="2"></td>
                             </tr>
-                            <tr>
+                            <tr id="row_deb" class="op-row">
                                 <td class="py-2 px-2 text-slate-600 dark:text-slate-300 text-xs">Débito</td>
-                                <td class="py-2 px-1"><input type="text" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="deb_c1" data-col="1" data-row="3"></td>
-                                <td class="py-2 px-1"><input type="text" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="deb_c2" data-col="2" data-row="3"></td>
-                                <td class="py-2 px-1"><input type="text" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="deb_c3" data-col="3" data-row="3"></td>
+                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="deb_c1" data-col="1" data-row="3"></td>
+                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="deb_c2" data-col="2" data-row="3"></td>
+                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="deb_c3" data-col="3" data-row="3"></td>
                             </tr>
-                            <tr>
+                            <tr id="row_cred" class="op-row">
                                 <td class="py-2 px-2 text-slate-600 dark:text-slate-300 text-xs">Crédito</td>
-                                <td class="py-2 px-1"><input type="text" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="cred_c1" data-col="1" data-row="4"></td>
-                                <td class="py-2 px-1"><input type="text" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="cred_c2" data-col="2" data-row="4"></td>
-                                <td class="py-2 px-1"><input type="text" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="cred_c3" data-col="3" data-row="4"></td>
+                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="cred_c1" data-col="1" data-row="4"></td>
+                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="cred_c2" data-col="2" data-row="4"></td>
+                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="cred_c3" data-col="3" data-row="4"></td>
                             </tr>
-                            <tr>
+                            <tr id="row_amex" class="op-row">
                                 <td class="py-2 px-2 text-slate-600 dark:text-slate-300 text-xs">AMEX</td>
-                                <td class="py-2 px-1"><input type="text" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="amex_c1" data-col="1" data-row="5"></td>
-                                <td class="py-2 px-1"><input type="text" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="amex_c2" data-col="2" data-row="5"></td>
-                                <td class="py-2 px-1"><input type="text" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="amex_c3" data-col="3" data-row="5"></td>
+                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="amex_c1" data-col="1" data-row="5"></td>
+                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="amex_c2" data-col="2" data-row="5"></td>
+                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="amex_c3" data-col="3" data-row="5"></td>
                             </tr>
-                            <tr>
+                            <tr id="row_tpv_deb" class="op-row">
                                 <td class="py-2 px-2 text-slate-600 dark:text-slate-300 text-xs">TPV Débito</td>
-                                <td class="py-2 px-1"><input type="text" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="tpv_deb_c1" data-col="1" data-row="6"></td>
-                                <td class="py-2 px-1"><input type="text" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="tpv_deb_c2" data-col="2" data-row="6"></td>
-                                <td class="py-2 px-1"><input type="text" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="tpv_deb_c3" data-col="3" data-row="6"></td>
+                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="tpv_deb_c1" data-col="1" data-row="6"></td>
+                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="tpv_deb_c2" data-col="2" data-row="6"></td>
+                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="tpv_deb_c3" data-col="3" data-row="6"></td>
                             </tr>
-                            <tr>
+                            <tr id="row_tpv_cred" class="op-row">
                                 <td class="py-2 px-2 text-slate-600 dark:text-slate-300 text-xs">TPV Crédito</td>
-                                <td class="py-2 px-1"><input type="text" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="tpv_cred_c1" data-col="1" data-row="7"></td>
-                                <td class="py-2 px-1"><input type="text" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="tpv_cred_c2" data-col="2" data-row="7"></td>
-                                <td class="py-2 px-1"><input type="text" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="tpv_cred_c3" data-col="3" data-row="7"></td>
+                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="tpv_cred_c1" data-col="1" data-row="7"></td>
+                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="tpv_cred_c2" data-col="2" data-row="7"></td>
+                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="tpv_cred_c3" data-col="3" data-row="7"></td>
                             </tr>
-                            <tr>
+                            <tr id="row_rappi" class="op-row">
                                 <td class="py-2 px-2 text-slate-600 dark:text-slate-300 text-xs">Rappi</td>
-                                <td class="py-2 px-1"><input type="text" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="rappi_c1" data-col="1" data-row="8"></td>
-                                <td class="py-2 px-1"><input type="text" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="rappi_c2" data-col="2" data-row="8"></td>
-                                <td class="py-2 px-1"><input type="text" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="rappi_c3" data-col="3" data-row="8"></td>
+                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="rappi_c1" data-col="1" data-row="8"></td>
+                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="rappi_c2" data-col="2" data-row="8"></td>
+                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="rappi_c3" data-col="3" data-row="8"></td>
                             </tr>
-                            <tr>
+                            <tr id="row_uber" class="op-row">
                                 <td class="py-2 px-2 text-slate-600 dark:text-slate-300 text-xs">Uber</td>
-                                <td class="py-2 px-1"><input type="text" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="uber_c1" data-col="1" data-row="9"></td>
-                                <td class="py-2 px-1"><input type="text" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="uber_c2" data-col="2" data-row="9"></td>
-                                <td class="py-2 px-1"><input type="text" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="uber_c3" data-col="3" data-row="9"></td>
+                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="uber_c1" data-col="1" data-row="9"></td>
+                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="uber_c2" data-col="2" data-row="9"></td>
+                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="uber_c3" data-col="3" data-row="9"></td>
                             </tr>
-                            <tr>
+                            <tr id="row_didi" class="op-row">
                                 <td class="py-2 px-2 text-slate-600 dark:text-slate-300 text-xs">DiDi</td>
-                                <td class="py-2 px-1"><input type="text" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="didi_c1" data-col="1" data-row="10"></td>
-                                <td class="py-2 px-1"><input type="text" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="didi_c2" data-col="2" data-row="10"></td>
-                                <td class="py-2 px-1"><input type="text" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="didi_c3" data-col="3" data-row="10"></td>
+                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="didi_c1" data-col="1" data-row="10"></td>
+                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="didi_c2" data-col="2" data-row="10"></td>
+                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="didi_c3" data-col="3" data-row="10"></td>
                             </tr>
                         </tbody>
                     </table>
@@ -216,16 +240,16 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
                     <div>
-                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1 text-center">Número de Retiros</label>
-                        <input type="number" class="input-cell raw-number-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-center outline-none" id="num_retiros" placeholder="0">
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1 text-center">Retiros Realizados en el Día</label>
+                        <input type="text" inputmode="numeric" class="input-cell raw-number-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-center outline-none" id="num_retiros" placeholder="0">
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1 text-center">Respeto de Precio</label>
-                        <input type="text" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-center outline-none" id="respeto_precio">
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1 text-center">Total de Respetos de Precio</label>
+                        <input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-center outline-none" id="respeto_precio">
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1 text-center">Cajas Abiertas</label>
-                        <input type="number" class="input-cell raw-number-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-center outline-none" id="cajas_abiertas" placeholder="0">
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1 text-center">Total de Cajas Abiertas</label>
+                        <input type="text" inputmode="numeric" class="input-cell raw-number-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-center outline-none" id="cajas_abiertas" placeholder="0">
                     </div>
                 </div>
             </div>
@@ -248,129 +272,129 @@
                             <tbody class="divide-y divide-slate-200 dark:divide-slate-700/60">
                                 <tr>
                                     <td class="p-1.5 border-r border-slate-200 dark:border-slate-700/60">
-                                        <div class="flex justify-between items-center px-2 py-1">
-                                            <span class="font-bold text-slate-800 dark:text-slate-200" id="t_efectivo">$0.00</span>
-                                            <span class="text-slate-500 dark:text-slate-400">Efectivo</span>
+                                        <div class="flex justify-between items-center px-2 py-1 w-full gap-2 whitespace-nowrap">
+                                            <span class="font-bold text-slate-800 dark:text-slate-200 truncate min-w-0" id="t_efectivo">$0.00</span>
+                                            <span class="text-slate-500 dark:text-slate-400 shrink-0">Efectivo</span>
                                         </div>
                                     </td>
                                     <td class="p-1.5">
-                                        <div class="flex justify-between items-center px-2 py-1">
-                                            <span class="font-bold text-slate-800 dark:text-slate-200" id="r_efectivo">$0.00</span>
-                                            <span class="text-slate-500 dark:text-slate-400">Efectivo</span>
+                                        <div class="flex justify-between items-center px-2 py-1 w-full gap-2 whitespace-nowrap">
+                                            <span class="font-bold text-slate-800 dark:text-slate-200 truncate min-w-0" id="r_efectivo">$0.00</span>
+                                            <span class="text-slate-500 dark:text-slate-400 shrink-0">Efectivo</span>
                                         </div>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="p-1.5 border-r border-slate-200 dark:border-slate-700/60">
-                                        <div class="flex justify-between items-center px-2 py-1">
-                                            <span class="font-bold text-slate-800 dark:text-slate-200" id="t_amex">$0.00</span>
-                                            <span class="text-slate-500 dark:text-slate-400">AMEX</span>
+                                        <div class="flex justify-between items-center px-2 py-1 w-full gap-2 whitespace-nowrap">
+                                            <span class="font-bold text-slate-800 dark:text-slate-200 truncate min-w-0" id="t_amex">$0.00</span>
+                                            <span class="text-slate-500 dark:text-slate-400 shrink-0">AMEX</span>
                                         </div>
                                     </td>
                                     <td class="p-1.5">
-                                        <div class="flex justify-between items-center px-2 py-1">
-                                            <span class="font-bold text-slate-800 dark:text-slate-200" id="r_amex">$0.00</span>
-                                            <span class="text-slate-500 dark:text-slate-400">AMEX</span>
+                                        <div class="flex justify-between items-center px-2 py-1 w-full gap-2 whitespace-nowrap">
+                                            <span class="font-bold text-slate-800 dark:text-slate-200 truncate min-w-0" id="r_amex">$0.00</span>
+                                            <span class="text-slate-500 dark:text-slate-400 shrink-0">AMEX</span>
                                         </div>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="p-1.5 border-r border-slate-200 dark:border-slate-700/60 bg-teal-50/30 dark:bg-teal-950/20">
-                                        <div class="flex justify-between items-center px-2 py-1">
-                                            <span class="font-bold text-teal-700 dark:text-teal-400" id="t_debito">$0.00</span>
-                                            <span class="text-teal-600 dark:text-teal-400 font-semibold">Débito</span>
+                                        <div class="flex justify-between items-center px-2 py-1 w-full gap-2 whitespace-nowrap">
+                                            <span class="font-bold text-teal-700 dark:text-teal-400 truncate min-w-0" id="t_debito">$0.00</span>
+                                            <span class="text-teal-600 dark:text-teal-400 font-semibold shrink-0">Débito</span>
                                         </div>
                                     </td>
                                     <td rowspan="2" class="p-1.5 bg-teal-50/30 dark:bg-teal-950/20">
-                                        <div class="flex justify-between items-center px-2 py-1">
-                                            <span class="font-bold text-teal-700 dark:text-teal-400" id="r_bbva">$0.00</span>
-                                            <span class="text-teal-600 dark:text-teal-400 font-semibold">BBVA</span>
+                                        <div class="flex justify-between items-center px-2 py-1 w-full gap-2 whitespace-nowrap">
+                                            <span class="font-bold text-teal-700 dark:text-teal-400 truncate min-w-0" id="r_bbva">$0.00</span>
+                                            <span class="text-teal-600 dark:text-teal-400 font-semibold shrink-0">BBVA</span>
                                         </div>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="p-1.5 border-r border-slate-200 dark:border-slate-700/60 bg-teal-50/30 dark:bg-teal-950/20">
-                                        <div class="flex justify-between items-center px-2 py-1">
-                                            <span class="font-bold text-teal-700 dark:text-teal-400" id="t_credito">$0.00</span>
-                                            <span class="text-teal-600 dark:text-teal-400 font-semibold">Crédito</span>
+                                        <div class="flex justify-between items-center px-2 py-1 w-full gap-2 whitespace-nowrap">
+                                            <span class="font-bold text-teal-700 dark:text-teal-400 truncate min-w-0" id="t_credito">$0.00</span>
+                                            <span class="text-teal-600 dark:text-teal-400 font-semibold shrink-0">Crédito</span>
                                         </div>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="p-1.5 border-r border-slate-200 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-800/40">
-                                        <div class="flex justify-between items-center px-2 py-1">
-                                            <span class="font-bold text-slate-800 dark:text-slate-200" id="t_deb_mcard">$0.00</span>
-                                            <span class="text-slate-500 dark:text-slate-400">Déb M Card</span>
+                                        <div class="flex justify-between items-center px-2 py-1 w-full gap-2 whitespace-nowrap">
+                                            <span class="font-bold text-slate-800 dark:text-slate-200 truncate min-w-0" id="t_deb_mcard">$0.00</span>
+                                            <span class="text-slate-500 dark:text-slate-400 shrink-0">Déb M Card</span>
                                         </div>
                                     </td>
                                     <td rowspan="2" class="p-1.5 bg-slate-50 dark:bg-slate-800/40">
-                                        <div class="flex justify-between items-center px-2 py-1">
-                                            <span class="font-bold text-slate-800 dark:text-slate-200" id="r_total_tpv">$0.00</span>
-                                            <span class="text-slate-500 dark:text-slate-400">Total TPV</span>
+                                        <div class="flex justify-between items-center px-2 py-1 w-full gap-2 whitespace-nowrap">
+                                            <span class="font-bold text-slate-800 dark:text-slate-200 truncate min-w-0" id="r_total_tpv">$0.00</span>
+                                            <span class="text-slate-500 dark:text-slate-400 shrink-0">Total TPV</span>
                                         </div>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="p-1.5 border-r border-slate-200 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-800/40">
-                                        <div class="flex justify-between items-center px-2 py-1">
-                                            <span class="font-bold text-slate-800 dark:text-slate-200" id="t_cred_mcard">$0.00</span>
-                                            <span class="text-slate-500 dark:text-slate-400">Créd M Card</span>
+                                        <div class="flex justify-between items-center px-2 py-1 w-full gap-2 whitespace-nowrap">
+                                            <span class="font-bold text-slate-800 dark:text-slate-200 truncate min-w-0" id="t_cred_mcard">$0.00</span>
+                                            <span class="text-slate-500 dark:text-slate-400 shrink-0">Créd M Card</span>
                                         </div>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="p-1.5 border-r border-slate-200 dark:border-slate-700/60 bg-pink-50/30 dark:bg-pink-950/20">
-                                        <div class="flex justify-between items-center px-2 py-1">
-                                            <span class="font-bold text-pink-700 dark:text-pink-400" id="t_rappi">$0.00</span>
-                                            <span class="text-pink-600 dark:text-pink-400 font-semibold">Rappi</span>
+                                        <div class="flex justify-between items-center px-2 py-1 w-full gap-2 whitespace-nowrap">
+                                            <span class="font-bold text-pink-700 dark:text-pink-400 truncate min-w-0" id="t_rappi">$0.00</span>
+                                            <span class="text-pink-600 dark:text-pink-400 font-semibold shrink-0">Rappi</span>
                                         </div>
                                     </td>
                                     <td class="p-1.5 bg-pink-50/30 dark:bg-pink-950/20">
-                                        <div class="flex justify-between items-center px-2 py-1">
-                                            <span class="font-bold text-pink-700 dark:text-pink-400" id="r_rappi">$0.00</span>
-                                            <span class="text-pink-600 dark:text-pink-400 font-semibold">Rappi</span>
+                                        <div class="flex justify-between items-center px-2 py-1 w-full gap-2 whitespace-nowrap">
+                                            <span class="font-bold text-pink-700 dark:text-pink-400 truncate min-w-0" id="r_rappi">$0.00</span>
+                                            <span class="text-pink-600 dark:text-pink-400 font-semibold shrink-0">Rappi</span>
                                         </div>
                                     </td>
                                 </tr>
                                 <tr class="bg-slate-100/60 dark:bg-slate-700/40 font-semibold">
                                     <td class="p-1.5 border-r border-slate-200 dark:border-slate-700/60">
-                                        <div class="flex justify-between items-center px-2 py-1">
-                                            <span class="font-bold text-slate-900 dark:text-slate-100" id="t_subtotal">$0.00</span>
-                                            <span class="text-slate-600 dark:text-slate-300">Subtotal</span>
+                                        <div class="flex justify-between items-center px-2 py-1 w-full gap-2 whitespace-nowrap">
+                                            <span class="font-bold text-slate-900 dark:text-slate-100 truncate min-w-0" id="t_subtotal">$0.00</span>
+                                            <span class="text-slate-600 dark:text-slate-300 shrink-0">Subtotal</span>
                                         </div>
                                     </td>
                                     <td class="p-1.5">
-                                        <div class="flex justify-between items-center px-2 py-1">
-                                            <span class="font-bold text-slate-900 dark:text-slate-100" id="r_subtotal">$0.00</span>
-                                            <span class="text-slate-600 dark:text-slate-300">Subtotal</span>
+                                        <div class="flex justify-between items-center px-2 py-1 w-full gap-2 whitespace-nowrap">
+                                            <span class="font-bold text-slate-900 dark:text-slate-100 truncate min-w-0" id="r_subtotal">$0.00</span>
+                                            <span class="text-slate-600 dark:text-slate-300 shrink-0">Subtotal</span>
                                         </div>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="p-1.5 border-r border-slate-200 dark:border-slate-700/60">
-                                        <div class="flex justify-between items-center px-2 py-1">
-                                            <span class="font-bold text-slate-800 dark:text-slate-200" id="t_menos_fondo">$0.00</span>
-                                            <span class="text-slate-500 dark:text-slate-400">Menos Fondo</span>
+                                        <div class="flex justify-between items-center px-2 py-1 w-full gap-2 whitespace-nowrap">
+                                            <span class="font-bold text-slate-800 dark:text-slate-200 truncate min-w-0" id="t_menos_fondo">$0.00</span>
+                                            <span class="text-slate-500 dark:text-slate-400 shrink-0 whitespace-nowrap">Menos Fondo</span>
                                         </div>
                                     </td>
                                     <td class="p-1.5">
-                                        <div class="flex justify-between items-center px-2 py-1">
-                                            <span class="font-bold text-slate-800 dark:text-slate-200" id="r_mas_folios">$0.00</span>
-                                            <span class="text-slate-500 dark:text-slate-400">Mas Folios</span>
+                                        <div class="flex justify-between items-center px-2 py-1 w-full gap-2 whitespace-nowrap">
+                                            <span class="font-bold text-slate-800 dark:text-slate-200 truncate min-w-0" id="r_mas_folios">$0.00</span>
+                                            <span class="text-slate-500 dark:text-slate-400 shrink-0 whitespace-nowrap">Mas Folios</span>
                                         </div>
                                     </td>
                                 </tr>
                                 <tr class="bg-slate-200/60 dark:bg-slate-700/80 font-bold text-sm">
                                     <td class="p-2 border-r border-slate-200 dark:border-slate-700/60">
-                                        <div class="flex justify-between items-center px-2 py-1">
-                                            <span class="font-black text-slate-900 dark:text-white" id="t_total">$0.00</span>
-                                            <span class="text-slate-700 dark:text-slate-200">Total</span>
+                                        <div class="flex justify-between items-center px-2 py-1 w-full gap-2 whitespace-nowrap">
+                                            <span class="font-black text-slate-900 dark:text-white truncate min-w-0" id="t_total">$0.00</span>
+                                            <span class="text-slate-700 dark:text-slate-200 shrink-0">Total</span>
                                         </div>
                                     </td>
                                     <td class="p-2">
-                                        <div class="flex justify-between items-center px-2 py-1">
-                                            <span class="font-black text-slate-900 dark:text-white" id="r_total">$0.00</span>
-                                            <span class="text-slate-700 dark:text-slate-200">Total</span>
+                                        <div class="flex justify-between items-center px-2 py-1 w-full gap-2 whitespace-nowrap">
+                                            <span class="font-black text-slate-900 dark:text-white truncate min-w-0" id="r_total">$0.00</span>
+                                            <span class="text-slate-700 dark:text-slate-200 shrink-0">Total</span>
                                         </div>
                                     </td>
                                 </tr>
@@ -378,8 +402,9 @@
                         </table>
                     </div>
 
-                    <div class="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-xl p-3 text-center">
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 block">Diferencia</span>
+                    <!-- Contenedor de Diferencia General con Semáforo Dinámico -->
+                    <div id="box_dif_general" class="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-xl p-3 text-center transition-colors duration-300">
+                        <span id="label_dif_general" class="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 block">Diferencia</span>
                         <div class="text-2xl font-black text-slate-900 dark:text-white mt-0.5" id="diferencia_general">$0.00</div>
                     </div>
                 </div>
@@ -387,8 +412,8 @@
                 <div class="pt-4 border-t border-slate-200 dark:border-slate-700/60 space-y-3">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                         <div class="flex justify-between items-center bg-slate-50 dark:bg-slate-900/40 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700/50">
-                            <span class="font-semibold text-slate-600 dark:text-slate-400">Total POS:</span>
-                            <input type="text" class="input-cell currency-input w-28 bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="total_pos">
+                            <span class="font-semibold text-slate-600 dark:text-slate-400">Ingresa el Neto del Total POS:</span>
+                            <input type="text" inputmode="decimal" class="input-cell currency-input w-28 bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="total_pos">
                         </div>
                         <div class="flex justify-between items-center bg-slate-50 dark:bg-slate-900/40 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700/50">
                             <span class="font-semibold text-slate-600 dark:text-slate-400">Conciliación:</span>
@@ -396,19 +421,22 @@
                         </div>
                     </div>
 
-                    <div class="flex flex-col sm:flex-row justify-between items-center gap-3 bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200 dark:border-slate-700/50">
-                        <div class="text-xs">
-                            <span class="font-semibold text-slate-600 dark:text-slate-400 block sm:inline">Diferencia en Archivo Ptto:</span>
-                            <span id="dif_conciliacion_val" class="font-extrabold text-sm text-slate-900 dark:text-white ml-0 sm:ml-2">$0.00</span>
+                    <div class="space-y-3 bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200 dark:border-slate-700/50">
+                        <div class="flex justify-between items-center w-full text-xs">
+                            <span class="font-semibold text-slate-600 dark:text-slate-400">Diferencia en Archivo Presupuesto:</span>
+                            <!-- Cuadro de Diferencia en Archivo Presupuesto con Semáforo Dinámico -->
+                            <div id="box_dif_presupuesto" class="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-xl px-3 py-1.5 text-center inline-block transition-colors duration-300">
+                                <span id="dif_conciliacion_val" class="font-extrabold text-sm text-slate-900 dark:text-white">$0.00</span>
+                            </div>
                         </div>
-                        <div class="w-full sm:w-auto flex items-center gap-2">
-                            <label for="responsable_cierre" class="text-xs font-bold text-slate-700 dark:text-slate-300 shrink-0">Responsable:</label>
+                        <div class="w-full flex items-center justify-between gap-2 border-t border-slate-200/60 dark:border-slate-700/40 pt-2 sm:border-0 sm:pt-0">
+                            <label for="responsable_cierre" class="text-xs font-bold text-slate-700 dark:text-slate-300 shrink-0">Responsable del Cierre:</label>
                             <input type="hidden" id="responsable_cierre" value="-" onchange="triggerCalculate()">
-                            <div class="dropdown relative inline-block w-full sm:w-40">
+                            <div class="dropdown relative inline-block w-36 sm:w-40">
                                 <button type="button" id="btn_responsable_cierre" class="w-full h-7 flex items-center justify-between px-2 rounded-xl text-[11px] font-semibold bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 transition-colors" onclick="toggleDropdown(event, 'menu_responsable_cierre')">
                                     <span id="text_responsable_cierre" class="truncate">-</span> <i class="fa-solid fa-chevron-down" style="font-size: 9px; margin-left: 2px;"></i>
                                 </button>
-                                <div id="menu_responsable_cierre" class="dropdown-content hidden absolute right-0 sm:left-0 mt-1 bg-white dark:bg-slate-800 w-full min-w-[140px] shadow-xl border border-slate-200 dark:border-slate-700 rounded-xl z-[9999] py-1 text-left"></div>
+                                <div id="menu_responsable_cierre" class="dropdown-content hidden bottom-full mb-1 right-0 sm:left-0 bg-white dark:bg-slate-800 w-full min-w-[140px] shadow-xl border border-slate-200 dark:border-slate-700 rounded-xl z-[9999] py-1 text-left"></div>
                             </div>
                         </div>
                     </div>
@@ -447,9 +475,11 @@
             if (isDark) {
                 htmlElement.classList.add('dark');
                 localStorage.setItem('theme', 'dark');
+                if(document.getElementById('theme-text')) document.getElementById('theme-text').textContent = 'Oscuro';
             } else {
                 htmlElement.classList.remove('dark');
                 localStorage.setItem('theme', 'light');
+                if(document.getElementById('theme-text')) document.getElementById('theme-text').textContent = 'Claro';
             }
             lucide.createIcons();
         }
@@ -460,6 +490,29 @@
         btnThemeToggle.addEventListener('click', () => {
             const isDarkActive = htmlElement.classList.contains('dark');
             setTheme(!isDarkActive);
+        });
+
+        // Compact Mode Handler
+        const btnCompactToggle = document.getElementById('btn-compact-toggle');
+        function setCompactMode(isCompact) {
+            if (isCompact) {
+                document.body.classList.add('compact-mode');
+                localStorage.setItem('compact', 'true');
+                if(document.getElementById('compact-text')) document.getElementById('compact-text').textContent = 'Normal';
+            } else {
+                document.body.classList.remove('compact-mode');
+                localStorage.setItem('compact', 'false');
+                if(document.getElementById('compact-text')) document.getElementById('compact-text').textContent = 'Compacto';
+            }
+            calculateAll();
+        }
+
+        const savedCompact = localStorage.getItem('compact') === 'true';
+        setCompactMode(savedCompact);
+
+        btnCompactToggle.addEventListener('click', () => {
+            const isCompactActive = document.body.classList.contains('compact-mode');
+            setCompactMode(!isCompactActive);
         });
 
         lucide.createIcons();
@@ -569,6 +622,36 @@
             } else {
                 el.classList.remove('text-red-500', 'dark:text-red-400');
             }
+
+            // Efecto Pulso al actualizar
+            el.classList.remove('pulse-effect');
+            void el.offsetWidth; // Trigger reflow
+            el.classList.add('pulse-effect');
+        }
+
+        // Actualizador de Semáforo Visual para Diferencias
+        function updateSemaforo(boxId, labelId, amount) {
+            const box = document.getElementById(boxId);
+            const label = document.getElementById(labelId);
+            if (!box) return;
+
+            // Limpiar clases previas
+            box.className = box.className.replace(/bg-\w+-\d+\s*/g, '').replace(/border-\w+-\d+\s*/g, '').replace(/dark:bg-\w+-\d+\/\d+\s*/g, '').replace(/dark:border-\w+-\d+\/\d+\s*/g, '');
+            if (label) label.className = label.className.replace(/text-\w+-\d+\s*/g, '').replace(/dark:text-\w+-\d+\s*/g, '');
+
+            if (amount === 0) {
+                // Exacto: Verde esmeralda
+                box.classList.add('bg-emerald-50', 'dark:bg-emerald-950/30', 'border', 'border-emerald-200', 'dark:border-emerald-900/50', 'rounded-xl');
+                if (label) label.classList.add('text-emerald-600', 'dark:text-emerald-400');
+            } else if (amount < 0) {
+                // Faltante: Rojo/Rosado
+                box.classList.add('bg-rose-50', 'dark:bg-rose-950/30', 'border', 'border-rose-200', 'dark:border-rose-900/50', 'rounded-xl');
+                if (label) label.classList.add('text-rose-600', 'dark:text-rose-400');
+            } else {
+                // Sobrante: Azul/Teal suave
+                box.classList.add('bg-sky-50', 'dark:bg-sky-950/30', 'border', 'border-sky-200', 'dark:border-sky-900/50', 'rounded-xl');
+                if (label) label.classList.add('text-sky-600', 'dark:text-sky-400');
+            }
         }
 
         function formatInputField(input) {
@@ -608,6 +691,32 @@
             const respetoPrecio = getVal('respeto_precio');
             const cajasAbiertas = getVal('cajas_abiertas');
             const menosFondo = cajasAbiertas * 2000;
+
+            // Evaluación de Modo Compacto (Ocultar filas en 0)
+            const rowsToCheck = [
+                { id: 'row_esp', vals: [getVal('esp_c1'), getVal('esp_c2'), getVal('esp_c3')] },
+                { id: 'row_rec', vals: [getVal('rec_c1'), getVal('rec_c2'), getVal('rec_c3')] },
+                { id: 'row_deb', vals: [getVal('deb_c1'), getVal('deb_c2'), getVal('deb_c3')] },
+                { id: 'row_cred', vals: [getVal('cred_c1'), getVal('cred_c2'), getVal('cred_c3')] },
+                { id: 'row_amex', vals: [getVal('amex_c1'), getVal('amex_c2'), getVal('amex_c3')] },
+                { id: 'row_tpv_deb', vals: [getVal('tpv_deb_c1'), getVal('tpv_deb_c2'), getVal('tpv_deb_c3')] },
+                { id: 'row_tpv_cred', vals: [getVal('tpv_cred_c1'), getVal('tpv_cred_c2'), getVal('tpv_cred_c3')] },
+                { id: 'row_rappi', vals: [getVal('rappi_c1'), getVal('rappi_c2'), getVal('rappi_c3')] },
+                { id: 'row_uber', vals: [getVal('uber_c1'), getVal('uber_c2'), getVal('uber_c3')] },
+                { id: 'row_didi', vals: [getVal('didi_c1'), getVal('didi_c2'), getVal('didi_c3')] }
+            ];
+
+            rowsToCheck.forEach(item => {
+                const rowEl = document.getElementById(item.id);
+                if (rowEl) {
+                    const isZero = item.vals.every(v => v === 0);
+                    if (isZero) {
+                        rowEl.classList.add('zero-row');
+                    } else {
+                        rowEl.classList.remove('zero-row');
+                    }
+                }
+            });
 
             const tEfectivo = retirosMonto + espTotal;
             const tAmex = amexTotal;
@@ -652,6 +761,7 @@
 
             const difGeneral = rTotal - tTotal;
             setFormattedCell('diferencia_general', difGeneral, true);
+            updateSemaforo('box_dif_general', 'label_dif_general', difGeneral);
 
             const conciliacion = rTotal;
             const totalPos = getVal('total_pos');
@@ -660,6 +770,7 @@
 
             setFormattedCell('conciliacion_val', conciliacion);
             setFormattedCell('dif_conciliacion_val', difConciliacion, true);
+            updateSemaforo('box_dif_presupuesto', null, difConciliacion);
 
             saveData();
         }
@@ -746,6 +857,26 @@
                 input.addEventListener('wheel', function(e) {
                     e.preventDefault();
                 }, { passive: false });
+            });
+
+            document.querySelectorAll('.input-cell').forEach(input => {
+                input.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter' || e.key === 'Tab' || e.key === 'Backspace' || e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'Delete') {
+                        return;
+                    }
+                    const charCode = e.which ? e.which : e.keyCode;
+                    const charStr = String.fromCharCode(charCode);
+                    if (!/[0-9.-]/.test(charStr)) {
+                        e.preventDefault();
+                    }
+                });
+
+                input.addEventListener('input', function() {
+                    const cleanedValue = this.value.replace(/[^0-9.-]/g, '');
+                    if (this.value !== cleanedValue) {
+                        this.value = cleanedValue;
+                    }
+                });
             });
 
             document.querySelectorAll('input').forEach(input => {
