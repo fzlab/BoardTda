@@ -95,8 +95,8 @@
             </div>
 
             <div class="flex items-center gap-1.5">
-                <!-- Botón Modo Compacto / Ocultar Ceros -->
-                <button id="btn-compact-toggle" class="flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-semibold bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 shadow-md transition-colors" title="Ocultar filas con ceros">
+                <!-- Botón Modo Compacto / Ocultar Ceros (Oculto en pantallas grandes/PC con md:hidden) -->
+                <button id="btn-compact-toggle" class="md:hidden flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-semibold bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 shadow-md transition-colors" title="Ocultar filas con ceros">
                     <i id="compact-icon" data-lucide="minimize-2" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i>
                     <span id="compact-text">Compacto</span>
                 </button>
@@ -239,15 +239,15 @@
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                    <div>
+                    <div class="flex flex-col justify-between">
                         <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1 text-center">Retiros Realizados en el Día</label>
                         <input type="text" inputmode="numeric" class="input-cell raw-number-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-center outline-none" id="num_retiros" placeholder="0">
                     </div>
-                    <div>
+                    <div class="flex flex-col justify-between">
                         <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1 text-center">Total de Respetos de Precio</label>
                         <input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-center outline-none" id="respeto_precio">
                     </div>
-                    <div>
+                    <div class="flex flex-col justify-between">
                         <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1 text-center">Total de Cajas Abiertas</label>
                         <input type="text" inputmode="numeric" class="input-cell raw-number-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-center outline-none" id="cajas_abiertas" placeholder="0">
                     </div>
