@@ -1,10 +1,17 @@
-const CACHE_NAME = 'fz-board-tda-v1.7.4.3'; // 
+const CACHE_NAME = 'fz-board-tda-v1.7.4.4'; // Versión actualizada para forzar la recarga con las subwebs
 
-// Archivos esenciales del núcleo que se precargan al instalar
+// Todos los archivos esenciales y subwebs de la PWA que se precargan al instalar
 const STATIC_ASSETS = [
     './',
     './index.html',
-    './manifest.json'
+    './manifest.json',
+    './icon-192.png',
+    './icon-512.png',
+    './corte/index.html',
+    './existencias/index.html',
+    './fases/index.html',
+    './tickets/index.html',
+    './ventas/index.html'
 ];
 
 // Instalación del Service Worker y almacenamiento de archivos base
