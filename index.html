@@ -444,66 +444,74 @@
         // --- GESTIÓN DE AUTENTICACIÓN Y SESIÓN ---
         async function initAuth() {
             try {
-                const { data: { session } } = await supabaseClient.auth.getSession();
-                if (!session) {
+                // Intentar recuperar sesión de Supabase (lee de localStorage de forma nativa)
+                const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+                
+                if (!session || sessionError) {
+                    // Si no hay sesión en absoluto, mostrar login
                     document.getElementById('loginModal').classList.remove('hidden');
                     renderProjects();
                 } else {
+                    // Hay sesión activa (puede ser online u offline). 
+                    // Recuperamos el rol previamente guardado en caché local para evitar que falle offline.
+                    const cachedRole = localStorage.getItem('fzboard_user_role');
+                    if (cachedRole) {
+                        currentUserRole = cachedRole;
+                        renderProjects();
+                    }
+                    
+                    // Intentamos actualizar el rol desde la red en segundo plano (si hay internet)
                     await fetchUserRoleAndInit(session.user);
                 }
             } catch (e) {
                 console.error("Error al consultar sesión:", e);
-                document.getElementById('loginModal').classList.remove('hidden');
-                renderProjects();
+                // Si ocurre un error crítico de red, intentamos usar el rol cacheado antes de bloquear
+                const cachedRole = localStorage.getItem('fzboard_user_role');
+                if (cachedRole) {
+                    currentUserRole = cachedRole;
+                    renderProjects();
+                } else {
+                    document.getElementById('loginModal').classList.remove('hidden');
+                    renderProjects();
+                }
             }
         }
 
-        function initLoginForm() {
-            const form = document.getElementById('loginForm');
-            form.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const email = document.getElementById('loginEmail').value.trim();
-                const password = document.getElementById('loginPassword').value;
-
-                if (!supabaseClient) {
-                    mostrarErrorModal("No se pudo conectar con Supabase. Verifica tu conexión.");
-                    return;
-                }
-
-                const { data, error } = await supabaseClient.auth.signInWithPassword({
-                    email: email,
-                    password: password
-                });
-
-                if (error) {
-                    mostrarErrorModal("Error al iniciar sesión: Verifica tus credenciales. " );
-                } else {
-                    document.getElementById('loginModal').classList.add('hidden');
-                    await fetchUserRoleAndInit(data.user);
-                }
-            });
-        }
-
         async function fetchUserRoleAndInit(user) {
-            const { data, error } = await supabaseClient
-                .from('user_profiles')
-                .select('role')
-                .eq('email', user.email)
-                .single();
+            try {
+                const { data, error } = await supabaseClient
+                    .from('user_profiles')
+                    .select('role')
+                    .eq('email', user.email)
+                    .single();
 
-            if (error || !data) {
-                currentUserRole = 'promotor'; // Rol por defecto
-            } else {
-                currentUserRole = data.role;
+                if (error || !data) {
+                    // Si hay error de red, mantenemos el rol cacheado si existe, de lo contrario usamos promotor
+                    if (!currentUserRole) {
+                        currentUserRole = localStorage.getItem('fzboard_user_role') || 'promotor';
+                    }
+                } else {
+                    currentUserRole = data.role;
+                    // Guardamos el rol en caché local para futuras aperturas en Modo Offline
+                    localStorage.setItem('fzboard_user_role', currentUserRole);
+                }
+            } catch (err) {
+                console.log("Sin conexión para actualizar rol, usando caché local.");
+                if (!currentUserRole) {
+                    currentUserRole = localStorage.getItem('fzboard_user_role') || 'promotor';
+                }
             }
 
             renderProjects();
         }
 
         async function cerrarSesionSupabase() {
+            // Limpiamos el rol cacheado al cerrar sesión
+            localStorage.removeItem('fzboard_user_role');
             if (supabaseClient) await supabaseClient.auth.signOut();
             location.reload();
         }
+
 
         // Renderizado del Tablero de Proyectos Activos (Optimizado para vista en cuadrícula de 2 columnas en móviles)
         function renderProjects() {
