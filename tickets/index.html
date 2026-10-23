@@ -300,10 +300,11 @@
 
   <script>
     // -------------------------------------------------------------
-    // CONFIGURACIÓN DE SUPABASE
+    // CONFIGURACIÓN DE SUPABASE Y CACHÉ LOCAL
     // -------------------------------------------------------------
     const SUPABASE_URL = "https://mifbcyxtafeacwkzqzsq.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_O6EAbkSba1NQPq08k_7bHg_PZ_x4ZU5";
+    const TICKETS_CACHE_KEY = 'tickets_cached_master_data';
 
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     let ticketsData = [];
@@ -341,13 +342,13 @@
     lucide.createIcons();
 
     // Listas para los menús desplegables estilo custom
-    const listaResponsables = ["", "Mantenimiento", "Inventarios", "Sistemas", "CEDIS", "Operaciones", "Comercial","RH"];
+    const listaResponsables = ["", "Mantenimiento", "Inventarios", "Sistemas", "CEDIS", "Operaciones","Comercial" ,"RH"];
     const listaResponsablesNombres = ["Todos", "Mantenimiento", "Inventarios", "Sistemas" ,"CEDIS", "Operaciones", "Comercial", "RH"];
     
     const listaEstatus = ["", "pendiente", "atendido"];
     const listaEstatusNombres = ["Todos", "Pendiente", "Atendido"];
 
-    const listaModalResponsables = ["Mantenimiento", "Inventarios", "Sistemas", "CEDIS", "Operaciones", "Comercial", "RH"];
+    const listaModalResponsables = ["Mantenimiento", "Inventarios", "Sistemas", "CEDIS", "Operaciones", "Comercial" ,"RH"];
     const listaModalEstatus = ["pendiente", "atendido"];
     const listaModalEstatusNombres = ["Pendiente", "Atendido"];
 
@@ -423,7 +424,7 @@
 
     function mostrarConfirmacion(texto, callback) {
         document.getElementById('confirmModalText').innerHTML = texto;
-        document.getElementById('confirmModal').classList.add('hidden'); // Fix safe check
+        document.getElementById('confirmModal').classList.add('hidden');
         document.getElementById('confirmModal').classList.remove('hidden');
         confirmCallback = callback;
         lucide.createIcons();
@@ -533,12 +534,28 @@
       procesarSincronizacionOffline();
     });
 
+    // Carga inicial optimizada con lectura desde localStorage
     window.onload = async function() {
       initClock();
       populateSelects();
-      await filtrarTickets();
+      
+      // 1. Cargar datos locales de inmediato para visualización offline instantánea
+      const datosLocales = localStorage.getItem(TICKETS_CACHE_KEY);
+      if (datosLocales) {
+        try {
+          ticketsData = JSON.parse(datosLocales);
+          aplicarFiltrosLocales();
+        } catch (e) {
+          console.error("Error al parsear caché local:", e);
+        }
+      }
+
+      // 2. Si hay conexión, sincronizamos y obtenemos datos frescos
       if (navigator.onLine) {
         await procesarSincronizacionOffline();
+        await filtrarTickets();
+      } else {
+        aplicarFiltrosLocales();
       }
     };
 
@@ -602,7 +619,6 @@
         return;
       }
 
-      // Validar que el ticket sea estrictamente un número entero positivo
       if (!/^\d+$/.test(folioVal)) {
         mostrarAlerta('El campo Ticket solo debe contener números enteros positivos.');
         return;
@@ -637,7 +653,8 @@
           agregarAColaOffline('CREAR', payload);
           ticketsData.unshift(payload);
         }
-        renderizarTickets(ticketsData);
+        localStorage.setItem(TICKETS_CACHE_KEY, JSON.stringify(ticketsData));
+        aplicarFiltrosLocales();
         cerrarModalTicket();
         return;
       }
@@ -665,7 +682,8 @@
           if (!navigator.onLine) {
             agregarAColaOffline('ELIMINAR', { id });
             ticketsData = ticketsData.filter(t => t.id != id);
-            renderizarTickets(ticketsData);
+            localStorage.setItem(TICKETS_CACHE_KEY, JSON.stringify(ticketsData));
+            aplicarFiltrosLocales();
             return;
           }
 
@@ -675,7 +693,9 @@
           } catch (err) {
             agregarAColaOffline('ELIMINAR', { id });
             ticketsData = ticketsData.filter(t => t.id != id);
-            renderizarTickets(ticketsData);
+            localStorage.setItem(TICKETS_CACHE_KEY, JSON.stringify(ticketsData));
+            aplicarFiltrosLocales();
+            return;
           }
 
           await filtrarTickets();
@@ -803,6 +823,35 @@
       });
     }
 
+    // Función auxiliar para aplicar filtros de manera local
+    function aplicarFiltrosLocales() {
+      const textoBuscador = document.getElementById('filtroBuscador').value.trim().toLowerCase();
+      const filtroResp = document.getElementById('filtroResponsable').value;
+      const filtroEst = document.getElementById('filtroEstatus').value;
+      const fechaIni = document.getElementById('filtroFechaInicio').value;
+      const fechaFin = document.getElementById('filtroFechaFin').value;
+
+      const statusEl = document.getElementById('conexionStatus');
+      const cola = obtenerColaPendiente();
+      if (statusEl) {
+        statusEl.className = "inline-flex items-center gap-1 text-[11px] text-amber-500 font-bold";
+        statusEl.innerHTML = `<i class="fa-solid fa-wifi"></i> Modo Sin Conexión (${cola.length} pendientes)`;
+      }
+
+      let filtrados = ticketsData;
+      if (filtroResp) filtrados = filtrados.filter(t => t.responsable === filtroResp);
+      if (filtroEst) filtrados = filtrados.filter(t => t.estatus === filtroEst);
+      if (fechaIni) filtrados = filtrados.filter(t => t.fecha >= fechaIni);
+      if (fechaFin) filtrados = filtrados.filter(t => t.fecha <= fechaFin);
+      if (textoBuscador) {
+        filtrados = filtrados.filter(t => 
+          (t.folio && t.folio.toString().toLowerCase().includes(textoBuscador)) || 
+          (t.falla && t.falla.toLowerCase().includes(textoBuscador))
+        );
+      }
+      renderizarTickets(filtrados);
+    }
+
     async function filtrarTickets() {
       const textoBuscador = document.getElementById('filtroBuscador').value.trim().toLowerCase();
       const filtroResp = document.getElementById('filtroResponsable').value;
@@ -811,24 +860,7 @@
       const fechaFin = document.getElementById('filtroFechaFin').value;
 
       if (!navigator.onLine) {
-        const statusEl = document.getElementById('conexionStatus');
-        const cola = obtenerColaPendiente();
-        if (statusEl) {
-          statusEl.className = "inline-flex items-center gap-1 text-[11px] text-amber-500 font-bold";
-          statusEl.innerHTML = `<i class="fa-solid fa-wifi"></i> Modo Sin Conexión (${cola.length} pendientes)`;
-        }
-        let filtrados = ticketsData;
-        if (filtroResp) filtrados = filtrados.filter(t => t.responsable === filtroResp);
-        if (filtroEst) filtrados = filtrados.filter(t => t.estatus === filtroEst);
-        if (fechaIni) filtrados = filtrados.filter(t => t.fecha >= fechaIni);
-        if (fechaFin) filtrados = filtrados.filter(t => t.fecha <= fechaFin);
-        if (textoBuscador) {
-          filtrados = filtrados.filter(t => 
-            (t.folio && t.folio.toString().toLowerCase().includes(textoBuscador)) || 
-            (t.falla && t.falla.toLowerCase().includes(textoBuscador))
-          );
-        }
-        renderizarTickets(filtrados);
+        aplicarFiltrosLocales();
         return;
       }
 
@@ -848,6 +880,7 @@
           statusEl.className = "inline-flex items-center gap-1 text-[11px] text-red-500";
           statusEl.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> Error de conexión`;
         }
+        aplicarFiltrosLocales();
         return;
       }
 
@@ -858,6 +891,9 @@
       }
 
       ticketsData = data || [];
+
+      // Guardar en caché local los datos frescos de Supabase
+      localStorage.setItem(TICKETS_CACHE_KEY, JSON.stringify(ticketsData));
 
       let filtrados = ticketsData;
       if (textoBuscador) {
