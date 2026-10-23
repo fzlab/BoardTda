@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fz-board-tda-v1.7.4.4'; // Versión actualizada para forzar la recarga con las subwebs
+const CACHE_NAME = 'fz-board-tda-v1.7.4.5'; // Versión actualizada
 
 // Todos los archivos esenciales y subwebs de la PWA que se precargan al instalar
 const STATIC_ASSETS = [
@@ -7,18 +7,22 @@ const STATIC_ASSETS = [
     './manifest.json',
     './icon-192.png',
     './icon-512.png',
-    './corte/index.html',
-    './existencias/index.html',
-    './fases/index.html',
-    './tickets/index.html',
-    './ventas/index.html'
+    './corte/',
+    './existencias/',
+    './fases/',
+    './tickets/',
+    './ventas/'
 ];
 
-// Instalación del Service Worker y almacenamiento de archivos base
+// Instalación robusta del Service Worker (evita que un fallo de ruta tumbe toda la caché)
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
-            return cache.addAll(STATIC_ASSETS);
+            return Promise.allSettled(
+                STATIC_ASSETS.map(asset => 
+                    cache.add(asset).catch(err => console.warn(`[SW] No se pudo cachear: ${asset}`, err))
+                )
+            );
         })
     );
     self.skipWaiting();
@@ -44,8 +48,9 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
     if (event.request.method !== 'GET') return;
 
-    // REGLA ESPECIAL PARA HTML / NAVEGACIÓN: Forzar red para evitar contenido atrapado
-    if (event.request.mode === 'navigate' || event.request.headers.get('accept').includes('text/html')) {
+    // REGLA ESPECIAL PARA HTML / NAVEGACIÓN: Forzar red con respaldo a caché local
+    const acceptHeader = event.request.headers.get('accept') || '';
+    if (event.request.mode === 'navigate' || acceptHeader.includes('text/html')) {
         event.respondWith(
             fetch(event.request)
                 .then((networkResponse) => {
@@ -58,19 +63,19 @@ self.addEventListener('fetch', (event) => {
                     return networkResponse;
                 })
                 .catch(() => {
-                    // Si no hay red, recurrimos al caché local
+                    // Si no hay red, recurrimos al caché local o al index principal
                     return caches.match(event.request).then((cachedResponse) => {
-                        return cachedResponse || caches.match('./index.html');
+                        return cachedResponse || caches.match('./index.html') || caches.match('./');
                     });
                 })
         );
         return;
     }
 
-    // Para el resto de recursos (CSS, JS, imágenes, etc.): Red primero con respaldo dinámico
+    // Para el resto de recursos (CDNs, CSS, JS, imágenes): Caché primero, con respaldo de red y guardado dinámico
     event.respondWith(
-        fetch(event.request)
-            .then((networkResponse) => {
+        caches.match(event.request).then((cachedResponse) => {
+            const fetchPromise = fetch(event.request).then((networkResponse) => {
                 if (networkResponse && networkResponse.status === 200) {
                     const responseClone = networkResponse.clone();
                     caches.open(CACHE_NAME).then((cache) => {
@@ -78,9 +83,12 @@ self.addEventListener('fetch', (event) => {
                     });
                 }
                 return networkResponse;
-            })
-            .catch(() => {
-                return caches.match(event.request);
-            })
+            }).catch(() => {
+                // Si falla la red, devolvemos el caché si existía
+                return cachedResponse;
+            });
+
+            return cachedResponse || fetchPromise;
+        })
     );
 });
