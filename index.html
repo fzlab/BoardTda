@@ -88,8 +88,8 @@
 
             <form id="loginForm" class="space-y-3">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Identificador / Usuario</label>
-                    <input type="text" id="loginEmail" required placeholder="Ingresa tu Usuario" 
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Correo electrónico</label>
+                    <input type="email" id="loginEmail" required placeholder="correo@empresa.com" 
                         class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-teal-500 font-medium">
                 </div>
                 <div>
@@ -97,7 +97,7 @@
                     <input type="password" id="loginPassword" required placeholder="••••••••" 
                         class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-teal-500 font-medium">
                 </div>
-                <button type="submit" class="w-full py-2.5 bg-teal-500/10 border border-teal-500/30 text-teal-600 dark:text-teal-400 rounded-lg hover:bg-teal-500/20 shadow-md  transition-colors cursor-pointer">
+                <button type="submit" class="w-full py-2.5 bg-teal-500/10 border border-teal-500/30 text-teal-600 dark:text-teal-400 rounded-lg hover:bg-teal-500/20 shadow-md transition-colors cursor-pointer">
                     Ingresar
                 </button>
             </form>
@@ -336,7 +336,7 @@
 
         // Definición de permisos por rol
         const ROLE_PERMISSIONS = {
-            gerencial: ['ventas_diarias', 'corte_cajas', 'consultor_fases', 'consultor_existencias','gestor_tickets'],
+            gerencial: ['ventas_diarias', 'corte_cajas', 'consultor_fases', 'consultor_existencias', 'gestor_tickets'],
             promotor: ['consultor_fases', 'consultor_existencias']
         };
 
@@ -349,7 +349,7 @@
                 title: 'Ventas Diarias',
                 url: 'ventas/',
                 category: 'pwa',
-                icon: 'banknote-arrow-down',
+                icon: 'banknote',
                 desc: 'Seguimiento a Ventas Diarias y Presupuesto Semanal.',
                 embed: true
             },
@@ -380,15 +380,15 @@
                 desc: 'Consulta las Existencias de un artículo, requiere archivo de Inventario para la Base de Datos.',
                 embed: true
             },
-                {
+            {
                 id: 'gestor_tickets',
                 title: 'Gestor de Tickets',
                 url: 'tickets/',
                 category: 'utilidad',
-                icon: 'ticket-check',
+                icon: 'ticket',
                 desc: 'Seguimiento a los Tickets generados por Mesa de Control',
                 embed: true
-            },
+            }
         ];
 
         let projects = JSON.parse(localStorage.getItem('fzboard_projects'));
@@ -425,6 +425,43 @@
             lucide.createIcons();
         });
 
+        // --- GESTIÓN DE LOGIN MANUAL CON SUPABASE ---
+        function initLoginForm() {
+            const loginForm = document.getElementById('loginForm');
+            if (loginForm) {
+                loginForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const email = document.getElementById('loginEmail').value.trim();
+                    const password = document.getElementById('loginPassword').value;
+
+                    if (!supabaseClient) {
+                        mostrarErrorModal("Cliente de Supabase no inicializado.");
+                        return;
+                    }
+
+                    try {
+                        const { data, error } = await supabaseClient.auth.signInWithPassword({
+                            email: email,
+                            password: password
+                        });
+
+                        if (error) {
+                            mostrarErrorModal("Correo o contraseña incorrectos.");
+                            return;
+                        }
+
+                        if (data && data.session) {
+                            document.getElementById('loginModal').classList.add('hidden');
+                            await fetchUserRoleAndInit(data.session.user);
+                        }
+                    } catch (err) {
+                        console.error("Error en login:", err);
+                        mostrarErrorModal("Ocurrió un error al intentar iniciar sesión.");
+                    }
+                });
+            }
+        }
+
         // --- GESTIÓN DE MODAL DE ERROR ---
         function mostrarErrorModal(mensaje) {
             const errorModal = document.getElementById('errorModal');
@@ -444,28 +481,21 @@
         // --- GESTIÓN DE AUTENTICACIÓN Y SESIÓN ---
         async function initAuth() {
             try {
-                // Intentar recuperar sesión de Supabase (lee de localStorage de forma nativa)
                 const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
                 
                 if (!session || sessionError) {
-                    // Si no hay sesión en absoluto, mostrar login
                     document.getElementById('loginModal').classList.remove('hidden');
                     renderProjects();
                 } else {
-                    // Hay sesión activa (puede ser online u offline). 
-                    // Recuperamos el rol previamente guardado en caché local para evitar que falle offline.
                     const cachedRole = localStorage.getItem('fzboard_user_role');
                     if (cachedRole) {
                         currentUserRole = cachedRole;
                         renderProjects();
                     }
-                    
-                    // Intentamos actualizar el rol desde la red en segundo plano (si hay internet)
                     await fetchUserRoleAndInit(session.user);
                 }
             } catch (e) {
                 console.error("Error al consultar sesión:", e);
-                // Si ocurre un error crítico de red, intentamos usar el rol cacheado antes de bloquear
                 const cachedRole = localStorage.getItem('fzboard_user_role');
                 if (cachedRole) {
                     currentUserRole = cachedRole;
@@ -486,13 +516,11 @@
                     .single();
 
                 if (error || !data) {
-                    // Si hay error de red, mantenemos el rol cacheado si existe, de lo contrario usamos promotor
                     if (!currentUserRole) {
                         currentUserRole = localStorage.getItem('fzboard_user_role') || 'promotor';
                     }
                 } else {
                     currentUserRole = data.role;
-                    // Guardamos el rol en caché local para futuras aperturas en Modo Offline
                     localStorage.setItem('fzboard_user_role', currentUserRole);
                 }
             } catch (err) {
@@ -506,21 +534,25 @@
         }
 
         async function cerrarSesionSupabase() {
-            // Limpiamos el rol cacheado al cerrar sesión
             localStorage.removeItem('fzboard_user_role');
-            if (supabaseClient) await supabaseClient.auth.signOut();
-            location.reload();
+            if (supabaseClient) {
+                await supabaseClient.auth.signOut();
+            }
+            // Forzar mostrar modal de login y vaciar el contenedor temporalmente para evitar confusión visual
+            document.getElementById('projectsContainer').innerHTML = '';
+            document.getElementById('loginModal').classList.remove('hidden');
+            currentUserRole = null;
         }
 
-
-        // Renderizado del Tablero de Proyectos Activos (Optimizado para vista en cuadrícula de 2 columnas en móviles)
+        // Renderizado del Tablero de Proyectos Activos
         function renderProjects() {
             const container = document.getElementById('projectsContainer');
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const searchInputEl = document.getElementById('searchInput');
+            const searchTerm = searchInputEl ? searchInputEl.value.toLowerCase() : '';
             
             const allowedProjectIds = currentUserRole 
                 ? (ROLE_PERMISSIONS[currentUserRole] || [])
-                : ['ventas_diarias', 'corte_cajas', 'consultor_fases', 'consultor_existencias'];
+                : ['ventas_diarias', 'corte_cajas', 'consultor_fases', 'consultor_existencias', 'gestor_tickets'];
 
             const predefinedIds = PREDEFINED_CATALOG.map(item => item.id);
 
@@ -581,7 +613,7 @@
             lucide.createIcons();
         }
 
-        // --- SISTEMA DE CATÁLOGO / TIENDA PREDEFINIDA (FILTRADO POR ROL) ---
+        // --- SISTEMA DE CATÁLOGO / TIENDA PREDEFINIDA ---
         function initCatalogModal() {
             const catalogModal = document.getElementById('catalogModal');
             const openCatalogBtn = document.getElementById('openCatalogBtn');
@@ -601,12 +633,10 @@
         function renderCatalogList() {
             const catalogContainer = document.getElementById('catalogContainer');
             
-            // Obtener los IDs de proyectos que este rol tiene autorizados
             const allowedProjectIds = currentUserRole 
                 ? (ROLE_PERMISSIONS[currentUserRole] || [])
-                : ['ventas_diarias', 'corte_cajas', 'consultor_fases', 'consultor_existencias'];
+                : ['ventas_diarias', 'corte_cajas', 'consultor_fases', 'consultor_existencias', 'gestor_tickets'];
 
-            // Filtrar el catálogo maestro para incluir SÓLO las Apps permitidas según el rol del usuario
             const catalogForUser = PREDEFINED_CATALOG.filter(item => allowedProjectIds.includes(item.id));
 
             if (catalogForUser.length === 0) {
@@ -779,7 +809,10 @@
             cerrarConfirmacionEliminar();
         }
 
-        document.getElementById('searchInput').addEventListener('input', renderProjects);
+        const searchInputElem = document.getElementById('searchInput');
+        if (searchInputElem) {
+            searchInputElem.addEventListener('input', renderProjects);
+        }
 
         // Control de vista desglosable (Iframe)
         window.openIframeAnimado = (url, title) => {
