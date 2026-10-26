@@ -824,8 +824,11 @@
             searchInputElem.addEventListener('input', renderProjects);
         }
 
-// Control de vista desglosable (Iframe) con soporte de historial
-window.openIframeAnimado = (url, title, pushHistory = true) => {
+// Control de vista desglosable (Iframe) con sincronización de historial perfecta
+window.openIframeAnimado = (url, title) => {
+    // 1. Registramos el estado en el historial antes de abrir
+    history.pushState({ view: 'iframe' }, '', '#app-view');
+    
     const viewModal = document.getElementById('iframeModal');
     const iframe = document.getElementById('pwaIframe');
     
@@ -837,22 +840,12 @@ window.openIframeAnimado = (url, title, pushHistory = true) => {
     }
 
     viewModal.classList.add('active');
-
-    // Registramos en el historial que el Iframe está abierto
-    if (pushHistory) {
-        history.pushState({ view: 'iframe' }, '', '#app-view');
-    }
 };
 
-window.cerrarIframeAnimado = (popHistory = true) => {
-    const viewModal = document.getElementById('iframeModal');
-    viewModal.classList.remove('active');
-
-    // Si el usuario presionó el botón atrás, el popstate ya quitó el estado, 
-    // pero si dio clic en "Volver al Hub", sacamos el estado manualmente.
-    if (popHistory && history.state && history.state.view === 'iframe') {
-        history.back();
-    }
+window.cerrarIframeAnimado = () => {
+    // El botón manual simplemente retrocede en el historial. 
+    // El evento 'popstate' se encargará de cerrar la vista de forma limpia.
+    history.back();
 };
 
 
@@ -870,7 +863,7 @@ window.cerrarIframeAnimado = (popHistory = true) => {
                 navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Registration error:', err));
             });
         }
-        // Manejador global del botón o gesto "Atrás" en dispositivos móviles
+        // Manejador global del botón o gesto "Atrás" y navegación por historial
 window.addEventListener('popstate', (event) => {
     const viewModal = document.getElementById('iframeModal');
     const catalogModal = document.getElementById('catalogModal');
@@ -878,13 +871,15 @@ window.addEventListener('popstate', (event) => {
     const confirmDeleteModal = document.getElementById('confirmDeleteModal');
     const errorModal = document.getElementById('errorModal');
 
-    // 1. Si el Iframe de una subweb está abierto, ciérralo y regresa al Index principal
+    // 1. Si el estado actual ya no es 'iframe', cerramos la vista del iframe obligatoriamente
     if (viewModal && viewModal.classList.contains('active')) {
-        cerrarIframeAnimado(false); // false para no volver a llamar history.back()
-        return;
+        if (!event.state || event.state.view !== 'iframe') {
+            viewModal.classList.remove('active');
+            return;
+        }
     }
 
-    // 2. Si hay modales abiertos, ciérralos uno a uno
+    // 2. Si hay modales abiertos, ciérralos uno a uno con el botón atrás
     if (catalogModal && !catalogModal.classList.contains('hidden')) {
         catalogModal.classList.add('hidden');
         return;
@@ -902,6 +897,7 @@ window.addEventListener('popstate', (event) => {
         return;
     }
 });
+
 
     </script>
 </body>
