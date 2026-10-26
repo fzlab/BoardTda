@@ -752,7 +752,7 @@
             viewModal.classList.add('active');
         };
 
-        // Función corregida para el botón "Volver al Hub"
+        // Función unificada para cerrar el iframe y volver al index
         window.cerrarIframeAnimado = () => {
             const viewModal = document.getElementById('iframeModal');
             const iframe = document.getElementById('pwaIframe');
@@ -780,14 +780,15 @@
                 navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Registration error:', err));
             });
         }
-        // Manejador global del botón o gesto "Atrás" y navegación por historial
+        // Manejador global del botón o gesto "Atrás" unificado
         window.addEventListener('popstate', (event) => {
-            const viewModal = document.getElementById('iframeModal');
             const catalogModal = document.getElementById('catalogModal');
             const projectModal = document.getElementById('projectModal');
             const confirmDeleteModal = document.getElementById('confirmDeleteModal');
             const errorModal = document.getElementById('errorModal');
-            // 1. Si hay modales abiertos, ciérralos primero
+            const viewModal = document.getElementById('iframeModal');
+
+            // 1. Si hay modales flotantes abiertos, ciérralos primero
             if (catalogModal && !catalogModal.classList.contains('hidden')) {
                 catalogModal.classList.add('hidden');
                 return;
@@ -804,11 +805,10 @@
                 errorModal.classList.add('hidden');
                 return;
             }
-            // 2. Control estricto del Iframe: si el estado actual es el Index o no es 'iframe', cerramos la vista
+
+            // 2. Si el iframe está activo y se presiona atrás/gesto, ejecuta exactamente la misma función de volver al hub
             if (viewModal && viewModal.classList.contains('active')) {
-                if (!event.state || event.state.view !== 'iframe') {
-                    viewModal.classList.remove('active');
-                }
+                cerrarIframeAnimado();
             }
         });
     </script>
