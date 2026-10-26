@@ -1,23 +1,50 @@
 class SupabaseNotesManager {
     constructor() {
-        // Usamos el cliente de Supabase global inicializado en el index/layout principal
-        this.supabase = window.supabaseClient || (window.supabase ? window.supabase.createClient(
-            'https://mifbcyxtafeacwkzqzsq.supabase.co', 
-            'sb_publishable_O6EAbkSba1NQPq08k_7bHg_PZ_x4ZU5'
-        ) : null);
+        const SUPABASE_URL = 'https://mifbcyxtafeacwkzqzsq.supabase.co';
+        const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_O6EAbkSba1NQPq08k_7bHg_PZ_x4ZU5';
+
+        // 1. Intentar capturar el cliente de la ventana principal (si se abre en iframe) o crear uno compartido
+        try {
+            if (window.parent && window.parent.supabaseClient) {
+                this.supabase = window.parent.supabaseClient;
+            } else if (window.supabaseClient) {
+                this.supabase = window.supabaseClient;
+            } else if (window.supabase) {
+                this.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+                    auth: { persistSession: true, autoRefreshToken: true }
+                });
+            }
+        } catch (e) {
+            console.warn("No se pudo enlazar con el padre, usando cliente local:", e);
+        }
+
+        if (!this.supabase && window.supabase) {
+            this.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+                auth: { persistSession: true, autoRefreshToken: true }
+            });
+        }
+
         this.userId = null;
     }
 
     async init() {
         if (!this.supabase) {
-            throw new Error('Supabase no está disponible en la aplicación.');
+            throw new Error('Supabase no está disponible.');
         }
 
-        const { data: { session }, error: sessionError } = await this.supabase.auth.getSession();
+        // 2. Intentar obtener la sesión actual
+        let { data: { session }, error: sessionError } = await this.supabase.auth.getSession();
         
-        if (sessionError || !session) {
-            // Si no hay sesión activa, redirigir al index principal para que inicie sesión
-            window.location.href = './index.html';
+        // 3. Si por seguridad o contexto de iframe no la detecta al instante, intentamos un getUser() o refrescar
+        if (!session || sessionError) {
+            const { data: userData } = await this.supabase.auth.getUser();
+            if (userData && userData.user) {
+                this.userId = userData.user.id;
+                return userData.user;
+            }
+
+            // Si de verdad no hay sesión en ningún lado, redirigir al login principal de la PWA
+            window.location.href = '../index.html'; 
             throw new Error('No hay una sesión activa');
         }
 
@@ -27,13 +54,12 @@ class SupabaseNotesManager {
 
     async getAll(storeName) {
         const { data, error } = await this.supabase
-            .from(storeName) // 'notes' o 'folders'
+            .from(storeName)
             .select('*')
             .eq('user_id', this.userId);
 
         if (error) throw error;
         
-        // Mapeamos los campos de Supabase a las propiedades que usa tu interfaz de notas
         if (storeName === 'notes') {
             return data.map(n => ({
                 id: n.id,
@@ -102,7 +128,6 @@ class SupabaseNotesManager {
         if (error) throw error;
     }
 }
-
 class LuminaNotes {
     constructor() {
         this.dbManager = new SupabaseNotesManager();
