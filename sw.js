@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fz-board-tda-v1.8.2.10';
+const CACHE_NAME = 'fz-board-tda-v1.8.2.11';
 
 // Agregamos las URLs exactas de los CDNs que usa index.html
 const STATIC_ASSETS = [
