@@ -13,12 +13,14 @@
   font-style: normal;
   font-display: swap;
 }
-body {
-  font-family: 'SimplySans', sans-serif;
+
+/* Forzar la tipografía globalmente y anular el font-sans de Tailwind para el texto normal */
+body, button, input, select, textarea {
+  font-family: 'SimplySans', sans-serif !important;
   font-weight: 400;
 }
 
-h1, h2, h3, h4, h5, h6 {
-  font-family: 'SimplySans', sans-serif;
+h1, h2, h3, h4, h5, h6, strong, b {
+  font-family: 'SimplySans', sans-serif !important;
   font-weight: 700;
 }
