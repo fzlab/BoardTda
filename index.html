@@ -870,6 +870,39 @@ window.cerrarIframeAnimado = (popHistory = true) => {
                 navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Registration error:', err));
             });
         }
+        // Manejador global del botón o gesto "Atrás" en dispositivos móviles
+window.addEventListener('popstate', (event) => {
+    const viewModal = document.getElementById('iframeModal');
+    const catalogModal = document.getElementById('catalogModal');
+    const projectModal = document.getElementById('projectModal');
+    const confirmDeleteModal = document.getElementById('confirmDeleteModal');
+    const errorModal = document.getElementById('errorModal');
+
+    // 1. Si el Iframe de una subweb está abierto, ciérralo y regresa al Index principal
+    if (viewModal && viewModal.classList.contains('active')) {
+        cerrarIframeAnimado(false); // false para no volver a llamar history.back()
+        return;
+    }
+
+    // 2. Si hay modales abiertos, ciérralos uno a uno
+    if (catalogModal && !catalogModal.classList.contains('hidden')) {
+        catalogModal.classList.add('hidden');
+        return;
+    }
+    if (projectModal && !projectModal.classList.contains('hidden')) {
+        projectModal.classList.add('hidden');
+        return;
+    }
+    if (confirmDeleteModal && !confirmDeleteModal.classList.contains('hidden')) {
+        confirmDeleteModal.classList.add('hidden');
+        return;
+    }
+    if (errorModal && !errorModal.classList.contains('hidden')) {
+        errorModal.classList.add('hidden');
+        return;
+    }
+});
+
     </script>
 </body>
 </html>
