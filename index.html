@@ -824,25 +824,37 @@
             searchInputElem.addEventListener('input', renderProjects);
         }
 
-        // Control de vista desglosable (Iframe)
-        window.openIframeAnimado = (url, title) => {
-            const viewModal = document.getElementById('iframeModal');
-            const iframe = document.getElementById('pwaIframe');
-            
-            document.getElementById('iframeTitle').textContent = title;
-            document.getElementById('iframeExternalLink').href = url;
-            
-            if (iframe.src !== url && !iframe.src.endsWith(url)) {
-                iframe.src = url;
-            }
+// Control de vista desglosable (Iframe) con soporte de historial
+window.openIframeAnimado = (url, title, pushHistory = true) => {
+    const viewModal = document.getElementById('iframeModal');
+    const iframe = document.getElementById('pwaIframe');
+    
+    document.getElementById('iframeTitle').textContent = title;
+    document.getElementById('iframeExternalLink').href = url;
+    
+    if (iframe.src !== url && !iframe.src.endsWith(url)) {
+        iframe.src = url;
+    }
 
-            viewModal.classList.add('active');
-        };
+    viewModal.classList.add('active');
 
-        window.cerrarIframeAnimado = () => {
-            const viewModal = document.getElementById('iframeModal');
-            viewModal.classList.remove('active');
-        };
+    // Registramos en el historial que el Iframe está abierto
+    if (pushHistory) {
+        history.pushState({ view: 'iframe' }, '', '#app-view');
+    }
+};
+
+window.cerrarIframeAnimado = (popHistory = true) => {
+    const viewModal = document.getElementById('iframeModal');
+    viewModal.classList.remove('active');
+
+    // Si el usuario presionó el botón atrás, el popstate ya quitó el estado, 
+    // pero si dio clic en "Volver al Hub", sacamos el estado manualmente.
+    if (popHistory && history.state && history.state.view === 'iframe') {
+        history.back();
+    }
+};
+
 
         // Hook de instalación de PWA
         function initPwaInstaller() {
