@@ -5,7 +5,6 @@
     <link rel="stylesheet" href="./fonts.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Board TDA</title>
-    
     <!-- Soporte PWA e iOS -->
     <meta name="theme-color" content="#0f172a">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,7 +13,6 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="description" content="Dashboard centralizador de proyectos web y PWAs">
     <link rel="manifest" href="manifest.json" id="manifestLink">
-    
     <!-- Tailwind CSS (CDN) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -36,13 +34,10 @@
             }
         }
     </script>
-    
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
     <style>
         html, body {
             overscroll-behavior-y: contain;
@@ -54,7 +49,6 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
         .dark ::-webkit-scrollbar-thumb { background: #334155; }
-
         /* --- TRANSICIÓN FLUIDA --- */
         .view-transition {
             position: fixed;
@@ -66,7 +60,6 @@
             visibility: hidden;
             transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease, visibility 0.35s;
         }
-
         .view-transition.active {
             transform: translateX(0);
             opacity: 1;
@@ -75,7 +68,6 @@
     </style>
 </head>
 <body class="h-full bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 flex flex-col font-sans overflow-hidden antialiased transition-colors duration-200">
-
     <!-- Modal de Login -->
     <div id="loginModal" class="fixed inset-0 z-[10020] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md hidden">
         <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 w-full max-w-sm shadow-2xl space-y-4">
@@ -86,7 +78,6 @@
                 <h3 class="text-base font-bold text-slate-900 dark:text-white">Iniciar Sesión</h3>
                 <p class="text-xs text-slate-500 dark:text-slate-400">Ingresa con tus credenciales asignadas</p>
             </div>
-
             <form id="loginForm" class="space-y-3">
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Correo electrónico</label>
@@ -104,7 +95,6 @@
             </form>
         </div>
     </div>
-
     <!-- Modal de Error de Autenticación / Credenciales -->
     <div id="errorModal" class="fixed inset-0 z-[10030] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md hidden">
         <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 w-full max-w-sm shadow-2xl space-y-4 text-center">
@@ -122,7 +112,6 @@
             </button>
         </div>
     </div>
-
     <!-- Header / Navbar -->
     <header class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-700/60 px-3 py-2 flex items-center justify-between shrink-0 z-10">
         <div class="flex items-center space-x-2.5">
@@ -138,42 +127,35 @@
                 </p>
             </div>
         </div>
-
         <div class="flex items-center gap-1.5 sm:gap-2">
             <!-- Dark / Light Toggle -->
             <button id="themeToggle" class="w-7 h-7 flex items-center justify-center rounded-full bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 transition-colors" title="Cambiar Tema">
                 <i data-lucide="moon" class="w-3.5 h-3.5 dark-icon"></i>
                 <i data-lucide="sun" class="w-3.5 h-3.5 light-icon hidden"></i>
             </button>
-
             <!-- Widget de reloj -->
             <div class="hidden sm:flex flex-col items-end px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700/60 text-right">
                 <span id="liveClock" class="text-xs font-mono font-semibold text-teal-700 dark:text-teal-300">00:00:00</span>
                 <span id="liveDate" class="text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-wider">--,--</span>
             </div>
-
             <!-- Botón de Catálogo / Tienda de Proyectos -->
             <button id="openCatalogBtn" class="flex items-center gap-1 px-2.5 h-7 rounded-full bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 text-teal-600 dark:text-teal-400 text-[11px] shadow-sm font-semibold transition-colors cursor-pointer" title="Apps Disponibles">
                 <i data-lucide="store" class="w-3.5 h-3.5"></i>
                 <span>Catálogo</span>
             </button>
-
             <!-- Botón proyecto nuevo manual -->
             <button id="openAddModalBtn" class="flex items-center gap-1 px-2.5 h-7 rounded-full bg-teal-500/10 border border-teal-500/30 text-teal-600 dark:text-teal-400 hover:bg-teal-500/20 text-[11px] shadow-sm font-semibold transition-colors cursor-pointer" title="Agregar personalizado">
                 <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                 <span class="hidden sm:inline">Nuevo</span>
             </button>
-
             <!-- Botón Cerrar Sesión -->
             <button onclick="cerrarSesionSupabase()" class="flex items-center gap-1 px-2 h-7 rounded-full bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-[11px] shadow-sm font-semibold transition-colors cursor-pointer" title="Cerrar Sesión">
                 <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
             </button>
         </div>
     </header>
-
     <!-- Contenido principal del cuerpo -->
     <main class="flex-1 overflow-y-auto p-3 relative max-w-7xl mx-auto w-full space-y-3 flex flex-col">
-
         <!-- Barra de buscar -->
         <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl p-3 shadow-md flex flex-col sm:flex-row gap-2.5 items-center justify-between shrink-0">
             <div class="relative w-full sm:w-72">
@@ -182,10 +164,8 @@
                     class="w-full pl-9 pr-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700/50 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-teal-500 transition-all font-medium">
             </div>
         </div>
-
         <!-- Dashboard Grid Layout: 2 columnas en móvil, 2 en sm/md, 3 en lg -->
         <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3" id="projectsContainer"></div>
-
         <!-- Extra Useful Widgets Panel -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1 shrink-0">
             <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl p-3 shadow-md md:col-span-3 flex flex-col justify-between">
@@ -201,7 +181,6 @@
             </div>
         </div> 
     </main>
-
     <!-- Modal: Catálogo / Tienda de Proyectos Predefinidos -->
     <div id="catalogModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md hidden">
         <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 w-full max-w-2xl shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
@@ -214,13 +193,10 @@
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
-
             <p class="text-xs text-slate-500 dark:text-slate-400 shrink-0">
                 Selecciona la App que deseas tener en tu pantalla principal:
             </p>
-
             <div id="catalogContainer" class="overflow-y-auto space-y-2 pr-1 flex-1"></div>
-
             <div class="pt-2 border-t border-slate-200 dark:border-slate-700 flex justify-end shrink-0">
                 <button id="finishCatalogBtn" class="px-4 py-2 bg-teal-500/10 border border-teal-500/30 text-teal-600 dark:text-teal-400 hover:bg-teal-500/20 rounded-xl text-xs font-semibold shadow-md transition-all">
                     Listo
@@ -228,7 +204,6 @@
             </div>
         </div>
     </div>
-
     <!-- Modal: Add / Edit Project Manual -->
     <div id="projectModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md hidden">
         <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 w-full max-w-sm shadow-2xl space-y-4">
@@ -241,7 +216,6 @@
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
-
             <form id="projectForm" class="space-y-3">
                 <input type="hidden" id="projectId">
                 <div>
@@ -283,7 +257,6 @@
             </form>
         </div>
     </div>
-
     <!-- Modal de Confirmación para Eliminar Proyecto -->
     <div id="confirmDeleteModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[10005] flex items-center justify-center p-4 hidden">
         <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 w-full max-w-sm shadow-2xl text-center space-y-4">
@@ -303,7 +276,6 @@
             </div>
         </div>
     </div>
-
     <!-- --- VISTA DESLIZANTE DE PANTALLA COMPLETA --- -->
     <div id="iframeModal" class="view-transition flex flex-col">
         <div class="flex items-center justify-between px-4 py-3 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-md shrink-0">
@@ -323,26 +295,21 @@
             <iframe id="pwaIframe" class="w-full h-full border-0 block" src="about:blank"></iframe>
         </div>
     </div>
-
     <!-- Application Script Logic -->
     <script>
         // --- CONFIGURACIÓN DE SUPABASE ---
         const SUPABASE_URL = 'https://mifbcyxtafeacwkzqzsq.supabase.co';
         const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_O6EAbkSba1NQPq08k_7bHg_PZ_x4ZU5';
-        
         let supabaseClient = null;
         if (window.supabase) {
             supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
         }
-
         // Definición de permisos por rol
         const ROLE_PERMISSIONS = {
             gerencial: ['ventas_diarias', 'corte_cajas', 'consultor_fases', 'consultor_existencias', 'gestor_tickets','notas'],
             promotor: ['consultor_fases', 'consultor_existencias']
         };
-
         let currentUserRole = null;
-
         // Catálogo maestro de proyectos predefinidos
         const PREDEFINED_CATALOG = [
             {
@@ -400,46 +367,38 @@
                 embed: true
             }
         ];
-
         let projects = JSON.parse(localStorage.getItem('fzboard_projects'));
         if (!projects) {
             projects = [...PREDEFINED_CATALOG];
             localStorage.setItem('fzboard_projects', JSON.stringify(projects));
         }
-
         let activeCategory = 'all';
         let deferredPrompt = null;
         let projectToDeleteId = null;
-
         function formatUrl(url) {
             if (!url) return '#';
             if (url.startsWith('http://') || url.startsWith('https://')) return url;
             return url;
         }
-
         document.addEventListener('DOMContentLoaded', async () => {
             // Al cargar la PWA, aseguramos que el Index sea el estado base del historial
-if (!history.state || history.state.view !== 'index') {
-    history.replaceState({ view: 'index' }, '', '#index');
-}
-
+            if (!history.state || history.state.view !== 'index') {
+                history.replaceState({ view: 'index' }, '', '#index');
+            }
             initClock();
             initNotes();
             initTheme();
             initPwaInstaller();
             initCatalogModal();
             initLoginForm();
-
             if (supabaseClient) {
                 await initAuth();
             } else {
                 document.getElementById('loginModal').classList.remove('hidden');
                 renderProjects();
             }
-
             lucide.createIcons();
         });
-
         // --- GESTIÓN DE LOGIN MANUAL CON SUPABASE ---
         function initLoginForm() {
             const loginForm = document.getElementById('loginForm');
@@ -448,23 +407,19 @@ if (!history.state || history.state.view !== 'index') {
                     e.preventDefault();
                     const email = document.getElementById('loginEmail').value.trim();
                     const password = document.getElementById('loginPassword').value;
-
                     if (!supabaseClient) {
                         mostrarErrorModal("Cliente de Supabase no inicializado.");
                         return;
                     }
-
                     try {
                         const { data, error } = await supabaseClient.auth.signInWithPassword({
                             email: email,
                             password: password
                         });
-
                         if (error) {
                             mostrarErrorModal("Correo o contraseña incorrectos.");
                             return;
                         }
-
                         if (data && data.session) {
                             document.getElementById('loginModal').classList.add('hidden');
                             await fetchUserRoleAndInit(data.session.user);
@@ -476,7 +431,6 @@ if (!history.state || history.state.view !== 'index') {
                 });
             }
         }
-
         // --- GESTIÓN DE MODAL DE ERROR ---
         function mostrarErrorModal(mensaje) {
             const errorModal = document.getElementById('errorModal');
@@ -487,17 +441,14 @@ if (!history.state || history.state.view !== 'index') {
                 lucide.createIcons();
             }
         }
-
         function cerrarErrorModal() {
             const errorModal = document.getElementById('errorModal');
             if (errorModal) errorModal.classList.add('hidden');
         }
-
         // --- GESTIÓN DE AUTENTICACIÓN Y SESIÓN ---
         async function initAuth() {
             try {
                 const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
-                
                 if (!session || sessionError) {
                     document.getElementById('loginModal').classList.remove('hidden');
                     renderProjects();
@@ -521,7 +472,6 @@ if (!history.state || history.state.view !== 'index') {
                 }
             }
         }
-
         async function fetchUserRoleAndInit(user) {
             try {
                 const { data, error } = await supabaseClient
@@ -529,7 +479,6 @@ if (!history.state || history.state.view !== 'index') {
                     .select('role')
                     .eq('email', user.email)
                     .single();
-
                 if (error || !data) {
                     if (!currentUserRole) {
                         currentUserRole = localStorage.getItem('fzboard_user_role') || 'promotor';
@@ -544,10 +493,8 @@ if (!history.state || history.state.view !== 'index') {
                     currentUserRole = localStorage.getItem('fzboard_user_role') || 'promotor';
                 }
             }
-
             renderProjects();
         }
-
         async function cerrarSesionSupabase() {
             localStorage.removeItem('fzboard_user_role');
             if (supabaseClient) {
@@ -558,19 +505,15 @@ if (!history.state || history.state.view !== 'index') {
             document.getElementById('loginModal').classList.remove('hidden');
             currentUserRole = null;
         }
-
         // Renderizado del Tablero de Proyectos Activos
         function renderProjects() {
             const container = document.getElementById('projectsContainer');
             const searchInputEl = document.getElementById('searchInput');
             const searchTerm = searchInputEl ? searchInputEl.value.toLowerCase() : '';
-            
             const allowedProjectIds = currentUserRole 
                 ? (ROLE_PERMISSIONS[currentUserRole] || [])
                 : ['ventas_diarias', 'corte_cajas', 'consultor_fases', 'consultor_existencias', 'gestor_tickets'];
-
             const predefinedIds = PREDEFINED_CATALOG.map(item => item.id);
-
             const filtered = projects.filter(p => {
                 const matchesRole = !predefinedIds.includes(p.id) || allowedProjectIds.includes(p.id);
                 const matchesCat = activeCategory === 'all' || p.category === activeCategory;
@@ -578,7 +521,6 @@ if (!history.state || history.state.view !== 'index') {
                                      (p.desc && p.desc.toLowerCase().includes(searchTerm));
                 return matchesRole && matchesCat && matchesSearch;
             });
-
             if (filtered.length === 0) {
                 container.innerHTML = `
                     <div class="col-span-full p-8 text-center bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl shadow-md">
@@ -590,11 +532,9 @@ if (!history.state || history.state.view !== 'index') {
                 lucide.createIcons();
                 return;
             }
-
             container.innerHTML = filtered.map(p => {
                 const formattedUrl = formatUrl(p.url);
                 const isEmoji = p.icon && p.icon.match(/\p{Extended_Pictographic}/u);
-                
                 return `
                     <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl p-2.5 sm:p-3 shadow-md flex flex-col justify-between group hover:border-teal-500/50 transition-all duration-200">
                         <div>
@@ -624,17 +564,14 @@ if (!history.state || history.state.view !== 'index') {
                     </div>
                 `;
             }).join('');
-
             lucide.createIcons();
         }
-
         // --- SISTEMA DE CATÁLOGO / TIENDA PREDEFINIDA ---
         function initCatalogModal() {
             const catalogModal = document.getElementById('catalogModal');
             const openCatalogBtn = document.getElementById('openCatalogBtn');
             const closeCatalogBtn = document.getElementById('closeCatalogBtn');
             const finishCatalogBtn = document.getElementById('finishCatalogBtn');
-
             if (openCatalogBtn) {
                 openCatalogBtn.addEventListener('click', () => {
                     renderCatalogList();
@@ -644,16 +581,12 @@ if (!history.state || history.state.view !== 'index') {
                 finishCatalogBtn.addEventListener('click', () => catalogModal.classList.add('hidden'));
             }
         }
-
         function renderCatalogList() {
             const catalogContainer = document.getElementById('catalogContainer');
-            
             const allowedProjectIds = currentUserRole 
                 ? (ROLE_PERMISSIONS[currentUserRole] || [])
                 : ['ventas_diarias', 'corte_cajas', 'consultor_fases', 'consultor_existencias', 'gestor_tickets'];
-
             const catalogForUser = PREDEFINED_CATALOG.filter(item => allowedProjectIds.includes(item.id));
-
             if (catalogForUser.length === 0) {
                 catalogContainer.innerHTML = `
                     <p class="text-xs text-center text-slate-500 dark:text-slate-400 py-4">
@@ -662,11 +595,9 @@ if (!history.state || history.state.view !== 'index') {
                 `;
                 return;
             }
-
             catalogContainer.innerHTML = catalogForUser.map(item => {
                 const isAdded = projects.some(p => p.id === item.id);
                 const isEmoji = item.icon && item.icon.match(/\p{Extended_Pictographic}/u);
-
                 return `
                     <div class="flex items-center justify-between p-3 rounded-xl border border-slate-200 dark:border-slate-700/70 bg-slate-50 dark:bg-slate-900/40 hover:border-teal-500/40 transition-all">
                         <div class="flex items-center gap-3">
@@ -688,10 +619,8 @@ if (!history.state || history.state.view !== 'index') {
                     </div>
                 `;
             }).join('');
-
             lucide.createIcons();
         }
-
         window.toggleCatalogProject = (catId) => {
             const exists = projects.some(p => p.id === catId);
             if (exists) {
@@ -700,12 +629,10 @@ if (!history.state || history.state.view !== 'index') {
                 const item = PREDEFINED_CATALOG.find(c => c.id === catId);
                 if (item) projects.push({...item});
             }
-            
             localStorage.setItem('fzboard_projects', JSON.stringify(projects));
             renderCatalogList();
             renderProjects();
         };
-
         // Reloj en tiempo real
         function initClock() {
             const updateClock = () => {
@@ -718,14 +645,12 @@ if (!history.state || history.state.view !== 'index') {
             updateClock();
             setInterval(updateClock, 1000);
         }
-
         // Notas Rápidas
         function initNotes() {
             const textarea = document.getElementById('quickNotes');
             const badge = document.getElementById('noteSavedBadge');
             if(!textarea) return;
             textarea.value = localStorage.getItem('fzboard_notes') || '';
-
             let timeout;
             textarea.addEventListener('input', () => {
                 clearTimeout(timeout);
@@ -736,11 +661,9 @@ if (!history.state || history.state.view !== 'index') {
                 }, 500);
             });
         }
-
         // Cambio de Modo Claro / Oscuro
         const btnThemeToggle = document.getElementById('themeToggle');
         const htmlElement = document.documentElement;
-
         function setTheme(isDark) {
             if (isDark) {
                 htmlElement.classList.add('dark');
@@ -751,11 +674,9 @@ if (!history.state || history.state.view !== 'index') {
             }
             lucide.createIcons();
         }
-
         function initTheme() {
             const savedTheme = localStorage.getItem('theme');
             setTheme(savedTheme !== 'light');
-
             if (btnThemeToggle) {
                 btnThemeToggle.addEventListener('click', () => {
                     const isDarkActive = htmlElement.classList.contains('dark');
@@ -763,11 +684,9 @@ if (!history.state || history.state.view !== 'index') {
                 });
             }
         }
-
         // Modal de Creación / Edición Manual
         const modal = document.getElementById('projectModal');
         const form = document.getElementById('projectForm');
-
         document.getElementById('openAddModalBtn').addEventListener('click', () => {
             form.reset();
             document.getElementById('projectId').value = '';
@@ -775,10 +694,8 @@ if (!history.state || history.state.view !== 'index') {
             modal.classList.remove('hidden');
             lucide.createIcons();
         });
-
         document.getElementById('closeModalBtn').addEventListener('click', () => modal.classList.add('hidden'));
         document.getElementById('cancelModalBtn').addEventListener('click', () => modal.classList.add('hidden'));
-
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             const id = document.getElementById('projectId').value || Date.now().toString();
@@ -791,30 +708,25 @@ if (!history.state || history.state.view !== 'index') {
                 desc: document.getElementById('projectDesc').value,
                 embed: document.getElementById('projectEmbed').checked
             };
-
             const index = projects.findIndex(p => p.id === id);
             if (index > -1) {
                 projects[index] = newProject;
             } else {
                 projects.unshift(newProject);
             }
-
             localStorage.setItem('fzboard_projects', JSON.stringify(projects));
             modal.classList.add('hidden');
             renderProjects();
         });
-
         window.deleteProject = (id) => {
             projectToDeleteId = id;
             document.getElementById('confirmDeleteModal').classList.remove('hidden');
             lucide.createIcons();
         };
-
         function cerrarConfirmacionEliminar() {
             projectToDeleteId = null;
             document.getElementById('confirmDeleteModal').classList.add('hidden');
         }
-
         function ejecutarEliminacionProyecto() {
             if (projectToDeleteId) {
                 projects = projects.filter(p => p.id !== projectToDeleteId);
@@ -823,32 +735,22 @@ if (!history.state || history.state.view !== 'index') {
             }
             cerrarConfirmacionEliminar();
         }
-
         const searchInputElem = document.getElementById('searchInput');
         if (searchInputElem) {
             searchInputElem.addEventListener('input', renderProjects);
         }
-
-window.openIframeAnimado = (url, title) => {
-    // Usamos un hash fijo '#viewer' para evitar acumular historial entre distintas subwebs
-    history.pushState({ view: 'iframe', title: title }, '', '#viewer');
-    
-    const viewModal = document.getElementById('iframeModal');
-    const iframe = document.getElementById('pwaIframe');
-    
-    document.getElementById('iframeTitle').textContent = title;
-    document.getElementById('iframeExternalLink').href = url;
-    
-    if (iframe.src !== url && !iframe.src.endsWith(url)) {
-        iframe.src = url;
-    }
-
-    viewModal.classList.add('active');
-};
-
-
-
-
+        window.openIframeAnimado = (url, title) => {
+            // Usamos un hash fijo '#viewer' para evitar acumular historial entre distintas subwebs
+            history.pushState({ view: 'iframe', title: title }, '', '#viewer');
+            const viewModal = document.getElementById('iframeModal');
+            const iframe = document.getElementById('pwaIframe');
+            document.getElementById('iframeTitle').textContent = title;
+            document.getElementById('iframeExternalLink').href = url;
+            if (iframe.src !== url && !iframe.src.endsWith(url)) {
+                iframe.src = url;
+            }
+            viewModal.classList.add('active');
+        };
         // Hook de instalación de PWA
         function initPwaInstaller() {
             window.addEventListener('beforeinstallprompt', (e) => {
@@ -856,7 +758,6 @@ window.openIframeAnimado = (url, title) => {
                 deferredPrompt = e;
             });
         }
-
         // Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -864,41 +765,36 @@ window.openIframeAnimado = (url, title) => {
             });
         }
         // Manejador global del botón o gesto "Atrás" y navegación por historial
-window.addEventListener('popstate', (event) => {
-    const viewModal = document.getElementById('iframeModal');
-    const catalogModal = document.getElementById('catalogModal');
-    const projectModal = document.getElementById('projectModal');
-    const confirmDeleteModal = document.getElementById('confirmDeleteModal');
-    const errorModal = document.getElementById('errorModal');
-
-    // 1. Si hay modales abiertos, ciérralos primero
-    if (catalogModal && !catalogModal.classList.contains('hidden')) {
-        catalogModal.classList.add('hidden');
-        return;
-    }
-    if (projectModal && !projectModal.classList.contains('hidden')) {
-        projectModal.classList.add('hidden');
-        return;
-    }
-    if (confirmDeleteModal && !confirmDeleteModal.classList.contains('hidden')) {
-        confirmDeleteModal.classList.add('hidden');
-        return;
-    }
-    if (errorModal && !errorModal.classList.contains('hidden')) {
-        errorModal.classList.add('hidden');
-        return;
-    }
-
-    // 2. Control estricto del Iframe: si el estado actual es el Index o no es 'iframe', cerramos la vista
-    if (viewModal && viewModal.classList.contains('active')) {
-        if (!event.state || event.state.view !== 'iframe') {
-            viewModal.classList.remove('active');
-        }
-    }
-});
-
-
-
+        window.addEventListener('popstate', (event) => {
+            const viewModal = document.getElementById('iframeModal');
+            const catalogModal = document.getElementById('catalogModal');
+            const projectModal = document.getElementById('projectModal');
+            const confirmDeleteModal = document.getElementById('confirmDeleteModal');
+            const errorModal = document.getElementById('errorModal');
+            // 1. Si hay modales abiertos, ciérralos primero
+            if (catalogModal && !catalogModal.classList.contains('hidden')) {
+                catalogModal.classList.add('hidden');
+                return;
+            }
+            if (projectModal && !projectModal.classList.contains('hidden')) {
+                projectModal.classList.add('hidden');
+                return;
+            }
+            if (confirmDeleteModal && !confirmDeleteModal.classList.contains('hidden')) {
+                confirmDeleteModal.classList.add('hidden');
+                return;
+            }
+            if (errorModal && !errorModal.classList.contains('hidden')) {
+                errorModal.classList.add('hidden');
+                return;
+            }
+            // 2. Control estricto del Iframe: si el estado actual es el Index o no es 'iframe', cerramos la vista
+            if (viewModal && viewModal.classList.contains('active')) {
+                if (!event.state || event.state.view !== 'iframe') {
+                    viewModal.classList.remove('active');
+                }
+            }
+        });
     </script>
 </body>
 </html>
