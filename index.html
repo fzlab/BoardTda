@@ -751,6 +751,22 @@
             }
             viewModal.classList.add('active');
         };
+
+        // Función corregida para el botón "Volver al Hub"
+        window.cerrarIframeAnimado = () => {
+            const viewModal = document.getElementById('iframeModal');
+            const iframe = document.getElementById('pwaIframe');
+            
+            if (viewModal) {
+                viewModal.classList.remove('active');
+            }
+            if (iframe) {
+                iframe.src = 'about:blank';
+            }
+            // Redirigir explícitamente al index.html en la raíz
+            window.location.href = './index.html';
+        };
+
         // Hook de instalación de PWA
         function initPwaInstaller() {
             window.addEventListener('beforeinstallprompt', (e) => {
