@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fz-board-tda-v1.7.7';
+const CACHE_NAME = 'fz-board-tda-v1.7.8';
 
 // Agregamos las URLs exactas de los CDNs que usa index.html
 const STATIC_ASSETS = [
@@ -15,6 +15,7 @@ const STATIC_ASSETS = [
     './fases/',
     './tickets/',
     './ventas/',
+    './notas/',
     'https://cdn.tailwindcss.com',
     'https://unpkg.com/lucide@latest',
     'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'
