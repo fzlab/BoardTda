@@ -258,7 +258,17 @@
     </div>
 
     <div id="toast-container" class="toast-container"></div>
+    <!-- 1. Cargar el script de Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- 2. Definir el cliente global -->
+    <script>
+        const SUPABASE_URL = 'https://mifbcyxtafeacwkzqzsq.supabase.co';
+        const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_O6EAbkSba1NQPq08k_7bHg_PZ_x4ZU5';
+        if (window.supabase && !window.supabaseClient) {
+            window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+        }
+    </script>
 
+    <!-- 3. Tu script de notas adaptado -->
     <script src="script.js"></script>
 </body>
-</html>
