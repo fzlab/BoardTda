@@ -741,7 +741,7 @@ class LuminaNotes {
         const text = note.body.trim();
         const words = text ? text.split(/\s+/).length : 0;
         const chars = text.length;
-        this.statsCounterEl.textContent = `${words} letras, ${chars} caracteres`;
+        this.statsCounterEl.textContent = `${words} palabras, ${chars} caracteres`;
     }
 
     updatePinButtonState(isPinned) {
