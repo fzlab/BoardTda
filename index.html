@@ -830,8 +830,8 @@ if (!history.state || history.state.view !== 'index') {
         }
 
 window.openIframeAnimado = (url, title) => {
-    // Forzamos limpiar cualquier rastro anterior y ponemos el estado de la subweb
-    history.pushState({ view: 'iframe', title: title }, '', `#app-${title.toLowerCase().replace(/\s+/g, '-')}`);
+    // Usamos un hash fijo '#viewer' para evitar acumular historial entre distintas subwebs
+    history.pushState({ view: 'iframe', title: title }, '', '#viewer');
     
     const viewModal = document.getElementById('iframeModal');
     const iframe = document.getElementById('pwaIframe');
@@ -846,10 +846,6 @@ window.openIframeAnimado = (url, title) => {
     viewModal.classList.add('active');
 };
 
-window.cerrarIframeAnimado = () => {
-    // Al dar clic en volver al hub, retrocedemos exactamente un paso en el historial
-    history.back();
-};
 
 
 
