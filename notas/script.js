@@ -10,7 +10,6 @@ class SupabaseManager {
         this.supabaseUrl = 'https://mifbcyxtafeacwkzqzsq.supabase.co';
         this.supabaseKey = 'sb_publishable_O6EAbkSba1NQPq08k_7bHg_PZ_x4ZU5';
         this.client = null;
-        // UUID genérico de respaldo por si no hay sesión activa inmediata
         this.defaultUserId = '00000000-0000-0000-0000-000000000000';
     }
 
@@ -20,19 +19,39 @@ class SupabaseManager {
         }
     }
 
-    // Método para obtener el UUID del usuario logueado en la página principal / sesión compartida
     async getCurrentUserId() {
         this.init();
         if (!this.client) return this.defaultUserId;
 
         try {
-            const { data: { session }, error } = await this.client.auth.getSession();
+            // 1. Intentar obtener la sesión local del cliente Supabase del iframe
+            const { data: { session } } = await this.client.auth.getSession();
             if (session && session.user) {
                 return session.user.id;
             }
+
+            // 2. Si el iframe está aislado, intentamos leer la sesión del localStorage de la ventana padre (Hub principal)
+            if (window.parent && window.parent !== window) {
+                for (let i = 0; i < window.parent.localStorage.length; i++) {
+                    const key = window.parent.localStorage.key(i);
+                    if (key && key.includes('auth-token')) {
+                        const val = window.parent.localStorage.getItem(key);
+                        const parsed = JSON.parse(val);
+                        if (parsed && parsed.user && parsed.user.id) {
+                            // Opcional: sincronizar esta sesión al cliente local del iframe para futuras consultas
+                            await this.client.auth.setSession({
+                                access_token: parsed.access_token,
+                                refresh_token: parsed.refresh_token
+                            });
+                            return parsed.user.id;
+                        }
+                    }
+                }
+            }
         } catch (err) {
-            console.error('Error getting session user id:', err);
+            console.error('Error extracting parent session user id:', err);
         }
+
         return this.defaultUserId;
     }
 
@@ -44,8 +63,8 @@ class SupabaseManager {
         }
 
         try {
-            // Obtenemos el UUID real del usuario que inició sesión en la web principal
             const userId = await this.getCurrentUserId();
+            console.log('Sincronizando nota con user_id:', userId);
 
             const payload = {
                 id: String(note.id),
@@ -65,7 +84,7 @@ class SupabaseManager {
             if (error) {
                 console.error('Error syncing note to Supabase:', error.message, error.details);
             } else {
-                console.log('Note successfully synced to Supabase with user_id:', userId);
+                console.log('Note successfully synced to Supabase:', note.id);
             }
         } catch (err) {
             console.error('Supabase save exception:', err);
@@ -92,6 +111,7 @@ class SupabaseManager {
         }
     }
 }
+
 
 class DatabaseManager {
     constructor() {
