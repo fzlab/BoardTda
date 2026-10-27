@@ -27,50 +27,34 @@ class SupabaseNotesManager {
         this.userId = null;
     }
 
-        async init() {
+    async init() {
         if (!this.supabase) {
             throw new Error('Supabase no está disponible.');
         }
 
-        // Usamos una pequeña promesa para asegurar que Supabase recuperó la sesión del almacenamiento
-        const session = await new Promise(async (resolve) => {
-            const { data: { session } } = await this.supabase.auth.getSession();
-            if (session) {
-                resolve(session);
-                return;
-            }
+        // Si ya tenemos el userId cargado en memoria, no lo volvemos a pedir innecesariamente
+        if (this.userId) return { id: this.userId };
 
-            // Si no hay sesión inmediata, esperamos al evento de cambio de estado o usamos getUser
-            const { data: userData } = await this.supabase.auth.getUser();
-            if (userData && userData.user) {
-                resolve({ user: userData.user });
-                return;
-            }
-
-            // Damos un pequeño margen por si el storage es lento (ej. PWA / Iframe)
-            const { data: { subscription } } = this.supabase.auth.onAuthStateChange((event, session) => {
-                if (session) {
-                    subscription.unsubscribe();
-                    resolve(session);
-                }
-            });
-
-            // Timeout de seguridad de 2 segundos por si no hay sesión real
-            setTimeout(() => {
-                subscription?.unsubscribe();
-                resolve(null);
-            }, 2000);
-        });
-
-        if (!session || !session.user) {
-            // Si de verdad no hay sesión en ningún lado, redirigir al login principal
-            window.location.href = '../index.html'; 
-            throw new Error('No hay una sesión activa');
+        // Obtener sesión actual
+        const { data: { session }, error: sessionError } = await this.supabase.auth.getSession();
+        
+        if (session && session.user) {
+            this.userId = session.user.id;
+            return session.user;
         }
 
-        this.userId = session.user.id;
-        return session.user;
+        // Fallback a getUser si la sesión tardó en cargar
+        const { data: userData } = await this.supabase.auth.getUser();
+        if (userData && userData.user) {
+            this.userId = userData.user.id;
+            return userData.user;
+        }
+
+        // Si de verdad no hay sesión, redirigir al login
+        window.location.href = '../index.html'; 
+        throw new Error('No hay una sesión activa');
     }
+
 
 
     async getAll(storeName) {
