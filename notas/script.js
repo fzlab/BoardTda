@@ -170,6 +170,7 @@ class LuminaNotes {
         this.btnNew = document.getElementById('btn-new-note');
         this.btnEmptyNew = document.getElementById('btn-empty-new');
         this.btnImport = document.getElementById('btn-import');
+        this.btnRefresh = document.getElementById('btn-refresh'); // Referencia al nuevo botón
         this.inputImportFile = document.getElementById('input-import-file');
         this.btnAddFolder = document.getElementById('btn-add-folder');
         this.btnBack = document.getElementById('btn-back');
@@ -230,6 +231,12 @@ class LuminaNotes {
         this.btnNew.addEventListener('click', () => this.createNote());
         this.btnEmptyNew.addEventListener('click', () => this.createNote());
         this.btnImport.addEventListener('click', () => this.inputImportFile.click());
+        
+        // Programación del botón de actualizar
+        if (this.btnRefresh) {
+            this.btnRefresh.addEventListener('click', () => this.refreshDataFromDatabase());
+        }
+
         this.inputImportFile.addEventListener('change', (e) => this.handleFileImport(e));
         this.btnAddFolder.addEventListener('click', () => this.promptCreateFolder());
         this.foldersToggle.addEventListener('click', () => {
@@ -274,6 +281,45 @@ class LuminaNotes {
             this.flushPendingSave();
         });
     }
+
+    // Función para refrescar el contenido consultando la base de datos
+    async refreshDataFromDatabase() {
+        try {
+            await this.flushPendingSave(); // Guarda cambios pendientes antes de recargar
+            
+            // Animación visual de rotación en el icono
+            const svgIcon = this.btnRefresh.querySelector('svg');
+            if (svgIcon) {
+                svgIcon.style.transition = 'transform 0.5s ease';
+                svgIcon.style.transform = 'rotate(360deg)';
+                setTimeout(() => { svgIcon.style.transform = 'rotate(0deg)'; }, 500);
+            }
+
+            // Consultar datos actualizados de Supabase
+            this.notes = await this.dbManager.getAll('notes');
+            this.folders = await this.dbManager.getAll('folders');
+            
+            this.renderFolders();
+            this.renderSidebar();
+
+            // Si hay una nota activa actualmente, verificar si sigue existiendo y actualizar sus metadatos
+            if (this.activeNoteId) {
+                const currentNote = this.notes.find(n => n.id === this.activeNoteId);
+                if (currentNote) {
+                    this.renderFolderDropdown(currentNote.folderId);
+                } else {
+                    this.activeNoteId = null;
+                    this.updateEditorState();
+                }
+            }
+
+            this.showToast('Contenido actualizado desde la base de datos');
+        } catch (error) {
+            console.error('Error al actualizar:', error);
+            this.showToast('Error al actualizar el contenido');
+        }
+    }
+
     async createNote() {
         const activeFolder = this.currentFilter.startsWith('folder_') ? this.currentFilter : null;
         const newNote = {
