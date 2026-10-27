@@ -275,7 +275,7 @@ class LuminaNotes {
         });
     }
 
-    initEventListeners() {
+        initEventListeners() {
         this.btnNew.addEventListener('click', () => this.createNote());
         this.btnEmptyNew.addEventListener('click', () => this.createNote());
         this.btnImport.addEventListener('click', () => this.inputImportFile.click());
@@ -339,7 +339,6 @@ class LuminaNotes {
             this.flushPendingSave();
         });
     }
-
 
 
         document.querySelectorAll('.filter-btn').forEach(btn => {
