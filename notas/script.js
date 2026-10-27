@@ -165,6 +165,26 @@ class LuminaNotes {
         this.initEventListeners();
         this.bootstrap();
     }
+    // Método para guardar inmediatamente si hay un borrador pendiente en el editor
+    async flushPendingSave() {
+        if (this.saveTimeout && this.activeNoteId) {
+            clearTimeout(this.saveTimeout);
+            this.saveTimeout = null;
+
+            const note = this.notes.find(n => n.id === this.activeNoteId);
+            if (note) {
+                note.title = this.titleInput.value;
+                note.body = this.bodyInput.value;
+                note.updatedAt = new Date().toISOString();
+
+                try {
+                    await this.dbManager.save('notes', note);
+                } catch (error) {
+                    console.error('Error al guardar antes de salir:', error);
+                }
+            }
+        }
+    }
 
     async bootstrap() {
         try {
@@ -271,7 +291,7 @@ class LuminaNotes {
         });
     }
 
-    initEventListeners() {
+        initEventListeners() {
         this.btnNew.addEventListener('click', () => this.createNote());
         this.btnEmptyNew.addEventListener('click', () => this.createNote());
         this.btnImport.addEventListener('click', () => this.inputImportFile.click());
@@ -298,6 +318,46 @@ class LuminaNotes {
             this.searchQuery = e.target.value.toLowerCase();
             this.renderSidebar();
         });
+
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.folder-item').forEach(f => f.classList.remove('active'));
+
+                const target = e.currentTarget;
+                target.classList.add('active');
+                this.currentFilter = target.dataset.filter;
+                this.renderSidebar();
+            });
+        });
+
+        this.modalCancelBtn.addEventListener('click', () => this.hideModal());
+        this.inputModalCancelBtn.addEventListener('click', () => this.hideInputModal());
+
+        // --- NUEVOS LISTENERS PARA CONTROLAR LA NAVEGACIÓN Y VISIBILIDAD ---
+
+        // 1. Detectar si el usuario cambia de pestaña o minimiza la web
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') {
+                this.flushPendingSave();
+            } else if (document.visibilityState === 'visible') {
+                this.bootstrap(); // Recarga los datos al volver a enfocar la pestaña
+            }
+        });
+
+        // 2. Manejar cuando se regresa usando el botón Atrás/Adelante del navegador (Bfcache)
+        window.addEventListener('pageshow', (event) => {
+            if (event.persisted) {
+                this.bootstrap();
+            }
+        });
+
+        // 3. Forzar guardado justo antes de que la página se descargue o navegue a otra URL
+        window.addEventListener('beforeunload', () => {
+            this.flushPendingSave();
+        });
+    }
+
 
         document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
