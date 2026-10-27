@@ -282,7 +282,7 @@ class LuminaNotes {
         });
     }
 
-    // Función para refrescar el contenido consultando la base de datos
+    // Función corregida para refrescar el contenido desde Supabase
     async refreshDataFromDatabase() {
         try {
             await this.flushPendingSave(); // Guarda cambios pendientes antes de recargar
@@ -295,10 +295,15 @@ class LuminaNotes {
                 setTimeout(() => { svgIcon.style.transform = 'rotate(0deg)'; }, 500);
             }
 
-            // Consultar datos actualizados de Supabase
-            this.notes = await this.dbManager.getAll('notes');
-            this.folders = await this.dbManager.getAll('folders');
+            // Consultar datos frescos y limpios directamente de Supabase
+            const freshNotes = await this.dbManager.getAll('notes');
+            const freshFolders = await this.dbManager.getAll('folders');
+
+            // Asignar los nuevos datos al estado local de forma segura
+            this.notes = Array.isArray(freshNotes) ? freshNotes : [];
+            this.folders = Array.isArray(freshFolders) ? freshFolders : [];
             
+            // Forzar renderizado inmediato de la interfaz
             this.renderFolders();
             this.renderSidebar();
 
@@ -311,6 +316,8 @@ class LuminaNotes {
                     this.activeNoteId = null;
                     this.updateEditorState();
                 }
+            } else {
+                this.updateEditorState();
             }
 
             this.showToast('Contenido actualizado desde la base de datos');
