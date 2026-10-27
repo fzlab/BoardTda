@@ -15,6 +15,7 @@ class SupabaseManager {
 
     init() {
         if (window.supabase && !this.client) {
+            // Inicialización directa tal como la web funcional de tickets
             this.client = window.supabase.createClient(this.supabaseUrl, this.supabaseKey);
         }
     }
@@ -24,32 +25,13 @@ class SupabaseManager {
         if (!this.client) return this.defaultUserId;
 
         try {
-            // 1. Intentar obtener la sesión local del cliente Supabase del iframe
-            const { data: { session } } = await this.client.auth.getSession();
+            // Obtener la sesión compartida directamente del cliente de Supabase del navegador
+            const { data: { session }, error } = await this.client.auth.getSession();
             if (session && session.user) {
                 return session.user.id;
             }
-
-            // 2. Si el iframe está aislado, intentamos leer la sesión del localStorage de la ventana padre (Hub principal)
-            if (window.parent && window.parent !== window) {
-                for (let i = 0; i < window.parent.localStorage.length; i++) {
-                    const key = window.parent.localStorage.key(i);
-                    if (key && key.includes('auth-token')) {
-                        const val = window.parent.localStorage.getItem(key);
-                        const parsed = JSON.parse(val);
-                        if (parsed && parsed.user && parsed.user.id) {
-                            // Opcional: sincronizar esta sesión al cliente local del iframe para futuras consultas
-                            await this.client.auth.setSession({
-                                access_token: parsed.access_token,
-                                refresh_token: parsed.refresh_token
-                            });
-                            return parsed.user.id;
-                        }
-                    }
-                }
-            }
         } catch (err) {
-            console.error('Error extracting parent session user id:', err);
+            console.error('Error al obtener la sesión de Supabase:', err);
         }
 
         return this.defaultUserId;
@@ -64,7 +46,6 @@ class SupabaseManager {
 
         try {
             const userId = await this.getCurrentUserId();
-            console.log('Sincronizando nota con user_id:', userId);
 
             const payload = {
                 id: String(note.id),
@@ -111,7 +92,6 @@ class SupabaseManager {
         }
     }
 }
-
 
 class DatabaseManager {
     constructor() {
@@ -162,7 +142,6 @@ class DatabaseManager {
             
             request.onsuccess = () => {
                 resolve(request.result);
-                // Si es la tienda de notas, sincronizamos con Supabase en segundo plano
                 if (storeName === 'notes') {
                     this.supabaseManager.saveNote(item);
                 }
@@ -179,7 +158,6 @@ class DatabaseManager {
             
             request.onsuccess = () => {
                 resolve();
-                // Si es la tienda de notas, eliminamos también en Supabase
                 if (storeName === 'notes') {
                     this.supabaseManager.deleteNote(id);
                 }
