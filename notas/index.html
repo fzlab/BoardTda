@@ -35,14 +35,14 @@
                         <span>Notas</span>
                     </div>
                     <div class="sidebar-actions">
-                        <button id="btn-import" class="btn-icon" title="Import Note">
+                        <button id="btn-import" class="btn-icon" title="Importar Nota">
                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                 <polyline points="17 8 12 3 7 8"></polyline>
                                 <line x1="12" y1="3" x2="12" y2="15"></line>
                             </svg>
                         </button>
-                        <button id="btn-refresh" class="btn-icon" title="Actualizar">
+                        <button id="btn-refresh" class="btn-icon" title="Actualizar base de datos">
                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <polyline points="23 4 23 10 17 10"></polyline>
                                 <polyline points="1 20 1 14 7 14"></polyline>
@@ -50,7 +50,7 @@
                             </svg>
                         </button>
                         <input type="file" id="input-import-file" accept=".txt,.json" class="hidden">
-                        <button id="btn-new-note" class="btn-primary" title="New Note">
+                        <button id="btn-new-note" class="btn-primary" title="Nueva Nota">
                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <line x1="12" y1="5" x2="12" y2="19"></line>
                                 <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -95,7 +95,7 @@
                         </svg>
                         <span class="section-title">Carpetas</span>
                     </div>
-                    <button id="btn-add-folder" class="btn-icon-xs" title="New Folder">
+                    <button id="btn-add-folder" class="btn-icon-xs" title="Nueva Carpeta">
                         <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <line x1="12" y1="5" x2="12" y2="19"></line>
                             <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -140,7 +140,7 @@
                 <div class="editor-top-fixed">
                     <header class="editor-header">
                         <div class="header-left">
-                            <button id="btn-back" class="btn-icon mobile-only" title="Back">
+                            <button id="btn-back" class="btn-icon mobile-only" title="Volver">
                                 <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <polyline points="15 18 9 12 15 6"></polyline>
                                 </svg>
@@ -158,21 +158,21 @@
                         </div>
 
                         <div class="editor-actions">
-                            <button id="btn-pin" class="btn-icon" title="Pin Note">
+                            <button id="btn-pin" class="btn-icon" title="Marcar Nota">
                                 <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <line x1="12" y1="17" x2="12" y2="22"></line>
                                     <path d="M5 17h14l-1.5-6h-11z"></path>
                                     <path d="M9 11V4a3 3 0 0 1 6 0v7"></path>
                                 </svg>
                             </button>
-                            <button id="btn-export" class="btn-icon" title="Export Note">
+                            <button id="btn-export" class="btn-icon" title="Exportar Nota">
                                 <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                     <polyline points="7 10 12 15 17 10"></polyline>
                                     <line x1="12" y1="15" x2="12" y2="3"></line>
                                 </svg>
                             </button>
-                            <button id="btn-delete" class="btn-icon btn-danger" title="Delete Note">
+                            <button id="btn-delete" class="btn-icon btn-danger" title="Eliminar Nota">
                                 <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <polyline points="3 6 5 6 21 6"></polyline>
                                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -231,14 +231,15 @@
         </main>
     </div>
 
+    <!-- Modal de Confirmación Genérico -->
     <div id="custom-modal" class="modal-overlay hidden">
         <div class="modal-card">
             <div class="modal-header">
                 <div id="modal-icon-container" class="modal-icon"></div>
-                <h4 id="modal-title">Confirmas el borrado</h4>
+                <h4 id="modal-title">Confirmar acción</h4>
             </div>
             <div class="modal-body">
-                <p id="modal-message">Seguro que quieres eliminarla? Esta acción no se puede deshacer.</p>
+                <p id="modal-message">¿Seguro que quieres continuar? Esta acción no se puede deshacer.</p>
             </div>
             <div class="modal-footer">
                 <button id="modal-cancel-btn" class="btn-secondary">Cancelar</button>
@@ -247,6 +248,7 @@
         </div>
     </div>
 
+    <!-- Modal para Inputs (Crear Carpeta) -->
     <div id="custom-input-modal" class="modal-overlay hidden">
         <div class="modal-card">
             <div class="modal-header">
@@ -268,18 +270,22 @@
     </div>
 
     <div id="toast-container" class="toast-container"></div>
-    <!-- 1. Cargar el script de Supabase CDN -->
+
+    <!-- 1. SDK de Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- 2. Definir el cliente global -->
+    
+    <!-- 2. Inicialización del cliente global de Supabase -->
     <script>
         const SUPABASE_URL = 'https://mifbcyxtafeacwkzqzsq.supabase.co';
         const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_O6EAbkSba1NQPq08k_7bHg_PZ_x4ZU5';
         if (window.supabase && !window.supabaseClient) {
-            window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+            window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+                auth: { persistSession: true, autoRefreshToken: true }
+            });
         }
     </script>
 
-    <!-- 3. script de notas adaptado -->
+    <!-- 3. Script principal adaptado con offline-first y caché -->
     <script src="script.js"></script>
 </body>
 </html>
