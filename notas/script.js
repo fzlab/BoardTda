@@ -2,8 +2,6 @@ class SupabaseNotesManager {
     constructor() {
         const SUPABASE_URL = 'https://mifbcyxtafeacwkzqzsq.supabase.co';
         const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_O6EAbkSba1NQPq08k_7bHg_PZ_x4ZU5';
-
-        // 1. Intentar capturar el cliente de la ventana principal (si se abre en iframe) o crear uno compartido
         try {
             if (window.parent && window.parent.supabaseClient) {
                 this.supabase = window.parent.supabaseClient;
@@ -17,54 +15,37 @@ class SupabaseNotesManager {
         } catch (e) {
             console.warn("No se pudo enlazar con el padre, usando cliente local:", e);
         }
-
         if (!this.supabase && window.supabase) {
             this.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
                 auth: { persistSession: true, autoRefreshToken: true }
             });
         }
-
         this.userId = null;
     }
-
     async init() {
         if (!this.supabase) {
             throw new Error('Supabase no está disponible.');
         }
-
-        // Si ya tenemos el userId cargado en memoria, no lo volvemos a pedir innecesariamente
         if (this.userId) return { id: this.userId };
-
-        // Obtener sesión actual
         const { data: { session }, error: sessionError } = await this.supabase.auth.getSession();
-        
         if (session && session.user) {
             this.userId = session.user.id;
             return session.user;
         }
-
-        // Fallback a getUser si la sesión tardó en cargar
         const { data: userData } = await this.supabase.auth.getUser();
         if (userData && userData.user) {
             this.userId = userData.user.id;
             return userData.user;
         }
-
-        // Si de verdad no hay sesión, redirigir al login
         window.location.href = '../index.html'; 
         throw new Error('No hay una sesión activa');
     }
-
-
-
     async getAll(storeName) {
         const { data, error } = await this.supabase
             .from(storeName)
             .select('*')
             .eq('user_id', this.userId);
-
         if (error) throw error;
-        
         if (storeName === 'notes') {
             return data.map(n => ({
                 id: n.id,
@@ -84,7 +65,6 @@ class SupabaseNotesManager {
         }
         return data;
     }
-
     async save(storeName, item) {
         if (storeName === 'notes') {
             const dbNote = {
@@ -96,13 +76,11 @@ class SupabaseNotesManager {
                 folder_id: item.folderId || null,
                 updated_at: new Date().toISOString()
             };
-
             const { data, error } = await this.supabase
                 .from('notes')
                 .upsert(dbNote)
                 .select()
                 .single();
-
             if (error) throw error;
             return data;
         } else if (storeName === 'folders') {
@@ -111,25 +89,21 @@ class SupabaseNotesManager {
                 user_id: this.userId,
                 name: item.name
             };
-
             const { data, error } = await this.supabase
                 .from('folders')
                 .upsert(dbFolder)
                 .select()
                 .single();
-
             if (error) throw error;
             return data;
         }
     }
-
     async delete(storeName, id) {
         const { error } = await this.supabase
             .from(storeName)
             .delete()
             .eq('id', id)
             .eq('user_id', this.userId);
-
         if (error) throw error;
     }
 }
@@ -143,24 +117,20 @@ class LuminaNotes {
         this.currentSort = 'updated-desc';
         this.searchQuery = '';
         this.saveTimeout = null;
-
         this.initDOM();
         this.initCustomDropdowns();
         this.initEventListeners();
         this.bootstrap();
     }
-    // Método para guardar inmediatamente si hay un borrador pendiente en el editor
     async flushPendingSave() {
         if (this.saveTimeout && this.activeNoteId) {
             clearTimeout(this.saveTimeout);
             this.saveTimeout = null;
-
             const note = this.notes.find(n => n.id === this.activeNoteId);
             if (note) {
                 note.title = this.titleInput.value;
                 note.body = this.bodyInput.value;
                 note.updatedAt = new Date().toISOString();
-
                 try {
                     await this.dbManager.save('notes', note);
                 } catch (error) {
@@ -169,16 +139,13 @@ class LuminaNotes {
             }
         }
     }
-
     async bootstrap() {
         try {
             await this.dbManager.init();
             this.notes = await this.dbManager.getAll('notes');
             this.folders = await this.dbManager.getAll('folders');
-
             this.renderFolders();
             this.renderSidebar();
-
             if (this.notes.length > 0 && window.innerWidth > 768) {
                 this.selectNote(this.notes[0].id, false);
             } else {
@@ -189,20 +156,17 @@ class LuminaNotes {
             this.showToast('Error al conectar con la base de datos');
         }
     }
-
     initDOM() {
         this.appContainer = document.getElementById('app-container');
         this.notesListEl = document.getElementById('notes-list');
         this.foldersListEl = document.getElementById('folders-list');
         this.foldersHeader = document.getElementById('folders-header');
         this.foldersToggle = document.getElementById('folders-toggle');
-
         this.titleInput = document.getElementById('note-title');
         this.bodyInput = document.getElementById('note-body');
         this.noteDateEl = document.getElementById('note-date');
         this.statsCounterEl = document.getElementById('stats-counter');
         this.searchInput = document.getElementById('search-input');
-
         this.btnNew = document.getElementById('btn-new-note');
         this.btnEmptyNew = document.getElementById('btn-empty-new');
         this.btnImport = document.getElementById('btn-import');
@@ -212,154 +176,106 @@ class LuminaNotes {
         this.btnPin = document.getElementById('btn-pin');
         this.btnExport = document.getElementById('btn-export');
         this.btnDelete = document.getElementById('btn-delete');
-
         this.editorWrapper = document.getElementById('editor-wrapper');
         this.emptyState = document.getElementById('empty-state');
-
         this.countAllEl = document.getElementById('count-all');
         this.countPinnedEl = document.getElementById('count-pinned');
-
         this.modalOverlay = document.getElementById('custom-modal');
         this.modalIcon = document.getElementById('modal-icon-container');
         this.modalTitle = document.getElementById('modal-title');
         this.modalMessage = document.getElementById('modal-message');
         this.modalConfirmBtn = document.getElementById('modal-confirm-btn');
         this.modalCancelBtn = document.getElementById('modal-cancel-btn');
-
         this.inputModalOverlay = document.getElementById('custom-input-modal');
         this.inputModalField = document.getElementById('input-modal-field');
         this.inputModalConfirmBtn = document.getElementById('input-modal-confirm-btn');
         this.inputModalCancelBtn = document.getElementById('input-modal-cancel-btn');
-
         this.sortDropdownBtn = document.getElementById('sort-dropdown-btn');
         this.sortDropdownMenu = document.getElementById('sort-dropdown-menu');
         this.sortDropdownLabel = document.getElementById('sort-selected-label');
-
         this.folderDropdownBtn = document.getElementById('folder-dropdown-btn');
         this.folderDropdownMenu = document.getElementById('folder-dropdown-menu');
         this.folderDropdownLabel = document.getElementById('folder-selected-label');
     }
-
     initCustomDropdowns() {
         this.sortDropdownBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             this.folderDropdownMenu.classList.add('hidden');
             this.sortDropdownMenu.classList.toggle('hidden');
         });
-
         document.querySelectorAll('#sort-dropdown-menu .dropdown-item').forEach(item => {
             item.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const val = item.dataset.value;
                 const labelText = item.querySelector('span').textContent;
-
                 document.querySelectorAll('#sort-dropdown-menu .dropdown-item').forEach(i => i.classList.remove('active'));
                 item.classList.add('active');
-
                 this.sortDropdownLabel.textContent = labelText;
                 this.currentSort = val;
                 this.sortDropdownMenu.classList.add('hidden');
                 this.renderSidebar();
             });
         });
-
         this.folderDropdownBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             this.sortDropdownMenu.classList.add('hidden');
             this.folderDropdownMenu.classList.toggle('hidden');
         });
-
         document.addEventListener('click', () => {
             this.sortDropdownMenu.classList.add('hidden');
             this.folderDropdownMenu.classList.add('hidden');
         });
     }
-
-        initEventListeners() {
+    initEventListeners() {
         this.btnNew.addEventListener('click', () => this.createNote());
         this.btnEmptyNew.addEventListener('click', () => this.createNote());
         this.btnImport.addEventListener('click', () => this.inputImportFile.click());
         this.inputImportFile.addEventListener('change', (e) => this.handleFileImport(e));
         this.btnAddFolder.addEventListener('click', () => this.promptCreateFolder());
-
         this.foldersToggle.addEventListener('click', () => {
             this.foldersHeader.classList.toggle('collapsed');
             this.foldersListEl.classList.toggle('collapsed');
         });
-
         this.btnBack.addEventListener('click', () => {
             this.appContainer.classList.remove('show-editor');
         });
-
         this.titleInput.addEventListener('input', () => this.handleEditorInput());
         this.bodyInput.addEventListener('input', () => this.handleEditorInput());
-
         this.btnPin.addEventListener('click', () => this.togglePinActiveNote());
         this.btnExport.addEventListener('click', () => this.exportActiveNote());
         this.btnDelete.addEventListener('click', () => this.promptDeleteNote());
-
         this.searchInput.addEventListener('input', (e) => {
             this.searchQuery = e.target.value.toLowerCase();
             this.renderSidebar();
         });
-
         document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
                 document.querySelectorAll('.folder-item').forEach(f => f.classList.remove('active'));
-
                 const target = e.currentTarget;
                 target.classList.add('active');
                 this.currentFilter = target.dataset.filter;
                 this.renderSidebar();
             });
         });
-
         this.modalCancelBtn.addEventListener('click', () => this.hideModal());
         this.inputModalCancelBtn.addEventListener('click', () => this.hideInputModal());
-
-        // --- CONTROL DE NAVEGACIÓN SEGURO ---
-
-        // 1. Si el usuario oculta la pestaña, guardamos de inmediato lo que esté escribiendo
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'hidden') {
                 this.flushPendingSave();
             }
         });
-
-        // 2. Si el navegador restaura la página desde el caché (Bfcache) al usar el botón Atrás/Adelante
         window.addEventListener('pageshow', (event) => {
             if (event.persisted) {
                 this.bootstrap();
             }
         });
-
-        // 3. Forzar guardado antes de cerrar o cambiar de web
         window.addEventListener('beforeunload', () => {
             this.flushPendingSave();
         });
     }
-
-
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-                document.querySelectorAll('.folder-item').forEach(f => f.classList.remove('active'));
-
-                const target = e.currentTarget;
-                target.classList.add('active');
-                this.currentFilter = target.dataset.filter;
-                this.renderSidebar();
-            });
-        });
-
-        this.modalCancelBtn.addEventListener('click', () => this.hideModal());
-        this.inputModalCancelBtn.addEventListener('click', () => this.hideInputModal());
-    }
-
     async createNote() {
         const activeFolder = this.currentFilter.startsWith('folder_') ? this.currentFilter : null;
-
         const newNote = {
             id: crypto.randomUUID ? crypto.randomUUID() : ('note_' + Date.now()),
             title: '',
@@ -369,7 +285,6 @@ class LuminaNotes {
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
         };
-
         try {
             await this.dbManager.save('notes', newNote);
             this.notes.unshift(newNote);
@@ -383,21 +298,17 @@ class LuminaNotes {
             this.showToast('Error al crear nota');
         }
     }
-
     async handleFileImport(e) {
         const file = e.target.files[0];
         if (!file) return;
-
         const reader = new FileReader();
         reader.onload = async (event) => {
             try {
                 const content = event.target.result;
                 const activeFolder = this.currentFilter.startsWith('folder_') ? this.currentFilter : null;
-
                 if (file.name.endsWith('.json')) {
                     const parsed = JSON.parse(content);
                     const itemsToImport = Array.isArray(parsed) ? parsed : [parsed];
-
                     for (const item of itemsToImport) {
                         const newNote = {
                             id: crypto.randomUUID ? crypto.randomUUID() : ('note_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4)),
@@ -427,7 +338,6 @@ class LuminaNotes {
                     this.notes.unshift(newNote);
                     this.showToast('Nota importada correctamente');
                 }
-
                 this.renderFolders();
                 this.renderSidebar();
                 if (this.notes.length > 0) {
@@ -438,20 +348,16 @@ class LuminaNotes {
                 this.showToast('Error al importar archivo');
             }
         };
-
         reader.readAsText(file);
         e.target.value = '';
     }
-
     selectNote(id, openEditorOnMobile = true) {
         this.activeNoteId = id;
         const note = this.notes.find(n => n.id === id);
-
         if (!note) {
             this.updateEditorState();
             return;
         }
-
         this.titleInput.value = note.title;
         this.bodyInput.value = note.body;
         this.updateMetaInfo(note);
@@ -459,17 +365,13 @@ class LuminaNotes {
         this.renderFolderDropdown(note.folderId);
         this.updateEditorState();
         this.renderSidebar();
-
         if (openEditorOnMobile) {
             this.appContainer.classList.add('show-editor');
         }
     }
-
     handleEditorInput() {
         if (!this.activeNoteId) return;
-
         this.updateSaveStatus('Guardando...');
-
         clearTimeout(this.saveTimeout);
         this.saveTimeout = setTimeout(async () => {
             const note = this.notes.find(n => n.id === this.activeNoteId);
@@ -477,7 +379,6 @@ class LuminaNotes {
                 note.title = this.titleInput.value;
                 note.body = this.bodyInput.value;
                 note.updatedAt = new Date().toISOString();
-
                 try {
                     await this.dbManager.save('notes', note);
                     this.renderSidebar();
@@ -490,7 +391,6 @@ class LuminaNotes {
             }
         }, 600);
     }
-
     async togglePinActiveNote() {
         if (!this.activeNoteId) return;
         const note = this.notes.find(n => n.id === this.activeNoteId);
@@ -507,12 +407,9 @@ class LuminaNotes {
             }
         }
     }
-
     promptDeleteNote() {
         if (!this.activeNoteId) return;
-
         const deleteSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
-
         this.showModal({
             title: 'Borrar Nota',
             message: 'Seguro que quieres eliminar esta nota permanentemente?',
@@ -522,16 +419,13 @@ class LuminaNotes {
             }
         });
     }
-
     async deleteActiveNote() {
         const targetId = this.activeNoteId;
         try {
             await this.dbManager.delete('notes', targetId);
             this.notes = this.notes.filter(n => n.id !== targetId);
-
             this.appContainer.classList.remove('show-editor');
             this.renderFolders();
-
             if (this.notes.length > 0) {
                 this.selectNote(this.notes[0].id, false);
             } else {
@@ -539,27 +433,23 @@ class LuminaNotes {
                 this.updateEditorState();
                 this.renderSidebar();
             }
-
             this.showToast('Nota eliminada');
         } catch (error) {
             console.error(error);
             this.showToast('Error al eliminar la nota');
         }
     }
-
     promptCreateFolder() {
         this.showInputModal({
             title: 'Crear nueva carpeta',
             placeholder: 'Nombre de la carpeta...',
             onConfirm: async (folderName) => {
                 if (!folderName.trim()) return;
-
                 const newFolder = {
                     id: crypto.randomUUID ? crypto.randomUUID() : ('folder_' + Date.now()),
                     name: folderName.trim(),
                     createdAt: new Date().toISOString()
                 };
-
                 try {
                     await this.dbManager.save('folders', newFolder);
                     this.folders.push(newFolder);
@@ -576,10 +466,8 @@ class LuminaNotes {
             }
         });
     }
-
     promptDeleteFolder(folderId, folderName) {
         const deleteSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2v11z"></path><line x1="9" y1="14" x2="15" y2="14"></line></svg>`;
-
         this.showModal({
             title: 'Borrar Carpeta',
             message: `Seguro que quieres borrar la carpeta "${folderName}"? Las notas en esta carpeta quedarán Sin Categoría.`,
@@ -588,19 +476,16 @@ class LuminaNotes {
                 try {
                     await this.dbManager.delete('folders', folderId);
                     this.folders = this.folders.filter(f => f.id !== folderId);
-
                     for (const note of this.notes) {
                         if (note.folderId === folderId) {
                             note.folderId = null;
                             await this.dbManager.save('notes', note);
                         }
                     }
-
                     if (this.currentFilter === folderId) {
                         this.currentFilter = 'all';
                         document.querySelector('.filter-btn[data-filter="all"]').classList.add('active');
                     }
-
                     this.renderFolders();
                     this.renderSidebar();
                     if (this.activeNoteId) {
@@ -615,7 +500,6 @@ class LuminaNotes {
             }
         });
     }
-
     async assignNoteFolder(folderId) {
         if (!this.activeNoteId) return;
         const note = this.notes.find(n => n.id === this.activeNoteId);
@@ -633,15 +517,12 @@ class LuminaNotes {
             }
         }
     }
-
     exportActiveNote() {
         if (!this.activeNoteId) return;
         const note = this.notes.find(n => n.id === this.activeNoteId);
         if (!note) return;
-
         const filename = (note.title.trim() || 'untitled-note') + '.txt';
         const content = `${note.title}\n${'='.repeat(note.title.length)}\n\n${note.body}`;
-
         const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -649,23 +530,18 @@ class LuminaNotes {
         link.download = filename;
         link.click();
         URL.revokeObjectURL(url);
-
         this.showToast('Nota exportada correctamente');
     }
-
     renderFolders() {
         this.foldersListEl.innerHTML = '';
-
         if (this.folders.length === 0) {
             this.foldersListEl.innerHTML = `<div style="padding: 6px 12px; font-size: 0.8rem; color: var(--text-muted);">No hay carpetas creadas</div>`;
             return;
         }
-
         this.folders.forEach(folder => {
             const count = this.notes.filter(n => n.folderId === folder.id).length;
             const item = document.createElement('div');
             item.className = `folder-item ${this.currentFilter === folder.id ? 'active' : ''}`;
-
             item.innerHTML = `
                 <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
@@ -679,7 +555,6 @@ class LuminaNotes {
                     </svg>
                 </button>
             `;
-
             item.addEventListener('click', (e) => {
                 if (e.target.closest('.btn-delete-folder')) return;
                 document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -688,19 +563,15 @@ class LuminaNotes {
                 this.currentFilter = folder.id;
                 this.renderSidebar();
             });
-
             item.querySelector('.btn-delete-folder').addEventListener('click', (e) => {
                 e.stopPropagation();
                 this.promptDeleteFolder(folder.id, folder.name);
             });
-
             this.foldersListEl.appendChild(item);
         });
     }
-
     renderFolderDropdown(currentFolderId) {
         this.folderDropdownMenu.innerHTML = '';
-
         const uncategorizedItem = document.createElement('div');
         uncategorizedItem.className = `dropdown-item ${!currentFolderId ? 'active' : ''}`;
         uncategorizedItem.innerHTML = `
@@ -712,7 +583,6 @@ class LuminaNotes {
             this.folderDropdownMenu.classList.add('hidden');
         });
         this.folderDropdownMenu.appendChild(uncategorizedItem);
-
         this.folders.forEach(folder => {
             const item = document.createElement('div');
             item.className = `dropdown-item ${currentFolderId === folder.id ? 'active' : ''}`;
@@ -726,11 +596,9 @@ class LuminaNotes {
             });
             this.folderDropdownMenu.appendChild(item);
         });
-
         const activeFolderObj = this.folders.find(f => f.id === currentFolderId);
         this.folderDropdownLabel.textContent = activeFolderObj ? activeFolderObj.name : 'Sin Categoría';
     }
-
     renderSidebar() {
         let filtered = this.notes.filter(note => {
             const matchesSearch = note.title.toLowerCase().includes(this.searchQuery) ||
@@ -741,39 +609,31 @@ class LuminaNotes {
             }
             return matchesSearch;
         });
-
         filtered.sort((a, b) => {
             if (this.currentSort === 'updated-desc') return new Date(b.updatedAt) - new Date(a.updatedAt);
             if (this.currentSort === 'updated-asc') return new Date(a.updatedAt) - new Date(b.updatedAt);
             if (this.currentSort === 'title-asc') return a.title.localeCompare(b.title);
             return 0;
         });
-
         this.countAllEl.textContent = this.notes.length;
         this.countPinnedEl.textContent = this.notes.filter(n => n.pinned).length;
-
         this.notesListEl.innerHTML = '';
-
         if (filtered.length === 0) {
             this.notesListEl.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 20px; font-size: 0.85rem;">No hay notas por aqui</div>`;
             return;
         }
-
         filtered.forEach(note => {
             const item = document.createElement('div');
             item.className = `note-item ${note.id === this.activeNoteId ? 'active' : ''}`;
-
             const pinIconHtml = note.pinned ? `
                 <svg class="note-item-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="12" y1="17" x2="12" y2="22"></line>
                     <path d="M5 17h14l-1.5-6h-11z"></path>
                     <path d="M9 11V4a3 3 0 0 1 6 0v7"></path>
                 </svg>` : '';
-
             const displayTitle = note.title.trim() || 'Sin Título';
             const displaySnippet = note.body.trim() || 'Sin texto...';
             const formattedDate = this.formatDate(note.updatedAt);
-
             item.innerHTML = `
                 <div class="note-item-header">
                     <div class="note-item-title">${this.escapeHTML(displayTitle)}</div>
@@ -782,12 +642,10 @@ class LuminaNotes {
                 <div class="note-item-snippet">${this.escapeHTML(displaySnippet)}</div>
                 <div class="note-item-date">${formattedDate}</div>
             `;
-
             item.addEventListener('click', () => this.selectNote(note.id, true));
             this.notesListEl.appendChild(item);
         });
     }
-
     updateEditorState() {
         if (!this.activeNoteId) {
             this.editorWrapper.classList.add('hidden');
@@ -797,16 +655,13 @@ class LuminaNotes {
             this.emptyState.classList.add('hidden');
         }
     }
-
     updateMetaInfo(note) {
         this.noteDateEl.textContent = `Actualizado: ${this.formatDate(note.updatedAt)}`;
-
         const text = note.body.trim();
         const words = text ? text.split(/\s+/).length : 0;
         const chars = text.length;
         this.statsCounterEl.textContent = `${words} palabras, ${chars} caracteres`;
     }
-
     updatePinButtonState(isPinned) {
         if (isPinned) {
             this.btnPin.classList.add('active');
@@ -814,54 +669,43 @@ class LuminaNotes {
             this.btnPin.classList.remove('active');
         }
     }
-
     updateSaveStatus(text) {
         document.getElementById('status-text').textContent = text;
     }
-
     showModal({ title, message, iconSvg, onConfirm }) {
         this.modalTitle.textContent = title;
         this.modalMessage.textContent = message;
         this.modalIcon.innerHTML = iconSvg;
         this.modalOverlay.classList.remove('hidden');
-
         this.modalConfirmBtn.onclick = () => {
             onConfirm();
             this.hideModal();
         };
     }
-
     hideModal() {
         this.modalOverlay.classList.add('hidden');
     }
-
     showInputModal({ title, placeholder, onConfirm }) {
         document.getElementById('input-modal-title').textContent = title;
         this.inputModalField.placeholder = placeholder;
         this.inputModalField.value = '';
         this.inputModalOverlay.classList.remove('hidden');
         this.inputModalField.focus();
-
         this.inputModalConfirmBtn.onclick = () => {
             onConfirm(this.inputModalField.value);
             this.hideInputModal();
         };
     }
-
     hideInputModal() {
         this.inputModalOverlay.classList.add('hidden');
     }
-
     showToast(message) {
         const container = document.getElementById('toast-container');
         const toast = document.createElement('div');
         toast.className = 'toast';
-
         const checkSvg = `<svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
-
         toast.innerHTML = `${checkSvg} <span>${message}</span>`;
         container.appendChild(toast);
-
         setTimeout(() => {
             toast.style.opacity = '0';
             toast.style.transform = 'translateY(10px)';
@@ -869,7 +713,6 @@ class LuminaNotes {
             setTimeout(() => toast.remove(), 200);
         }, 2500);
     }
-
     formatDate(isoString) {
         const date = new Date(isoString);
         return date.toLocaleDateString('es-MX', {
@@ -880,7 +723,6 @@ class LuminaNotes {
             minute: '2-digit'
         });
     }
-
     escapeHTML(str) {
         return str.replace(/[&<>'"]/g, 
             tag => ({
@@ -893,7 +735,6 @@ class LuminaNotes {
         );
     }
 }
-
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new LuminaNotes();
 });
