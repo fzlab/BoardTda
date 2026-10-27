@@ -27,23 +27,43 @@ class SupabaseNotesManager {
         this.userId = null;
     }
 
-    async init() {
+        async init() {
         if (!this.supabase) {
             throw new Error('Supabase no está disponible.');
         }
 
-        // 2. Intentar obtener la sesión actual
-        let { data: { session }, error: sessionError } = await this.supabase.auth.getSession();
-        
-        // 3. Si por seguridad o contexto de iframe no la detecta al instante, intentamos un getUser() o refrescar
-        if (!session || sessionError) {
-            const { data: userData } = await this.supabase.auth.getUser();
-            if (userData && userData.user) {
-                this.userId = userData.user.id;
-                return userData.user;
+        // Usamos una pequeña promesa para asegurar que Supabase recuperó la sesión del almacenamiento
+        const session = await new Promise(async (resolve) => {
+            const { data: { session } } = await this.supabase.auth.getSession();
+            if (session) {
+                resolve(session);
+                return;
             }
 
-            // Si de verdad no hay sesión en ningún lado, redirigir al login principal de la PWA
+            // Si no hay sesión inmediata, esperamos al evento de cambio de estado o usamos getUser
+            const { data: userData } = await this.supabase.auth.getUser();
+            if (userData && userData.user) {
+                resolve({ user: userData.user });
+                return;
+            }
+
+            // Damos un pequeño margen por si el storage es lento (ej. PWA / Iframe)
+            const { data: { subscription } } = this.supabase.auth.onAuthStateChange((event, session) => {
+                if (session) {
+                    subscription.unsubscribe();
+                    resolve(session);
+                }
+            });
+
+            // Timeout de seguridad de 2 segundos por si no hay sesión real
+            setTimeout(() => {
+                subscription?.unsubscribe();
+                resolve(null);
+            }, 2000);
+        });
+
+        if (!session || !session.user) {
+            // Si de verdad no hay sesión en ningún lado, redirigir al login principal
             window.location.href = '../index.html'; 
             throw new Error('No hay una sesión activa');
         }
@@ -51,6 +71,7 @@ class SupabaseNotesManager {
         this.userId = session.user.id;
         return session.user;
     }
+
 
     async getAll(storeName) {
         const { data, error } = await this.supabase
