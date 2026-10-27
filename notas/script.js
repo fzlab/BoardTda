@@ -291,7 +291,7 @@ class LuminaNotes {
         });
     }
 
-        initEventListeners() {
+    initEventListeners() {
         this.btnNew.addEventListener('click', () => this.createNote());
         this.btnEmptyNew.addEventListener('click', () => this.createNote());
         this.btnImport.addEventListener('click', () => this.inputImportFile.click());
@@ -334,29 +334,28 @@ class LuminaNotes {
         this.modalCancelBtn.addEventListener('click', () => this.hideModal());
         this.inputModalCancelBtn.addEventListener('click', () => this.hideInputModal());
 
-        // --- NUEVOS LISTENERS PARA CONTROLAR LA NAVEGACIÓN Y VISIBILIDAD ---
+        // --- CONTROL DE NAVEGACIÓN SEGURO ---
 
-        // 1. Detectar si el usuario cambia de pestaña o minimiza la web
+        // 1. Si el usuario oculta la pestaña, guardamos de inmediato lo que esté escribiendo
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'hidden') {
                 this.flushPendingSave();
-            } else if (document.visibilityState === 'visible') {
-                this.bootstrap(); // Recarga los datos al volver a enfocar la pestaña
             }
         });
 
-        // 2. Manejar cuando se regresa usando el botón Atrás/Adelante del navegador (Bfcache)
+        // 2. Si el navegador restaura la página desde el caché (Bfcache) al usar el botón Atrás/Adelante
         window.addEventListener('pageshow', (event) => {
             if (event.persisted) {
                 this.bootstrap();
             }
         });
 
-        // 3. Forzar guardado justo antes de que la página se descargue o navegue a otra URL
+        // 3. Forzar guardado antes de cerrar o cambiar de web
         window.addEventListener('beforeunload', () => {
             this.flushPendingSave();
         });
     }
+
 
 
         document.querySelectorAll('.filter-btn').forEach(btn => {
