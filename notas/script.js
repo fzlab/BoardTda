@@ -6,50 +6,36 @@ if (typeof supabase === 'undefined') {
 }
 
 class SupabaseManager {
+class SupabaseManager {
     constructor() {
         this.supabaseUrl = 'https://mifbcyxtafeacwkzqzsq.supabase.co';
         this.supabaseKey = 'sb_publishable_O6EAbkSba1NQPq08k_7bHg_PZ_x4ZU5';
         this.client = null;
-        this.defaultUserId = '00000000-0000-0000-0000-000000000000';
     }
 
     init() {
         if (window.supabase && !this.client) {
-            // Inicialización directa tal como la web funcional de tickets
             this.client = window.supabase.createClient(this.supabaseUrl, this.supabaseKey);
         }
     }
 
-    async getCurrentUserId() {
-        this.init();
-        if (!this.client) return this.defaultUserId;
-
-        try {
-            // Obtener la sesión compartida directamente del cliente de Supabase del navegador
-            const { data: { session }, error } = await this.client.auth.getSession();
-            if (session && session.user) {
-                return session.user.id;
-            }
-        } catch (err) {
-            console.error('Error al obtener la sesión de Supabase:', err);
-        }
-
-        return this.defaultUserId;
-    }
-
     async saveNote(note) {
         this.init();
-        if (!this.client) {
-            console.error('Supabase client not initialized.');
-            return;
-        }
+        if (!this.client) return;
 
         try {
-            const userId = await this.getCurrentUserId();
+            // 1. Obtenemos el usuario autenticado actual de la sesión de Supabase
+            const { data: { user }, error: userError } = await this.client.auth.getUser();
 
+            if (userError || !user) {
+                console.warn('Supabase Sync Warning: No hay una sesión de usuario activa.');
+                return;
+            }
+
+            // 2. Mapeo del objeto local usando el user.id real
             const payload = {
-                id: String(note.id),
-                user_id: userId,
+                id: note.id,
+                user_id: user.id, // <-- Usamos el ID real del usuario autenticado
                 folder_id: note.folderId && note.folderId.startsWith('folder_') ? null : (note.folderId || null),
                 title: note.title || '',
                 content: note.body || '',
@@ -63,9 +49,9 @@ class SupabaseManager {
                 .upsert(payload, { onConflict: 'id' });
 
             if (error) {
-                console.error('Error syncing note to Supabase:', error.message, error.details);
+                console.error('Error syncing note to Supabase:', error.message);
             } else {
-                console.log('Note successfully synced to Supabase:', note.id);
+                console.log('Nota sincronizada correctamente con Supabase.');
             }
         } catch (err) {
             console.error('Supabase save exception:', err);
@@ -77,21 +63,26 @@ class SupabaseManager {
         if (!this.client) return;
 
         try {
+            const { data: { user }, error: userError } = await this.client.auth.getUser();
+            if (userError || !user) return;
+
             const { error } = await this.client
                 .from('notes')
                 .delete()
-                .eq('id', String(id));
+                .eq('id', id)
+                .eq('user_id', user.id); // Aseguramos que borre solo las notas del usuario actual
 
             if (error) {
                 console.error('Error deleting note from Supabase:', error.message);
             } else {
-                console.log('Note successfully deleted from Supabase:', id);
+                console.log('Nota eliminada de Supabase.');
             }
         } catch (err) {
             console.error('Supabase delete exception:', err);
         }
     }
 }
+
 
 class DatabaseManager {
     constructor() {
