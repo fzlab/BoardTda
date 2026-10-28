@@ -14,27 +14,67 @@ class SupabaseManager {
 
     init() {
         if (window.supabase && !this.client) {
-            this.client = window.supabase.createClient(this.supabaseUrl, this.supabaseKey);
+            // Configuramos el cliente indicándole que persista y comparta sesión
+            this.client = window.supabase.createClient(this.supabaseUrl, this.supabaseKey, {
+                auth: {
+                    persistSession: true,
+                    autoRefreshToken: true,
+                    detectSessionInUrl: true
+                }
+            });
+        }
+    }
+
+    async getActiveUser() {
+        this.init();
+        if (!this.client) return null;
+
+        try {
+            // 1. Intentar obtener el usuario directamente del cliente local
+            let { data: { user }, error } = await this.client.auth.getUser();
+            if (user) return user;
+
+            // 2. Si estamos dentro de un iframe y el padre (Hub) tiene sesión, intentamos sincronizarla
+            if (window.parent && window.parent !== window && window.parent.supabase) {
+                // Opcional: recuperar la sesión desde el LocalStorage del dominio principal si comparten origen
+                const sessionData = localStorage.getItem('sb-mifbcyxtafeacwkzqzsq-auth-token');
+                if (sessionData) {
+                    const parsed = JSON.parse(sessionData);
+                    if (parsed && parsed.access_token) {
+                        await this.client.auth.setSession({
+                            access_token: parsed.access_token,
+                            refresh_token: parsed.refresh_token
+                        });
+                        const res = await this.client.auth.getUser();
+                        if (res.data.user) return res.data.user;
+                    }
+                }
+            }
+            return null;
+        } catch (e) {
+            console.error('Error obteniendo usuario en SupabaseManager:', e);
+            return null;
         }
     }
 
     async saveNote(note) {
         this.init();
-        if (!this.client) return;
+        if (!this.client) {
+            console.error('Supabase Client no inicializado');
+            return;
+        }
 
         try {
-            // 1. Obtenemos el usuario autenticado actual de la sesión de Supabase
-            const { data: { user }, error: userError } = await this.client.auth.getUser();
+            const user = await this.getActiveUser();
 
-            if (userError || !user) {
-                console.warn('Supabase Sync Warning: No hay una sesión de usuario activa.');
+            if (!user) {
+                console.warn('Supabase Sync Abortada: No se detectó ningún usuario con sesión activa en la subweb de notas.');
                 return;
             }
 
-            // 2. Mapeo del objeto local usando el user.id real
             const payload = {
                 id: note.id,
-                user_id: user.id, // <-- Usamos el ID real del usuario autenticado
+                user_id: user.id,
                 folder_id: note.folderId && note.folderId.startsWith('folder_') ? null : (note.folderId || null),
                 title: note.title || '',
                 content: note.body || '',
@@ -43,14 +83,14 @@ class SupabaseManager {
                 updated_at: note.updatedAt
             };
 
-            const { error } = await this.client
+            const { data, error } = await this.client
                 .from('notes')
                 .upsert(payload, { onConflict: 'id' });
 
             if (error) {
-                console.error('Error syncing note to Supabase:', error.message);
+                console.error('❌ Error de Supabase al guardar la nota:', error.message, error.details);
             } else {
-                console.log('Nota sincronizada correctamente con Supabase.');
+                console.log('✅ Nota sincronizada exitosamente con Supabase:', note.id);
             }
         } catch (err) {
             console.error('Supabase save exception:', err);
@@ -62,25 +102,29 @@ class SupabaseManager {
         if (!this.client) return;
 
         try {
-            const { data: { user }, error: userError } = await this.client.auth.getUser();
-            if (userError || !user) return;
+            const user = await this.getActiveUser();
+            if (!user) {
+                console.warn('Supabase Delete Abortada: Sin sesión activa.');
+                return;
+            }
 
             const { error } = await this.client
                 .from('notes')
                 .delete()
                 .eq('id', id)
-                .eq('user_id', user.id); // Aseguramos que borre solo las notas del usuario actual
+                .eq('user_id', user.id);
 
             if (error) {
-                console.error('Error deleting note from Supabase:', error.message);
+                console.error('❌ Error eliminando nota de Supabase:', error.message);
             } else {
-                console.log('Nota eliminada de Supabase.');
+                console.log('🗑️ Nota eliminada de Supabase:', id);
             }
         } catch (err) {
             console.error('Supabase delete exception:', err);
         }
     }
 }
+
 
 
 class DatabaseManager {
