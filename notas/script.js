@@ -6,7 +6,6 @@ if (typeof supabase === 'undefined') {
 }
 
 class SupabaseManager {
-class SupabaseManager {
     constructor() {
         this.supabaseUrl = 'https://mifbcyxtafeacwkzqzsq.supabase.co';
         this.supabaseKey = 'sb_publishable_O6EAbkSba1NQPq08k_7bHg_PZ_x4ZU5';
