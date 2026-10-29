@@ -140,8 +140,8 @@
 
     <!-- Modal Ver / Maximizar Nota -->
     <div class="modal fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[10000] flex items-center justify-center p-4" id="modalVerNota" style="display: none;">
-        <div class="modal-content bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 w-full max-w-lg shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
-            <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-3">
+        <div id="modalVerNotaContent" class="modal-content border rounded-2xl p-5 w-full max-w-lg shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-200/50 dark:border-slate-700/50 pb-3">
                 <span id="verNotaCategoriaBadge" class="px-2.5 py-0.5 rounded-full font-semibold bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20 text-xs">Sin categoría</span>
                 <div class="flex items-center gap-2">
                     <button id="btnVerEditar" onclick="" class="py-1 px-2.5 bg-teal-500/10 border border-teal-500/30 text-teal-600 dark:text-teal-400 rounded-lg hover:bg-teal-500/20 text-xs font-semibold flex items-center gap-1 cursor-pointer" title="Editar nota">
@@ -587,6 +587,11 @@
             document.getElementById('verNotaCategoriaBadge').textContent = nombreCat;
             document.getElementById('btnVerEditar').setAttribute('onclick', `cerrarModalVerNota(); abrirModalNota('${nota.id}')`);
             
+            // Aplicar el color correspondiente a la tarjeta en el modal de visualización
+            const modalContentEl = document.getElementById('modalVerNotaContent');
+            const colorClases = obtenerClasesColorNota(nota.color_nota);
+            modalContentEl.className = `modal-content border rounded-2xl p-5 w-full max-w-lg shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto transition-colors ${colorClases}`;
+
             document.getElementById('modalVerNota').style.display = 'flex';
         }
 
