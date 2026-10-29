@@ -433,23 +433,18 @@
             tempDiv.innerHTML = htmlContent;
 
             // Reemplazar etiquetas HTML por formatos compatibles con WhatsApp
-            // Negritas: <b>, <strong> -> *texto*
             tempDiv.querySelectorAll('b, strong').forEach(el => {
                 el.outerHTML = `*${el.textContent}*`;
             });
-            // Cursiva: <i>, <em> -> _texto_
             tempDiv.querySelectorAll('i, em').forEach(el => {
                 el.outerHTML = `_${el.textContent}_`;
             });
-            // Subrayado: <u> -> ~texto~ (WhatsApp no tiene subrayado nativo, usa tachado o se mantiene limpio)
             tempDiv.querySelectorAll('u').forEach(el => {
                 el.outerHTML = `~${el.textContent}~`;
             });
-            // Encabezados H1, H2 -> *Texto* en mayúsculas o destacados
             tempDiv.querySelectorAll('h1, h2').forEach(el => {
                 el.outerHTML = `*${el.textContent.toUpperCase()}*\n`;
             });
-            // Saltos de línea y párrafos
             tempDiv.querySelectorAll('div, p').forEach(el => {
                 el.outerHTML = `${el.innerHTML}\n`;
             });
@@ -692,12 +687,21 @@
 
             try {
                 if (editId) {
-                    const { error } = await supabaseClient.from('notas').update(payload).eq('id', editId);
+                    const { data, error } = await supabaseClient.from('notas').update(payload).eq('id', editId).select();
                     if (error) throw error;
+                    if (data && data[0]) {
+                        const idx = notasData.findIndex(n => n.id == editId);
+                        if (idx !== -1) notasData[idx] = data[0];
+                    }
                 } else {
-                    const { error } = await supabaseClient.from('notas').insert([payload]);
+                    const { data, error } = await supabaseClient.from('notas').insert([payload]).select();
                     if (error) throw error;
+                    if (data && data[0]) {
+                        notasData.unshift(data[0]);
+                    }
                 }
+                localStorage.setItem(NOTAS_CACHE_KEY, JSON.stringify(notasData));
+                aplicarFiltrosLocales();
             } catch (err) {
                 console.error("Error al guardar nota online, guardando offline:", err);
                 if (editId) {
@@ -717,8 +721,8 @@
                 return;
             }
 
-            await cargarDatosRemotos();
             cerrarModalNota();
+            cargarDatosRemotos(); // Sincroniza en segundo plano sin bloquear
         }
 
         function eliminarNota(id) {
@@ -734,6 +738,9 @@
                 try {
                     const { error } = await supabaseClient.from('notas').delete().eq('id', id);
                     if (error) throw error;
+                    notasData = notasData.filter(n => n.id != id);
+                    localStorage.setItem(NOTAS_CACHE_KEY, JSON.stringify(notasData));
+                    aplicarFiltrosLocales();
                 } catch (err) {
                     agregarAColaOffline('ELIMINAR', 'NOTA', { id });
                     notasData = notasData.filter(n => n.id != id);
@@ -741,7 +748,7 @@
                     aplicarFiltrosLocales();
                     return;
                 }
-                await cargarDatosRemotos();
+                cargarDatosRemotos();
             });
         }
 
