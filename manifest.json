@@ -21,4 +21,22 @@
       "purpose": "any maskable"
     }
   ]
+  
+"shortcuts": [
+  {
+    "name": "Gestor de Tickets",
+    "short_name": "Tickets",
+    "url": "/tickets",
+    "icons": [
+      {
+        "src": "/src/img/icons/mediacapture-96x96.png",
+        "sizes": "96x96"
+      }
+    ]
+  },
+  
+
+  
+]
+      
 }
