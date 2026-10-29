@@ -33,7 +33,7 @@
         html, body { overscroll-behavior-y: contain; }
         -webkit-tap-highlight-color: transparent;
         body { user-select: none; -webkit-user-select: none; }
-        input, select, textarea { user-select: text; -webkit-user-select: text; }
+        input, select, textarea, [contenteditable] { user-select: text; -webkit-user-select: text; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
@@ -148,7 +148,7 @@
             </div>
             <div class="space-y-3">
                 <h3 id="verNotaTitulo" class="text-base font-bold text-slate-900 dark:text-slate-100"></h3>
-                <p id="verNotaContenido" class="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-line leading-relaxed"></p>
+                <div id="verNotaContenido" class="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-line leading-relaxed"></div>
             </div>
             <div class="mt-4 flex justify-end">
                 <button onclick="cerrarModalVerNota()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold rounded-xl text-xs cursor-pointer">Cerrar</button>
@@ -193,8 +193,18 @@
                     </div>
                 </div>
                 <div>
-                    <label class="font-semibold text-slate-600 dark:text-slate-400 block mb-1">Contenido</label>
-                    <textarea id="inputContenido" placeholder="Escribe tu nota aquí..." rows="5" class="w-full bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/50 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-200 outline-none leading-relaxed"></textarea>
+                    <label class="font-semibold text-slate-600 dark:text-slate-400 block mb-1">Contenido con Formato</label>
+                    <!-- Barra de Herramientas Estilo Keep -->
+                    <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700/60 rounded-t-xl px-2 py-1.5 text-slate-600 dark:text-slate-300 text-xs">
+                        <button type="button" onclick="aplicarFormato('formatBlock', '<h1>')" class="px-2 py-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded font-bold" title="Encabezado 1">H1</button>
+                        <button type="button" onclick="aplicarFormato('formatBlock', '<h2>')" class="px-2 py-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded font-bold" title="Encabezado 2">H2</button>
+                        <span class="w-[1px] h-4 bg-slate-300 dark:bg-slate-700 mx-1"></span>
+                        <button type="button" onclick="aplicarFormato('bold')" class="px-2.5 py-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded font-bold" title="Negrita"><i class="fa-solid fa-bold"></i></button>
+                        <button type="button" onclick="aplicarFormato('italic')" class="px-2.5 py-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded italic" title="Cursiva"><i class="fa-solid fa-italic"></i></button>
+                        <button type="button" onclick="aplicarFormato('underline')" class="px-2.5 py-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded underline" title="Subrayado"><i class="fa-solid fa-underline"></i></button>
+                    </div>
+                    <!-- Área Editable Enriquecida -->
+                    <div id="inputContenido" contenteditable="true" class="w-full bg-slate-50 dark:bg-slate-900/40 border border-t-0 border-slate-200 dark:border-slate-700/50 rounded-b-xl px-3 py-2.5 text-slate-800 dark:text-slate-200 outline-none leading-relaxed min-h-[120px] max-h-[220px] overflow-y-auto"></div>
                 </div>
             </div>
             <div class="mt-4 flex justify-end gap-2">
@@ -312,6 +322,12 @@
                 input.dispatchEvent(new Event('change'));
             }
             document.getElementById(menuId).classList.add('hidden');
+        }
+
+        // Aplicar formato de texto enriquecido (Negrita, Cursiva, Subrayado, H1, H2)
+        function aplicarFormato(command, value = null) {
+            document.execCommand(command, false, value);
+            document.getElementById('inputContenido').focus();
         }
 
         // Selección de color en el Modal
@@ -508,7 +524,7 @@
                     document.getElementById('modalNotaTitulo').innerText = 'Editar Nota';
                     document.getElementById('editNotaId').value = nota.id;
                     document.getElementById('inputTitulo').value = nota.titulo || '';
-                    document.getElementById('inputContenido').value = nota.contenido || '';
+                    document.getElementById('inputContenido').innerHTML = nota.contenido || '';
                     document.getElementById('inputCategoriaId').value = nota.categoria_id || '';
                     const catObj = categoriasData.find(c => c.id == nota.categoria_id);
                     document.getElementById('text_inputCategoria').textContent = catObj ? catObj.nombre : 'Sin categoría';
@@ -520,7 +536,7 @@
                 document.getElementById('modalNotaTitulo').innerText = 'Crear Nota';
                 document.getElementById('editNotaId').value = '';
                 document.getElementById('inputTitulo').value = '';
-                document.getElementById('inputContenido').value = '';
+                document.getElementById('inputContenido').innerHTML = '';
                 document.getElementById('inputCategoriaId').value = '';
                 document.getElementById('text_inputCategoria').textContent = 'Sin categoría';
                 seleccionarColorNota('default');
@@ -536,7 +552,7 @@
             const nombreCat = catObj ? catObj.nombre : 'Sin categoría';
 
             document.getElementById('verNotaTitulo').textContent = nota.titulo || 'Sin título';
-            document.getElementById('verNotaContenido').textContent = nota.contenido || '';
+            document.getElementById('verNotaContenido').innerHTML = nota.contenido || '';
             document.getElementById('verNotaCategoriaBadge').textContent = nombreCat;
             document.getElementById('btnVerEditar').setAttribute('onclick', `cerrarModalVerNota(); abrirModalNota('${nota.id}')`);
             
@@ -550,12 +566,12 @@
         async function guardarNota() {
             const editId = document.getElementById('editNotaId').value;
             const titulo = document.getElementById('inputTitulo').value.trim();
-            const contenido = document.getElementById('inputContenido').value.trim();
+            const contenido = document.getElementById('inputContenido').innerHTML.trim();
             let categoria_id = document.getElementById('inputCategoriaId').value.trim();
             const color_nota = document.getElementById('inputColorNota').value || 'default';
             if (!categoria_id) categoria_id = null;
 
-            if (!titulo && !contenido) {
+            if (!titulo && (!contenido || contenido === '<br>')) {
                 mostrarAlerta('La nota debe tener un título o algún contenido.');
                 return;
             }
@@ -776,7 +792,7 @@
                                 <i class="fa-solid fa-star text-xs"></i>
                             </button>
                         </div>
-                        <p class="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 whitespace-pre-line leading-relaxed">${nota.contenido || ''}</p>
+                        <div class="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 whitespace-pre-line leading-relaxed overflow-hidden max-h-24">${nota.contenido || ''}</div>
                     </div>
                     <div class="pt-2 border-t border-slate-200/50 dark:border-slate-700/50 flex items-center justify-between text-[10px]">
                         <span class="px-2 py-0.5 rounded-full font-semibold bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20 truncate max-w-[90px]">${nombreCat}</span>
