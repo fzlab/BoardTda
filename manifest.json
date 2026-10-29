@@ -29,8 +29,8 @@
       "url": "./tickets/index.html",
       "icons": [
         {
-          "src": "/src/icons/tickets-192.png",
-          "sizes": "192x192",
+          "src": "/src/icons/tickets-96.png",
+          "sizes": "96x96",
           "type": "image/png"
         }
       ]
@@ -41,8 +41,8 @@
       "url": "./notas/index.html",
       "icons": [
         {
-          "src": "/src/icons/notas-192.png",
-          "sizes": "192x192",
+          "src": "/src/icons/notas-96.png",
+          "sizes": "96x96",
           "type": "image/png"
         }
       ]
@@ -53,8 +53,8 @@
       "url": "./corte/index.html",
       "icons": [
         {
-          "src": "/src/icons/corte-192.png",
-          "sizes": "192x192",
+          "src": "/src/icons/corte-96.png",
+          "sizes": "96x96",
           "type": "image/png"
         }
       ]
