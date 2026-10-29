@@ -134,6 +134,28 @@
         </div>
     </div>
 
+    <!-- Modal Ver / Maximizar Nota -->
+    <div class="modal fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[10000] flex items-center justify-center p-4" id="modalVerNota" style="display: none;">
+        <div class="modal-content bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 w-full max-w-lg shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-3">
+                <span id="verNotaCategoriaBadge" class="px-2.5 py-0.5 rounded-full font-semibold bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20 text-xs">Sin categoría</span>
+                <div class="flex items-center gap-2">
+                    <button id="btnVerEditar" onclick="" class="py-1 px-2.5 bg-teal-500/10 border border-teal-500/30 text-teal-600 dark:text-teal-400 rounded-lg hover:bg-teal-500/20 text-xs font-semibold flex items-center gap-1 cursor-pointer" title="Editar nota">
+                        <i class="fa-solid fa-pen text-[10px]"></i> Editar
+                    </button>
+                    <span class="close-modal text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer text-xl font-bold px-1" onclick="cerrarModalVerNota()">×</span>
+                </div>
+            </div>
+            <div class="space-y-3">
+                <h3 id="verNotaTitulo" class="text-base font-bold text-slate-900 dark:text-slate-100"></h3>
+                <p id="verNotaContenido" class="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-line leading-relaxed"></p>
+            </div>
+            <div class="mt-4 flex justify-end">
+                <button onclick="cerrarModalVerNota()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold rounded-xl text-xs cursor-pointer">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Crear / Editar Nota -->
     <div class="modal fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[10000] flex items-center justify-center p-4" id="modalNota" style="display: none;">
         <div class="modal-content bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 w-full max-w-md shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
@@ -506,6 +528,25 @@
         }
         function cerrarModalNota() { document.getElementById('modalNota').style.display = 'none'; }
 
+        // --- VER / MAXIMIZAR NOTA ---
+        function abrirModalVerNota(id) {
+            const nota = notasData.find(n => n.id == id);
+            if (!nota) return;
+            const catObj = categoriasData.find(c => c.id == nota.categoria_id);
+            const nombreCat = catObj ? catObj.nombre : 'Sin categoría';
+
+            document.getElementById('verNotaTitulo').textContent = nota.titulo || 'Sin título';
+            document.getElementById('verNotaContenido').textContent = nota.contenido || '';
+            document.getElementById('verNotaCategoriaBadge').textContent = nombreCat;
+            document.getElementById('btnVerEditar').setAttribute('onclick', `cerrarModalVerNota(); abrirModalNota('${nota.id}')`);
+            
+            document.getElementById('modalVerNota').style.display = 'flex';
+        }
+
+        function cerrarModalVerNota() {
+            document.getElementById('modalVerNota').style.display = 'none';
+        }
+
         async function guardarNota() {
             const editId = document.getElementById('editNotaId').value;
             const titulo = document.getElementById('inputTitulo').value.trim();
@@ -740,8 +781,9 @@
                     <div class="pt-2 border-t border-slate-200/50 dark:border-slate-700/50 flex items-center justify-between text-[10px]">
                         <span class="px-2 py-0.5 rounded-full font-semibold bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">${nombreCat}</span>
                         <div class="flex items-center gap-1.5 opacity-90 sm:opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onclick="abrirModalNota('${nota.id}')" class="p-1 text-teal-600 hover:text-teal-800 dark:text-teal-400" title="Editar nota"><i class="fa-solid fa-pen"></i></button>
-                            <button onclick="eliminarNota('${nota.id}')" class="p-1 text-rose-500 hover:text-rose-700" title="Eliminar nota"><i class="fa-solid fa-trash-can"></i></button>
+                            <button onclick="abrirModalVerNota('${nota.id}')" class="p-1 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors" title="Ver / Maximizar nota"><i class="fa-solid fa-expand"></i></button>
+                            <button onclick="abrirModalNota('${nota.id}')" class="p-1 text-teal-600 hover:text-teal-800 dark:text-teal-400 transition-colors" title="Editar nota"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="eliminarNota('${nota.id}')" class="p-1 text-rose-500 hover:text-rose-700 transition-colors" title="Eliminar nota"><i class="fa-solid fa-trash-can"></i></button>
                         </div>
                     </div>
                 `;
