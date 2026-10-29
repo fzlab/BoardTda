@@ -174,6 +174,7 @@
     <!-- Modal Ver / Maximizar Nota -->
     <div class="modal fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[10000] flex items-center justify-center p-4" id="modalVerNota" style="display: none;">
         <div id="modalVerNotaContent" class="modal-content border rounded-2xl p-5 w-full max-w-lg shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <input type="hidden" id="verNotaIdActual">
             <div class="flex items-center justify-between border-b border-slate-200/50 dark:border-slate-700/50 pb-3">
                 <span id="verNotaCategoriaBadge" class="px-2.5 py-0.5 rounded-full font-semibold bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20 text-xs">Sin categoría</span>
                 <div class="flex items-center gap-1.5">
@@ -191,7 +192,7 @@
                 <div id="verNotaRecordatorioBadge" class="hidden text-xs text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1.5">
                     <i class="fa-solid fa-clock"></i> <span id="verNotaRecordatorioText"></span>
                 </div>
-                <div id="verNotaContenido" class="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-line leading-relaxed"></div>
+                <div id="verNotaContenido" class="text-xs text-slate-700 dark:text-slate-300 leading-relaxed space-y-1"></div>
             </div>
             <div class="mt-4 flex justify-end">
                 <button onclick="cerrarModalVerNota()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold rounded-xl text-xs cursor-pointer">Cerrar</button>
@@ -261,12 +262,12 @@
                     </div>
 
                     <!-- Contenedor Lista de Verificación (Checklist) -->
-                    <div id="wrapNotaLista" class="hidden space-y-2">
+                    <div id="wrapNotaLista" class="hidden space-y-1.5">
                         <div class="flex gap-2">
                             <input type="text" id="inputNuevaTarea" placeholder="Añadir elemento de lista..." class="flex-1 bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/50 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-200 outline-none" onkeypress="if(event.key==='Enter'){event.preventDefault(); agregarItemChecklist();}">
                             <button type="button" onclick="agregarItemChecklist()" class="px-3 py-2 bg-teal-500/10 border border-teal-500/30 text-teal-600 dark:text-teal-400 rounded-xl font-semibold">Agregar</button>
                         </div>
-                        <div id="checklistItemsContainer" class="space-y-1.5 max-h-40 overflow-y-auto pr-1"></div>
+                        <div id="checklistItemsContainer" class="space-y-1 max-h-40 overflow-y-auto pr-1"></div>
                     </div>
                 </div>
             </div>
@@ -476,7 +477,7 @@
                 return;
             }
             container.innerHTML = checklistEditItems.map((item, idx) => `
-                <div class="flex items-center justify-between bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/50 p-2 rounded-xl text-xs">
+                <div class="flex items-center justify-between bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/50 px-2.5 py-1.5 rounded-xl text-xs">
                     <div class="flex items-center gap-2">
                         <input type="checkbox" ${item.completado ? 'checked' : ''} onchange="checklistEditItems[${idx}].completado = this.checked;" class="w-4 h-4 accent-teal-500 rounded">
                         <span class="${item.completado ? 'line-through text-slate-400' : 'text-slate-800 dark:text-slate-200'}">${item.texto}</span>
@@ -548,7 +549,7 @@
             tempDiv.querySelectorAll('i, em').forEach(el => { el.outerHTML = `_${el.textContent}_`; });
             tempDiv.querySelectorAll('u').forEach(el => { el.outerHTML = `~${el.textContent}~`; });
             tempDiv.querySelectorAll('h1, h2').forEach(el => { el.outerHTML = `*${el.textContent.toUpperCase()}*\n`; });
-            tempDiv.querySelectorAll('div, p').forEach(el => { el.outerHTML = `${el.innerHTML}\n`; });
+            tempDiv.querySelectorAll('div').forEach(el => { el.outerHTML = `${el.innerHTML}\n`; });
 
             return tempDiv.textContent.replace(/\n\s*\n/g, '\n').trim();
         }
@@ -711,7 +712,6 @@
                     const colorNota = nota.color_nota || 'default';
                     seleccionarColorNota(colorNota);
 
-                    // Detectar si el contenido es lista (contiene checkboxes HTML)
                     const contenidoHtml = nota.contenido || '';
                     if (contenidoHtml.includes('type="checkbox"')) {
                         document.getElementById('inputEsLista').value = 'true';
@@ -719,7 +719,6 @@
                         document.getElementById('wrapNotaLista').classList.remove('hidden');
                         document.getElementById('btnAlternarLista').textContent = 'Cambiar a Nota de Texto';
                         
-                        // Extraer items del HTML guardado
                         const temp = document.createElement('div');
                         temp.innerHTML = contenidoHtml;
                         checklistEditItems = [];
@@ -764,6 +763,7 @@
             const catObj = categoriasData.find(c => c.id == nota.categoria_id);
             const nombreCat = catObj ? catObj.nombre : 'Sin categoría';
 
+            document.getElementById('verNotaIdActual').value = nota.id;
             document.getElementById('verNotaTitulo').textContent = nota.titulo || 'Sin título';
             document.getElementById('verNotaCategoriaBadge').textContent = nombreCat;
             document.getElementById('btnVerCompartir').setAttribute('onclick', `compartirNotaWhatsApp('${nota.id}')`);
@@ -777,13 +777,72 @@
                 recBadge.classList.add('hidden');
             }
 
-            document.getElementById('verNotaContenido').innerHTML = nota.contenido || '';
+            // Procesar contenido para que los checks sean interactivos directamente desde el modal de lectura
+            let contenidoHtml = nota.contenido || '';
+            if (contenidoHtml.includes('type="checkbox"')) {
+                const temp = document.createElement('div');
+                temp.innerHTML = contenidoHtml;
+                temp.querySelectorAll('div').forEach((div, idx) => {
+                    const chk = div.querySelector('input[type="checkbox"]');
+                    const span = div.querySelector('span');
+                    if (chk && span) {
+                        const isChecked = chk.checked;
+                        div.className = "flex items-center gap-2 py-0.5";
+                        div.innerHTML = `
+                            <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleItemChecklistModalVer('${nota.id}', ${idx}, this.checked)" class="w-4 h-4 accent-teal-500 rounded cursor-pointer">
+                            <span class="${isChecked ? 'line-through text-slate-400' : 'text-slate-800 dark:text-slate-200'}">${span.textContent}</span>
+                        `;
+                    }
+                });
+                contenidoHtml = temp.innerHTML;
+            }
+
+            document.getElementById('verNotaContenido').innerHTML = contenidoHtml;
 
             const modalContentEl = document.getElementById('modalVerNotaContent');
             const colorClases = obtenerClasesColorNota(nota.color_nota);
             modalContentEl.className = `modal-content border rounded-2xl p-5 w-full max-w-lg shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto transition-colors ${colorClases}`;
 
             document.getElementById('modalVerNota').style.display = 'flex';
+        }
+
+        async function toggleItemChecklistModalVer(notaId, indexItem, nuevoEstado) {
+            const nota = notasData.find(n => n.id == notaId);
+            if (!nota) return;
+
+            const temp = document.createElement('div');
+            temp.innerHTML = nota.contenido;
+            const items = temp.querySelectorAll('div');
+            if (items[indexItem]) {
+                const chk = items[indexItem].querySelector('input[type="checkbox"]');
+                const span = items[indexItem].querySelector('span');
+                if (chk) chk.checked = nuevoEstado;
+                if (span) {
+                    if (nuevoEstado) span.className = "line-through text-slate-400";
+                    else span.className = "text-slate-800 dark:text-slate-200";
+                }
+            }
+
+            nota.contenido = temp.innerHTML;
+            localStorage.setItem(NOTAS_CACHE_KEY, JSON.stringify(notasData));
+            aplicarFiltrosLocales();
+
+            const payload = {
+                id: nota.id,
+                contenido: nota.contenido,
+                updated_at: new Date().toISOString()
+            };
+
+            if (!navigator.onLine) {
+                agregarAColaOffline('EDITAR', 'NOTA', payload);
+                return;
+            }
+
+            try {
+                await supabaseClient.from('notas').update({ contenido: nota.contenido, updated_at: payload.updated_at }).eq('id', nota.id);
+            } catch (err) {
+                console.error("Error al actualizar checklist en vivo:", err);
+            }
         }
 
         function cerrarModalVerNota() {
@@ -806,10 +865,10 @@
                     mostrarAlerta('Agrega al menos un elemento a la lista de tareas.');
                     return;
                 }
-                contenido = checklistEditItems.map((i, idx) => `
+                contenido = checklistEditItems.map(i => `
                     <div class="flex items-center gap-2 py-0.5">
-                        <input type="checkbox" ${i.completado ? 'checked' : ''} onclick="toggleItemChecklistDirecto('${editId || 'temp'}', ${idx})" class="w-3.5 h-3.5 accent-teal-500 rounded">
-                        <span class="${i.completado ? 'line-through text-slate-400' : ''}">${i.texto}</span>
+                        <input type="checkbox" ${i.completado ? 'checked' : ''} class="w-4 h-4 accent-teal-500 rounded pointer-events-none">
+                        <span class="${i.completado ? 'line-through text-slate-400' : 'text-slate-800 dark:text-slate-200'}">${i.texto}</span>
                     </div>
                 `).join('');
             } else {
@@ -821,7 +880,6 @@
                 return;
             }
 
-            // PAYLOAD ÚNICAMENTE CON LAS COLUMNAS EXISTENTES EN SUPABASE
             const payload = {
                 titulo: titulo || 'Sin título',
                 contenido,
@@ -1105,7 +1163,7 @@
                             </div>
                         </div>
                         ${recordatorioHtml}
-                        <div class="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 whitespace-pre-line leading-relaxed overflow-hidden max-h-28">${nota.contenido || ''}</div>
+                        <div class="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 leading-relaxed overflow-hidden max-h-28 space-y-1">${nota.contenido || ''}</div>
                     </div>
                     <div class="pt-2 border-t border-slate-200/50 dark:border-slate-700/50 flex items-center justify-between text-[10px]">
                         <span class="px-2 py-0.5 rounded-full font-semibold bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20 truncate max-w-[90px]">${nombreCat}</span>
