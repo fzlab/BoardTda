@@ -164,7 +164,7 @@
             </div>
             <div class="mt-4 flex justify-end gap-2">
                 <button onclick="cerrarModalNota()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold rounded-xl text-xs">Cancelar</button>
-                <button onclick="guardarNota()" class="px-4 py-2 bg-teal-500/10 border border-teal-500/30 text-teal-600 dark:text-teal-400 rounded-lg hover:bg-teal-500/20 shadow-md font-semibold">Guardar Nota</button>
+                <button onclick="guardarNota()" class="px-4 py-2 bg-teal-500/10 border border-teal-500/30 text-teal-600 dark:text-teal-400 rounded-lg hover:bg-teal-500/25 shadow-md font-semibold">Guardar Nota</button>
             </div>
         </div>
     </div>
@@ -670,13 +670,18 @@
                 const catObj = categoriasData.find(c => c.id == nota.categoria_id);
                 const nombreCat = catObj ? catObj.nombre : 'Sin categoría';
 
+                // Solución al parpadeo de la estrella de favoritos
+                const starColorClass = nota.favorito 
+                    ? 'text-amber-500 dark:text-amber-400' 
+                    : 'text-slate-300 dark:text-slate-600 hover:text-amber-500 dark:hover:text-amber-400';
+
                 const card = document.createElement('div');
                 card.className = "note-card bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-3.5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-2 relative group";
                 card.innerHTML = `
                     <div class="space-y-1">
                         <div class="flex items-start justify-between gap-2">
                             <h4 class="font-bold text-slate-900 dark:text-slate-100 text-sm leading-snug">${nota.titulo || ''}</h4>
-                            <button onclick="toggleFavorito('${nota.id}')" class="text-slate-300 dark:text-slate-600 hover:text-amber-500 dark:hover:text-amber-400 transition-colors ${nota.favorito ? 'text-amber-500 dark:text-amber-400' : ''}">
+                            <button onclick="toggleFavorito('${nota.id}')" class="${starColorClass} transition-colors" title="Marcar como favorita">
                                 <i class="fa-solid fa-star text-xs"></i>
                             </button>
                         </div>
