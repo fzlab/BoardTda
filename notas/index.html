@@ -41,6 +41,10 @@
         body, .card, .topbar, input, select, button {
             transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
         }
+        /* Estilos visuales para H1 y H2 en notas y vistas */
+        .note-card h1, #verNotaContenido h1, #inputContenido h1 { font-size: 1.2rem; font-weight: bold; line-height: 1.3; margin: 0.2rem 0; }
+        .note-card h2, #verNotaContenido h2, #inputContenido h2 { font-size: 1.1rem; font-weight: bold; line-height: 1.3; margin: 0.2rem 0; }
+
         /* Estilo Masonry Keep Grid - Forzado a 2 columnas en móviles y más en pantallas grandes */
         .notes-grid {
             column-count: 2;
@@ -199,12 +203,12 @@
                         <button type="button" onclick="aplicarFormato('formatBlock', '<h1>')" class="px-2 py-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded font-bold" title="Encabezado 1">H1</button>
                         <button type="button" onclick="aplicarFormato('formatBlock', '<h2>')" class="px-2 py-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded font-bold" title="Encabezado 2">H2</button>
                         <span class="w-[1px] h-4 bg-slate-300 dark:bg-slate-700 mx-1"></span>
-                        <button type="button" onclick="aplicarFormato('bold')" class="px-2.5 py-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded font-bold" title="Negrita"><i class="fa-solid fa-bold"></i></button>
-                        <button type="button" onclick="aplicarFormato('italic')" class="px-2.5 py-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded italic" title="Cursiva"><i class="fa-solid fa-italic"></i></button>
-                        <button type="button" onclick="aplicarFormato('underline')" class="px-2.5 py-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded underline" title="Subrayado"><i class="fa-solid fa-underline"></i></button>
+                        <button type="button" id="btnBold" onclick="aplicarFormato('bold')" class="px-2.5 py-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded font-bold transition-colors" title="Negrita"><i class="fa-solid fa-bold"></i></button>
+                        <button type="button" id="btnItalic" onclick="aplicarFormato('italic')" class="px-2.5 py-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded italic transition-colors" title="Cursiva"><i class="fa-solid fa-italic"></i></button>
+                        <button type="button" id="btnUnderline" onclick="aplicarFormato('underline')" class="px-2.5 py-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded underline transition-colors" title="Subrayado"><i class="fa-solid fa-underline"></i></button>
                     </div>
                     <!-- Área Editable Enriquecida -->
-                    <div id="inputContenido" contenteditable="true" class="w-full bg-slate-50 dark:bg-slate-900/40 border border-t-0 border-slate-200 dark:border-slate-700/50 rounded-b-xl px-3 py-2.5 text-slate-800 dark:text-slate-200 outline-none leading-relaxed min-h-[120px] max-h-[220px] overflow-y-auto"></div>
+                    <div id="inputContenido" contenteditable="true" onkeyup="actualizarEstadoBotonesFormat()" onmouseup="actualizarEstadoBotonesFormat()" class="w-full bg-slate-50 dark:bg-slate-900/40 border border-t-0 border-slate-200 dark:border-slate-700/50 rounded-b-xl px-3 py-2.5 text-slate-800 dark:text-slate-200 outline-none leading-relaxed min-h-[120px] max-h-[220px] overflow-y-auto"></div>
                 </div>
             </div>
             <div class="mt-4 flex justify-end gap-2">
@@ -324,10 +328,36 @@
             document.getElementById(menuId).classList.add('hidden');
         }
 
-        // Aplicar formato de texto enriquecido (Negrita, Cursiva, Subrayado, H1, H2)
+        // Aplicar formato de texto enriquecido e indicadores de estado en botones
         function aplicarFormato(command, value = null) {
             document.execCommand(command, false, value);
             document.getElementById('inputContenido').focus();
+            actualizarEstadoBotonesFormat();
+        }
+
+        function actualizarEstadoBotonesFormat() {
+            try {
+                const isBold = document.queryCommandState('bold');
+                const isItalic = document.queryCommandState('italic');
+                const isUnderline = document.queryCommandState('underline');
+
+                const btnBold = document.getElementById('btnBold');
+                const btnItalic = document.getElementById('btnItalic');
+                const btnUnderline = document.getElementById('btnUnderline');
+
+                if (btnBold) {
+                    if (isBold) btnBold.classList.add('bg-teal-500/20', 'text-teal-600', 'dark:text-teal-400');
+                    else btnBold.classList.remove('bg-teal-500/20', 'text-teal-600', 'dark:text-teal-400');
+                }
+                if (btnItalic) {
+                    if (isItalic) btnItalic.classList.add('bg-teal-500/20', 'text-teal-600', 'dark:text-teal-400');
+                    else btnItalic.classList.remove('bg-teal-500/20', 'text-teal-600', 'dark:text-teal-400');
+                }
+                if (btnUnderline) {
+                    if (isUnderline) btnUnderline.classList.add('bg-teal-500/20', 'text-teal-600', 'dark:text-teal-400');
+                    else btnUnderline.classList.remove('bg-teal-500/20', 'text-teal-600', 'dark:text-teal-400');
+                }
+            } catch (e) {}
         }
 
         // Selección de color en el Modal
@@ -541,6 +571,7 @@
                 document.getElementById('text_inputCategoria').textContent = 'Sin categoría';
                 seleccionarColorNota('default');
             }
+            actualizarEstadoBotonesFormat();
         }
         function cerrarModalNota() { document.getElementById('modalNota').style.display = 'none'; }
 
