@@ -1,265 +1,723 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="h-full bg-slate-900">
 <head>
     <meta charset="UTF-8">
+    <link rel="stylesheet" href="../fonts.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Keep Notes - T0151 G.P Mérida</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- SDK de Supabase v2 -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#23120b">
-    <title>You Okay?</title>
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icon-192.png">
-    <link rel="stylesheet" href="style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            accent: '#0d9488'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        html, body { overscroll-behavior-y: contain; }
+        -webkit-tap-highlight-color: transparent;
+        body { user-select: none; -webkit-user-select: none; }
+        input, select, textarea { user-select: text; -webkit-user-select: text; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+        .dark ::-webkit-scrollbar-thumb { background: #334155; }
+        body, .card, .topbar, input, select, button {
+            transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+        }
+        /* Estilo Masonry Keep Grid */
+        .notes-grid {
+            column-count: 1;
+            column-gap: 0.75rem;
+        }
+        @media (min-width: 640px) { .notes-grid { column-count: 2; } }
+        @media (min-width: 1024px) { .notes-grid { column-count: 3; } }
+        @media (min-width: 1280px) { .notes-grid { column-count: 4; } }
+        .note-card {
+            break-inside: avoid;
+            margin-bottom: 0.75rem;
+        }
+    </style>
 </head>
-<body>
-    <div class="app-background">
-        <div class="bg-shape shape-1"></div>
-        <div class="bg-shape shape-2"></div>
-    </div>
-
-    <div class="app-container" id="app-container">
-        <aside class="sidebar">
-            <div class="sidebar-top-fixed">
-                <div class="sidebar-header">
-                    <div class="brand">
-                        <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-                            <line x1="9" y1="7" x2="15" y2="7"></line>
-                            <line x1="9" y1="11" x2="15" y2="11"></line>
-                        </svg>
-                        <span>You Okay?</span>
-                    </div>
-                    <div class="sidebar-actions">
-                        <button id="btn-import" class="btn-icon" title="Import Note">
-                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                <polyline points="17 8 12 3 7 8"></polyline>
-                                <line x1="12" y1="3" x2="12" y2="15"></line>
-                            </svg>
-                        </button>
-                        <input type="file" id="input-import-file" accept=".txt,.json" class="hidden">
-                        <button id="btn-new-note" class="btn-primary" title="New Note">
-                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <line x1="12" y1="5" x2="12" y2="19"></line>
-                                <line x1="5" y1="12" x2="19" y2="12"></line>
-                            </svg>
-                            <span>New</span>
-                        </button>
-                    </div>
+<body class="h-full bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 flex flex-col font-sans overflow-hidden antialiased">
+    <div class="main-content flex-1 flex flex-col overflow-y-auto">
+        
+        <!-- Topbar -->
+        <header class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-700/60 px-3 py-2 flex items-center justify-between shrink-0 z-50">
+            <div class="flex items-center space-x-2.5">
+                <div class="p-1.5 bg-teal-500/10 rounded-xl border border-teal-500/20 text-teal-600 shadow-md dark:text-teal-400">
+                    <i data-lucide="sticky-note" class="w-5 h-5"></i>
                 </div>
-
-                <div class="search-box">
-                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    </svg>
-                    <input type="text" id="search-input" placeholder="Search notes...">
-                </div>
-
-                <div class="nav-filters">
-                    <button class="filter-btn active" data-filter="all">
-                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                            <polyline points="14 2 14 8 20 8"></polyline>
-                        </svg>
-                        <span>All Notes</span>
-                        <span id="count-all" class="badge">0</span>
-                    </button>
-                    <button class="filter-btn" data-filter="pinned">
-                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="12" y1="17" x2="12" y2="22"></line>
-                            <path d="M5 17h14l-1.5-6h-11z"></path>
-                            <path d="M9 11V4a3 3 0 0 1 6 0v7"></path>
-                        </svg>
-                        <span>Pinned</span>
-                        <span id="count-pinned" class="badge">0</span>
-                    </button>
-                </div>
-
-                <div class="section-header" id="folders-header">
-                    <div class="section-title-group" id="folders-toggle">
-                        <svg class="icon-xs chevron-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                        <span class="section-title">Folders</span>
-                    </div>
-                    <button id="btn-add-folder" class="btn-icon-xs" title="New Folder">
-                        <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="12" y1="5" x2="12" y2="19"></line>
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                        </svg>
-                    </button>
-                </div>
-
-                <div id="folders-list" class="folders-list"></div>
-
-                <div class="notes-list-header">
-                    <span class="list-title">Notes</span>
-                    <div class="custom-dropdown" id="sort-dropdown">
-                        <button id="sort-dropdown-btn" class="dropdown-trigger">
-                            <span id="sort-selected-label">Newest</span>
-                            <svg class="icon-sm chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="6 9 12 15 18 9"></polyline>
-                            </svg>
-                        </button>
-                        <div id="sort-dropdown-menu" class="dropdown-menu hidden">
-                            <div class="dropdown-item active" data-value="updated-desc">
-                                <svg class="icon-sm check-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                <span>Newest</span>
-                            </div>
-                            <div class="dropdown-item" data-value="updated-asc">
-                                <svg class="icon-sm check-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                <span>Oldest</span>
-                            </div>
-                            <div class="dropdown-item" data-value="title-asc">
-                                <svg class="icon-sm check-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                <span>Title A-Z</span>
-                            </div>
-                        </div>
-                    </div>
+                <div>
+                    <h1 class="font-bold text-base leading-tight text-slate-900 dark:text-slate-100">Notas & Categorías</h1>
+                    <p class="text-[11px] text-teal-600 dark:text-teal-400 flex items-center gap-1 font-medium">
+                        <span class="w-1.5 h-1.5 rounded-full bg-teal-500 dark:bg-teal-400 inline-block"></span> Keep Sub-Web - T0151
+                    </p>
                 </div>
             </div>
-
-            <div id="notes-list" class="notes-list"></div>
-        </aside>
-
-        <main class="editor-area">
-            <div id="editor-wrapper" class="editor-wrapper">
-                <div class="editor-top-fixed">
-                    <header class="editor-header">
-                        <div class="header-left">
-                            <button id="btn-back" class="btn-icon mobile-only" title="Back">
-                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polyline points="15 18 9 12 15 6"></polyline>
-                                </svg>
-                            </button>
-                            <div class="editor-status">
-                                <span id="save-status" class="status-indicator">
-                                    <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                                        <polyline points="7 3 7 8 15 8"></polyline>
-                                    </svg>
-                                    <span id="status-text">Saved</span>
-                                </span>
-                            </div>
-                        </div>
-
-                        <div class="editor-actions">
-                            <button id="btn-pin" class="btn-icon" title="Pin Note">
-                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <line x1="12" y1="17" x2="12" y2="22"></line>
-                                    <path d="M5 17h14l-1.5-6h-11z"></path>
-                                    <path d="M9 11V4a3 3 0 0 1 6 0v7"></path>
-                                </svg>
-                            </button>
-                            <button id="btn-export" class="btn-icon" title="Export Note">
-                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                    <polyline points="7 10 12 15 17 10"></polyline>
-                                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                                </svg>
-                            </button>
-                            <button id="btn-delete" class="btn-icon btn-danger" title="Delete Note">
-                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polyline points="3 6 5 6 21 6"></polyline>
-                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                </svg>
-                            </button>
-                        </div>
-                    </header>
-
-                    <input type="text" id="note-title" class="input-title" placeholder="Note Title..." spellcheck="false">
-
-                    <div class="editor-meta">
-                        <span id="note-date">Updated: -</span>
-                        <span class="meta-divider">•</span>
-                        <span id="stats-counter">0 words, 0 characters</span>
-                        <span class="meta-divider">•</span>
-
-                        <div class="custom-dropdown" id="folder-dropdown">
-                            <button id="folder-dropdown-btn" class="folder-select-trigger">
-                                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-                                </svg>
-                                <span id="folder-selected-label">Uncategorized</span>
-                                <svg class="icon-sm chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polyline points="6 9 12 15 18 9"></polyline>
-                                </svg>
-                            </button>
-                            <div id="folder-dropdown-menu" class="dropdown-menu hidden"></div>
-                        </div>
-                    </div>
+            <div class="flex items-center gap-2">
+                <!-- Widget de reloj -->
+                <div class="flex flex-col items-end px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700/60 text-right">
+                    <span id="liveClock" class="text-xs font-mono font-semibold text-teal-700 dark:text-teal-300">00:00:00</span>
+                    <span id="liveDate" class="text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-wider">--,--</span>
                 </div>
-
-                <div class="editor-scroll-body">
-                    <textarea id="note-body" class="input-body" placeholder="Start typing your note here..." spellcheck="false"></textarea>
-                </div>
-            </div>
-
-            <div id="empty-state" class="empty-state hidden">
-                <div class="empty-illustration">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                        <polyline points="14 2 14 8 20 8"></polyline>
-                        <line x1="12" y1="18" x2="12" y2="12"></line>
-                        <line x1="9" y1="15" x2="15" y2="15"></line>
-                    </svg>
-                </div>
-                <h3>No Note Selected</h3>
-                <p>Select a note from the list or create a new one.</p>
-                <button id="btn-empty-new" class="btn-primary">
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                    </svg>
-                    <span>Create New Note</span>
+                <!-- Dark / Light Toggle -->
+                <button id="btn-theme-toggle" class="w-7 h-7 flex items-center justify-center rounded-full bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 transition-colors" title="Cambiar modo">
+                    <i id="theme-icon" data-lucide="moon" class="w-3.5 h-3.5 dark-icon"></i>
+                    <i data-lucide="sun" class="w-3.5 h-3.5 light-icon hidden"></i>
                 </button>
             </div>
-        </main>
-    </div>
+        </header>
 
-    <div id="custom-modal" class="modal-overlay hidden">
-        <div class="modal-card">
-            <div class="modal-header">
-                <div id="modal-icon-container" class="modal-icon"></div>
-                <h4 id="modal-title">Confirm Delete</h4>
-            </div>
-            <div class="modal-body">
-                <p id="modal-message">Are you sure you want to delete this? This action cannot be undone.</p>
-            </div>
-            <div class="modal-footer">
-                <button id="modal-cancel-btn" class="btn-secondary">Cancel</button>
-                <button id="modal-confirm-btn" class="btn-danger-fill">Delete</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="custom-input-modal" class="modal-overlay hidden">
-        <div class="modal-card">
-            <div class="modal-header">
-                <div class="modal-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-                    </svg>
+        <!-- Contenido Principal -->
+        <div class="p-3 max-w-7xl mx-auto w-full space-y-4 flex-1 relative z-10">
+            
+            <!-- Barra de Acciones, Filtros y Estado Offline -->
+            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl p-3 shadow-md space-y-3">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div class="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider flex items-center gap-1.5">
+                        <span id="conexionStatus" class="inline-flex items-center gap-1 text-[11px] text-amber-500"><i class="fa-solid fa-circle-dot"></i> Conectando...</span>
+                    </div>
+                    <div class="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+                        <button onclick="abrirModalCategoria()" class="py-1.5 px-3 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg transition-all font-semibold text-xs shadow-sm flex items-center justify-center gap-1.5 cursor-pointer">
+                            <i class="fa-solid fa-folder-plus text-teal-600"></i> Categorías
+                        </button>
+                        <button onclick="abrirModalNota()" class="py-1.5 px-3 bg-teal-500/10 border border-teal-500/30 text-teal-600 dark:text-teal-400 rounded-lg hover:bg-teal-500/20 transition-all font-semibold text-xs shadow-md flex items-center justify-center gap-1.5 cursor-pointer">
+                            <i class="fa-solid fa-plus"></i> Nueva Nota
+                        </button>
+                        <button onclick="actualizarDatosManual()" class="py-1.5 px-3 bg-teal-500/10 border border-teal-500/30 text-teal-600 dark:text-teal-400 rounded-lg hover:bg-teal-500/20 transition-all font-semibold text-xs shadow-md flex items-center justify-center gap-1.5 cursor-pointer" title="Actualizar datos">
+                            <i id="iconActualizar" class="fa-solid fa-rotate"></i>
+                        </button>
+                    </div>
                 </div>
-                <h4 id="input-modal-title">New Folder</h4>
+
+                <!-- Buscador y Filtro por Categoría -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-slate-200 dark:border-slate-700/60 text-xs">
+                    <!-- Buscador -->
+                    <div class="relative">
+                        <input type="text" id="filtroBuscador" placeholder="Buscar en notas por título o contenido..." oninput="filtrarNotas()" class="w-full bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/50 rounded-xl px-3 py-1.5 text-slate-800 dark:text-slate-200 outline-none focus:border-teal-500">
+                    </div>
+                    <!-- Filtro por Categoría -->
+                    <div>
+                        <input type="hidden" id="filtroCategoria" value="" onchange="filtrarNotas()">
+                        <div class="dropdown relative inline-block w-full">
+                            <button type="button" id="btn_filtroCategoria" class="w-full h-7 flex items-center justify-between px-2.5 rounded-xl text-[11px] font-semibold bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 transition-colors" onclick="toggleDropdown(event, 'menu_filtroCategoria')">
+                                <span id="text_filtroCategoria" class="truncate">Todas las Categorías</span> <i class="fa-solid fa-chevron-down" style="font-size: 9px; margin-left: 2px;"></i>
+                            </button>
+                            <div id="menu_filtroCategoria" class="dropdown-content hidden absolute left-0 mt-1 bg-white dark:bg-slate-800 w-full shadow-xl border border-slate-200 dark:border-slate-700 rounded-xl z-[9999] py-1 text-left"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="modal-body">
-                <input type="text" id="input-modal-field" class="modal-text-input" placeholder="Folder name..." spellcheck="false">
+
+            <!-- Contenedor Estilo Keep (Masonry Grid de Tarjetas) -->
+            <div id="notasContainer" class="notes-grid w-full">
+                <!-- Se llena dinámicamente -->
             </div>
-            <div class="modal-footer">
-                <button id="input-modal-cancel-btn" class="btn-secondary">Cancel</button>
-                <button id="input-modal-confirm-btn" class="btn-primary">Create</button>
+
+        </div>
+    </div>
+
+    <!-- Modal Crear / Editar Nota -->
+    <div class="modal fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[10000] flex items-center justify-center p-4" id="modalNota" style="display: none;">
+        <div class="modal-content bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 w-full max-w-md shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-3">
+                <h3 id="modalNotaTitulo" class="text-base font-bold text-slate-900 dark:text-slate-100">Crear Nota</h3>
+                <span class="close-modal text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer text-xl font-bold" onclick="cerrarModalNota()">×</span>
+            </div>
+            <input type="hidden" id="editNotaId">
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="font-semibold text-slate-600 dark:text-slate-400 block mb-1">Título</label>
+                    <input type="text" id="inputTitulo" placeholder="Título de la nota..." class="w-full bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/50 rounded-xl px-3 py-2 font-bold text-slate-800 dark:text-slate-200 outline-none">
+                </div>
+                <div>
+                    <label class="font-semibold text-slate-600 dark:text-slate-400 block mb-1">Categoría</label>
+                    <input type="hidden" id="inputCategoriaId" value="">
+                    <div class="dropdown relative inline-block w-full">
+                        <button type="button" id="btn_inputCategoria" class="w-full h-8 flex items-center justify-between px-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-900/40 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/50 transition-colors" onclick="toggleDropdown(event, 'menu_inputCategoria')">
+                            <span id="text_inputCategoria" class="truncate">Sin categoría</span> <i class="fa-solid fa-chevron-down" style="font-size: 9px; margin-left: 2px;"></i>
+                        </button>
+                        <div id="menu_inputCategoria" class="dropdown-content hidden absolute left-0 mt-1 bg-white dark:bg-slate-800 w-full shadow-xl border border-slate-200 dark:border-slate-700 rounded-xl z-[9999] py-1 text-left"></div>
+                    </div>
+                </div>
+                <div>
+                    <label class="font-semibold text-slate-600 dark:text-slate-400 block mb-1">Contenido</label>
+                    <textarea id="inputContenido" placeholder="Escribe tu nota aquí..." rows="5" class="w-full bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/50 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-200 outline-none leading-relaxed"></textarea>
+                </div>
+            </div>
+            <div class="mt-4 flex justify-end gap-2">
+                <button onclick="cerrarModalNota()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold rounded-xl text-xs">Cancelar</button>
+                <button onclick="guardarNota()" class="px-4 py-2 bg-teal-500/10 border border-teal-500/30 text-teal-600 dark:text-teal-400 rounded-lg hover:bg-teal-500/20 shadow-md font-semibold">Guardar Nota</button>
             </div>
         </div>
     </div>
 
-    <div id="toast-container" class="toast-container"></div>
+    <!-- Modal Gestionar Categorías -->
+    <div class="modal fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[10000] flex items-center justify-center p-4" id="modalCategoria" style="display: none;">
+        <div class="modal-content bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 w-full max-w-sm shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-3">
+                <h3 class="text-base font-bold text-slate-900 dark:text-slate-100">Gestionar Categorías</h3>
+                <span class="close-modal text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer text-xl font-bold" onclick="cerrarModalCategoria()">×</span>
+            </div>
+            <div class="space-y-3 text-xs">
+                <div class="flex gap-2">
+                    <input type="text" id="nuevaCategoriaNombre" placeholder="Nueva categoría..." class="flex-1 bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/50 rounded-xl px-3 py-2 font-semibold text-slate-800 dark:text-slate-200 outline-none">
+                    <button onclick="crearCategoria()" class="px-3 py-2 bg-teal-500/10 border border-teal-500/30 text-teal-600 dark:text-teal-400 rounded-xl font-semibold shadow-sm">Agregar</button>
+                </div>
+                <div id="listaCategoriasContainer" class="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                    <!-- Se llena dinámicamente -->
+                </div>
+            </div>
+            <div class="mt-4 flex justify-end">
+                <button onclick="cerrarModalCategoria()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold rounded-xl text-xs">Cerrar</button>
+            </div>
+        </div>
+    </div>
 
-    <script src="script.js"></script>
+    <!-- Modal Alerta -->
+    <div id="alertModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[10010] flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 w-full max-w-sm shadow-2xl text-center space-y-4">
+            <div class="w-10 h-10 bg-teal-500/10 border border-teal-500/20 text-teal-600 dark:text-teal-400 rounded-full flex items-center justify-center mx-auto">
+                <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+            </div>
+            <p id="alertModalText" class="text-xs font-semibold text-slate-700 dark:text-slate-200 leading-relaxed">Mensaje</p>
+            <button onclick="cerrarModalAlerta()" class="py-2 px-4 rounded-xl bg-teal-500/10 hover:bg-teal-500/20 text-teal-600 dark:text-teal-400 border border-teal-500/30 text-xs shadow-md font-semibold cursor-pointer">Aceptar</button>
+        </div>
+    </div>
+
+    <!-- Modal Confirmación -->
+    <div id="confirmModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[10005] flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 w-full max-w-sm shadow-2xl text-center space-y-4">
+            <div class="w-10 h-10 bg-rose-500/10 border border-rose-500/20 text-rose-500 rounded-full flex items-center justify-center mx-auto">
+                <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+            </div>
+            <p id="confirmModalText" class="text-xs font-semibold text-slate-700 dark:text-slate-200 leading-relaxed">¿Desea continuar?</p>
+            <div class="flex justify-center items-center gap-2 w-full">
+                <button onclick="cerrarModalConfirmacion(false)" class="py-2 px-4 bg-teal-500/10 border border-teal-500/30 text-teal-600 dark:text-teal-400 rounded-xl hover:bg-teal-500/20 transition-all font-semibold text-xs shadow-md cursor-pointer shrink-0">Cancelar</button>
+                <button onclick="cerrarModalConfirmacion(true)" class="py-2 px-4 bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 rounded-xl hover:bg-red-500/20 transition-all font-semibold text-xs shadow-md cursor-pointer shrink-0">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // -------------------------------------------------------------
+        // CONFIGURACIÓN SUPABASE & CACHÉ LOCAL
+        // -------------------------------------------------------------
+        const SUPABASE_URL = "https://mifbcyxtafeacwkzqzsq.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_O6EAbkSba1NQPq08k_7bHg_PZ_x4ZU5";
+        const NOTAS_CACHE_KEY = 'keep_notes_cache_data';
+        const CATEGORIAS_CACHE_KEY = 'keep_categories_cache_data';
+        
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        let notasData = [];
+        let categoriasData = [];
+
+        // Tema Oscuro / Claro
+        const btnThemeToggle = document.getElementById('btn-theme-toggle');
+        const htmlElement = document.documentElement;
+        function setTheme(isDark) {
+            if (isDark) {
+                htmlElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                htmlElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            lucide.createIcons();
+        }
+        const savedTheme = localStorage.getItem('theme');
+        setTheme(savedTheme !== 'light');
+        btnThemeToggle.addEventListener('click', () => {
+            setTheme(!htmlElement.classList.contains('dark'));
+        });
+        lucide.createIcons();
+
+        // Control de Menús Desplegables Custom
+        window.onclick = function(event) {
+            if (!event.target.closest('.dropdown')) {
+                const dropdowns = document.getElementsByClassName("dropdown-content");
+                for (let i = 0; i < dropdowns.length; i++) {
+                    let openDropdown = dropdowns[i];
+                    if (!openDropdown.classList.contains('hidden')) openDropdown.classList.add('hidden');
+                }
+            }
+        }
+        function toggleDropdown(event, dropdownId) {
+            event.stopPropagation();
+            const dropdowns = document.getElementsByClassName("dropdown-content");
+            for (let i = 0; i < dropdowns.length; i++) {
+                if (dropdowns[i].id !== dropdownId) dropdowns[i].classList.add('hidden');
+            }
+            document.getElementById(dropdownId).classList.toggle('hidden');
+        }
+        function seleccionarOpcionDropdown(inputId, spanId, menuId, valor, labelTexto) {
+            const input = document.getElementById(inputId);
+            const span = document.getElementById(spanId);
+            if (input && span) {
+                input.value = valor;
+                span.textContent = labelTexto;
+                input.dispatchEvent(new Event('change'));
+            }
+            document.getElementById(menuId).classList.add('hidden');
+        }
+
+        function populateSelectsCategorias() {
+            // Filtro Categoría Principal
+            let htmlFiltro = `<button type="button" onclick="seleccionarOpcionDropdown('filtroCategoria', 'text_filtroCategoria', 'menu_filtroCategoria', '', 'Todas las Categorías')" class="w-full px-3 py-2 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60">Todas las Categorías</button>`;
+            htmlFiltro += `<button type="button" onclick="seleccionarOpcionDropdown('filtroCategoria', 'text_filtroCategoria', 'menu_filtroCategoria', 'sin_categoria', 'Sin categoría')" class="w-full px-3 py-2 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60">Sin categoría</button>`;
+            
+            categoriasData.forEach(cat => {
+                htmlFiltro += `<button type="button" onclick="seleccionarOpcionDropdown('filtroCategoria', 'text_filtroCategoria', 'menu_filtroCategoria', '${cat.id}', '${cat.nombre}')" class="w-full px-3 py-2 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60">${cat.nombre}</button>`;
+            });
+            document.getElementById('menu_filtroCategoria').innerHTML = htmlFiltro;
+
+            // Modal Nota Categoría
+            let htmlModal = `<button type="button" onclick="seleccionarOpcionDropdown('inputCategoriaId', 'text_inputCategoria', 'menu_inputCategoria', '', 'Sin categoría')" class="w-full px-3 py-2 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60">Sin categoría</button>`;
+            categoriasData.forEach(cat => {
+                htmlModal += `<button type="button" onclick="seleccionarOpcionDropdown('inputCategoriaId', 'text_inputCategoria', 'menu_inputCategoria', '${cat.id}', '${cat.nombre}')" class="w-full px-3 py-2 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60">${cat.nombre}</button>`;
+            });
+            document.getElementById('menu_inputCategoria').innerHTML = htmlModal;
+        }
+
+        // Modales Alerta y Confirmación
+        let confirmCallback = null;
+        function mostrarAlerta(texto) {
+            document.getElementById('alertModalText').innerText = texto;
+            document.getElementById('alertModal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+        function cerrarModalAlerta() { document.getElementById('alertModal').classList.add('hidden'); }
+        function mostrarConfirmacion(texto, callback) {
+            document.getElementById('confirmModalText').innerHTML = texto;
+            document.getElementById('confirmModal').classList.remove('hidden');
+            confirmCallback = callback;
+            lucide.createIcons();
+        }
+        function cerrarModalConfirmacion(res) {
+            document.getElementById('confirmModal').classList.add('hidden');
+            if (confirmCallback) { confirmCallback(res); confirmCallback = null; }
+        }
+
+        // Reloj en vivo
+        function initClock() {
+            const updateClock = () => {
+                const now = new Date();
+                document.getElementById('liveClock').textContent = now.toLocaleTimeString();
+                document.getElementById('liveDate').textContent = now.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+            };
+            updateClock();
+            setInterval(updateClock, 1000);
+        }
+
+        // -------------------------------------------------------------
+        // OFFLINE-FIRST QUEUE & SYNC
+        // -------------------------------------------------------------
+        function obtenerColaPendiente() { return JSON.parse(localStorage.getItem('cola_keep_offline') || '[]'); }
+        function guardarColaPendiente(cola) { localStorage.setItem('cola_keep_offline', JSON.stringify(cola)); }
+        
+        function agregarAColaOffline(accion, tipo, payload) {
+            const cola = obtenerColaPendiente();
+            cola.push({ idTemp: Date.now(), accion, tipo, payload });
+            guardarColaPendiente(cola);
+            actualizarEstadoConexionUI();
+        }
+
+        function actualizarEstadoConexionUI() {
+            const statusEl = document.getElementById('conexionStatus');
+            const cola = obtenerColaPendiente();
+            if (!navigator.onLine) {
+                statusEl.className = "inline-flex items-center gap-1 text-[11px] text-amber-500 font-bold";
+                statusEl.innerHTML = `<i class="fa-solid fa-wifi"></i> Sin Conexión (${cola.length} pendientes)`;
+            } else if (cola.length > 0) {
+                statusEl.className = "inline-flex items-center gap-1 text-[11px] text-amber-500 font-bold animate-pulse";
+                statusEl.innerHTML = `<i class="fa-solid fa-arrows-rotate fa-spin"></i> Sincronizando (${cola.length})...`;
+            } else {
+                statusEl.className = "inline-flex items-center gap-1 text-[11px] text-emerald-500 font-semibold";
+                statusEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> Base de Datos: En Línea`;
+            }
+        }
+
+        async function procesarSincronizacionOffline() {
+            const cola = obtenerColaPendiente();
+            if (cola.length === 0 || !navigator.onLine) return;
+            const colaFallida = [];
+
+            for (const item of cola) {
+                let error = null;
+                const tabla = item.tipo === 'NOTA' ? 'notas' : 'categorias';
+
+                if (item.accion === 'CREAR') {
+                    const { id, ...data } = item.payload;
+                    const { error: err } = await supabaseClient.from(tabla).insert([data]);
+                    error = err;
+                } else if (item.accion === 'EDITAR') {
+                    const { error: err } = await supabaseClient.from(tabla).update(item.payload).eq('id', item.payload.id);
+                    error = err;
+                } else if (item.accion === 'ELIMINAR') {
+                    const { error: err } = await supabaseClient.from(tabla).delete().eq('id', item.payload.id);
+                    error = err;
+                }
+                if (error) colaFallida.push(item);
+            }
+            guardarColaPendiente(colaFallida);
+            actualizarEstadoConexionUI();
+            if (colaFallida.length === 0 && cola.length > 0) {
+                mostrarAlerta('¡Cambios locales sincronizados con éxito!');
+            }
+            await cargarDatosRemotos();
+        }
+
+        window.addEventListener('online', () => { procesarSincronizacionOffline(); });
+        window.addEventListener('offline', () => { actualizarEstadoConexionUI(); });
+
+        // -------------------------------------------------------------
+        // CARGA Y OPERACIONES DE DATOS
+        // -------------------------------------------------------------
+        window.onload = async function() {
+            initClock();
+            
+            // 1. Cargar caché local instantánea
+            const cacheNotas = localStorage.getItem(NOTAS_CACHE_KEY);
+            const cacheCats = localStorage.getItem(CATEGORIAS_CACHE_KEY);
+            if (cacheCats) categoriasData = JSON.parse(cacheCats);
+            if (cacheNotas) notasData = JSON.parse(cacheNotas);
+
+            populateSelectsCategorias();
+            aplicarFiltrosLocales();
+
+            // 2. Sincronizar y obtener datos frescos si hay red
+            if (navigator.onLine) {
+                await procesarSincronizacionOffline();
+                await cargarDatosRemotos();
+            } else {
+                actualizarEstadoConexionUI();
+            }
+        };
+
+        async function actualizarDatosManual() {
+            const icono = document.getElementById('iconActualizar');
+            if (icono) icono.classList.add('fa-spin');
+            if (navigator.onLine) {
+                await procesarSincronizacionOffline();
+            }
+            await cargarDatosRemotos();
+            if (icono) {
+                setTimeout(() => icono.classList.remove('fa-spin'), 500);
+            }
+        }
+
+        async function cargarDatosRemotos() {
+            if (!navigator.onLine) {
+                aplicarFiltrosLocales();
+                return;
+            }
+            // Obtener Categorías
+            const resCats = await supabaseClient.from('categorias').select('*').order('nombre', { ascending: true });
+            if (!resCats.error) {
+                categoriasData = resCats.data || [];
+                localStorage.setItem(CATEGORIAS_CACHE_KEY, JSON.stringify(categoriasData));
+            }
+
+            // Obtener Notas
+            const resNotas = await supabaseClient.from('notas').select('*').order('created_at', { ascending: false });
+            if (!resNotas.error) {
+                notasData = resNotas.data || [];
+                localStorage.setItem(NOTAS_CACHE_KEY, JSON.stringify(notasData));
+            } else {
+                console.error("Error al obtener notas:", resNotas.error);
+            }
+
+            populateSelectsCategorias();
+            aplicarFiltrosLocales();
+            actualizarEstadoConexionUI();
+        }
+
+        // --- GESTIÓN DE NOTAS ---
+        function abrirModalNota(id = null) {
+            document.getElementById('modalNota').style.display = 'flex';
+            populateSelectsCategorias();
+            if (id !== null) {
+                const nota = notasData.find(n => n.id == id);
+                if (nota) {
+                    document.getElementById('modalNotaTitulo').innerText = 'Editar Nota';
+                    document.getElementById('editNotaId').value = nota.id;
+                    document.getElementById('inputTitulo').value = nota.titulo || '';
+                    document.getElementById('inputContenido').value = nota.contenido || '';
+                    document.getElementById('inputCategoriaId').value = nota.categoria_id || '';
+                    const catObj = categoriasData.find(c => c.id == nota.categoria_id);
+                    document.getElementById('text_inputCategoria').textContent = catObj ? catObj.nombre : 'Sin categoría';
+                }
+            } else {
+                document.getElementById('modalNotaTitulo').innerText = 'Crear Nota';
+                document.getElementById('editNotaId').value = '';
+                document.getElementById('inputTitulo').value = '';
+                document.getElementById('inputContenido').value = '';
+                document.getElementById('inputCategoriaId').value = '';
+                document.getElementById('text_inputCategoria').textContent = 'Sin categoría';
+            }
+        }
+        function cerrarModalNota() { document.getElementById('modalNota').style.display = 'none'; }
+
+        async function guardarNota() {
+            const editId = document.getElementById('editNotaId').value;
+            const titulo = document.getElementById('inputTitulo').value.trim();
+            const contenido = document.getElementById('inputContenido').value.trim();
+            let categoria_id = document.getElementById('inputCategoriaId').value.trim();
+            if (!categoria_id) categoria_id = null;
+
+            if (!titulo && !contenido) {
+                mostrarAlerta('La nota debe tener un título o algún contenido.');
+                return;
+            }
+
+            const payload = {
+                titulo: titulo || 'Sin título',
+                contenido,
+                categoria_id,
+                updated_at: new Date().toISOString()
+            };
+
+            if (!navigator.onLine) {
+                if (editId) {
+                    payload.id = editId;
+                    agregarAColaOffline('EDITAR', 'NOTA', payload);
+                    const idx = notasData.findIndex(n => n.id == editId);
+                    if (idx !== -1) notasData[idx] = { ...notasData[idx], ...payload };
+                } else {
+                    payload.id = 'temp_' + Date.now();
+                    payload.created_at = new Date().toISOString();
+                    agregarAColaOffline('CREAR', 'NOTA', payload);
+                    notasData.unshift(payload);
+                }
+                localStorage.setItem(NOTAS_CACHE_KEY, JSON.stringify(notasData));
+                aplicarFiltrosLocales();
+                cerrarModalNota();
+                return;
+            }
+
+            try {
+                if (editId) {
+                    const { error } = await supabaseClient.from('notas').update(payload).eq('id', editId);
+                    if (error) throw error;
+                } else {
+                    const { error } = await supabaseClient.from('notas').insert([payload]);
+                    if (error) throw error;
+                }
+            } catch (err) {
+                console.error("Error al guardar nota online, guardando offline:", err);
+                if (editId) {
+                    payload.id = editId;
+                    agregarAColaOffline('EDITAR', 'NOTA', payload);
+                    const idx = notasData.findIndex(n => n.id == editId);
+                    if (idx !== -1) notasData[idx] = { ...notasData[idx], ...payload };
+                } else {
+                    payload.id = 'temp_' + Date.now();
+                    payload.created_at = new Date().toISOString();
+                    agregarAColaOffline('CREAR', 'NOTA', payload);
+                    notasData.unshift(payload);
+                }
+                localStorage.setItem(NOTAS_CACHE_KEY, JSON.stringify(notasData));
+                aplicarFiltrosLocales();
+                cerrarModalNota();
+                return;
+            }
+
+            await cargarDatosRemotos();
+            cerrarModalNota();
+        }
+
+        function eliminarNota(id) {
+            mostrarConfirmacion('¿Desea eliminar esta nota?', async (aceptado) => {
+                if (!aceptado) return;
+                if (!navigator.onLine) {
+                    agregarAColaOffline('ELIMINAR', 'NOTA', { id });
+                    notasData = notasData.filter(n => n.id != id);
+                    localStorage.setItem(NOTAS_CACHE_KEY, JSON.stringify(notasData));
+                    aplicarFiltrosLocales();
+                    return;
+                }
+                try {
+                    const { error } = await supabaseClient.from('notas').delete().eq('id', id);
+                    if (error) throw error;
+                } catch (err) {
+                    agregarAColaOffline('ELIMINAR', 'NOTA', { id });
+                    notasData = notasData.filter(n => n.id != id);
+                    localStorage.setItem(NOTAS_CACHE_KEY, JSON.stringify(notasData));
+                    aplicarFiltrosLocales();
+                    return;
+                }
+                await cargarDatosRemotos();
+            });
+        }
+
+        async function toggleFavorito(id) {
+            const nota = notasData.find(n => n.id == id);
+            if (!nota) return;
+            const nuevoFav = !nota.favorito;
+            nota.favorito = nuevoFav;
+            
+            if (!navigator.onLine) {
+                agregarAColaOffline('EDITAR', 'NOTA', { id, favorito: nuevoFav });
+                localStorage.setItem(NOTAS_CACHE_KEY, JSON.stringify(notasData));
+                aplicarFiltrosLocales();
+                return;
+            }
+            await supabaseClient.from('notas').update({ favorito: nuevoFav }).eq('id', id);
+            aplicarFiltrosLocales();
+        }
+
+        // --- GESTIÓN DE CATEGORÍAS ---
+        function abrirModalCategoria() {
+            document.getElementById('modalCategoria').style.display = 'flex';
+            renderizarListaCategoriasModal();
+        }
+        function cerrarModalCategoria() { document.getElementById('modalCategoria').style.display = 'none'; }
+
+        function renderizarListaCategoriasModal() {
+            const container = document.getElementById('listaCategoriasContainer');
+            if (categoriasData.length === 0) {
+                container.innerHTML = `<p class="text-slate-400 text-center py-2">No hay categorías creadas.</p>`;
+                return;
+            }
+            container.innerHTML = categoriasData.map(cat => `
+                <div class="flex items-center justify-between bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/50 p-2 rounded-xl">
+                    <span class="font-semibold text-slate-800 dark:text-slate-200">${cat.nombre}</span>
+                    <button onclick="eliminarCategoria('${cat.id}')" class="text-red-500 hover:text-red-700 p-1 text-xs" title="Eliminar categoría"><i class="fa-solid fa-trash-can"></i></button>
+                </div>
+            `).join('');
+        }
+
+        async function crearCategoria() {
+            const input = document.getElementById('nuevaCategoriaNombre');
+            const nombre = input.value.trim();
+            if (!nombre) { mostrarAlerta('Escribe el nombre de la categoría.'); return; }
+            
+            const payload = { nombre };
+            if (!navigator.onLine) {
+                payload.id = 'temp_cat_' + Date.now();
+                agregarAColaOffline('CREAR', 'CATEGORIA', payload);
+                categoriasData.push(payload);
+                localStorage.setItem(CATEGORIAS_CACHE_KEY, JSON.stringify(categoriasData));
+                input.value = '';
+                renderizarListaCategoriasModal();
+                populateSelectsCategorias();
+                return;
+            }
+
+            const { error } = await supabaseClient.from('categorias').insert([payload]);
+            if (error) {
+                mostrarAlerta('Error al crear categoría (puede que ya exista).');
+                return;
+            }
+            input.value = '';
+            await cargarDatosRemotos();
+            renderizarListaCategoriasModal();
+        }
+
+        async function eliminarCategoria(id) {
+            mostrarConfirmacion('¿Desea eliminar esta categoría? Las notas asociadas quedarán como "Sin categoría".', async (aceptado) => {
+                if (!aceptado) return;
+                if (!navigator.onLine) {
+                    agregarAColaOffline('ELIMINAR', 'CATEGORIA', { id });
+                    categoriasData = categoriasData.filter(c => c.id != id);
+                    localStorage.setItem(CATEGORIAS_CACHE_KEY, JSON.stringify(categoriasData));
+                    renderizarListaCategoriasModal();
+                    populateSelectsCategorias();
+                    aplicarFiltrosLocales();
+                    return;
+                }
+                await supabaseClient.from('categorias').delete().eq('id', id);
+                await cargarDatosRemotos();
+                renderizarListaCategoriasModal();
+            });
+        }
+
+        // --- RENDERIZADO Y FILTRADO ESTILO KEEP ---
+        function renderizarNotas(lista) {
+            const container = document.getElementById('notasContainer');
+            container.innerHTML = '';
+
+            if (lista.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full py-12 text-center space-y-2">
+                        <div class="w-12 h-12 bg-teal-500/10 text-teal-600 dark:text-teal-400 rounded-full flex items-center justify-center mx-auto border border-teal-500/20">
+                            <i class="fa-solid fa-note-sticky text-lg"></i>
+                        </div>
+                        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400">No hay notas guardadas</p>
+                    </div>`;
+                return;
+            }
+
+            lista.forEach(nota => {
+                const catObj = categoriasData.find(c => c.id == nota.categoria_id);
+                const nombreCat = catObj ? catObj.nombre : 'Sin categoría';
+
+                const card = document.createElement('div');
+                card.className = "note-card bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-3.5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-2 relative group";
+                card.innerHTML = `
+                    <div class="space-y-1">
+                        <div class="flex items-start justify-between gap-2">
+                            <h4 class="font-bold text-slate-900 dark:text-slate-100 text-sm leading-snug">${nota.titulo || ''}</h4>
+                            <button onclick="toggleFavorito('${nota.id}')" class="text-slate-300 dark:text-slate-600 hover:text-amber-500 dark:hover:text-amber-400 transition-colors ${nota.favorito ? 'text-amber-500 dark:text-amber-400' : ''}">
+                                <i class="fa-solid fa-star text-xs"></i>
+                            </button>
+                        </div>
+                        <p class="text-xs text-slate-600 dark:text-slate-300 whitespace-pre-line leading-relaxed">${nota.contenido || ''}</p>
+                    </div>
+                    <div class="pt-2 border-t border-slate-100 dark:border-slate-700/50 flex items-center justify-between text-[10px]">
+                        <span class="px-2 py-0.5 rounded-full font-semibold bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">${nombreCat}</span>
+                        <div class="flex items-center gap-1.5 opacity-90 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onclick="abrirModalNota('${nota.id}')" class="p-1 text-teal-600 hover:text-teal-800 dark:text-teal-400" title="Editar nota"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="eliminarNota('${nota.id}')" class="p-1 text-rose-500 hover:text-rose-700" title="Eliminar nota"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function aplicarFiltrosLocales() {
+            const textoBuscador = document.getElementById('filtroBuscador').value.trim().toLowerCase();
+            const filtroCat = document.getElementById('filtroCategoria').value;
+
+            let filtrados = notasData;
+            if (filtroCat === 'sin_categoria') {
+                filtrados = filtrados.filter(n => !n.categoria_id);
+            } else if (filtroCat) {
+                filtrados = filtrados.filter(n => n.categoria_id === filtroCat);
+            }
+
+            if (textoBuscador) {
+                filtrados = filtrados.filter(n =>
+                    (n.titulo && n.titulo.toLowerCase().includes(textoBuscador)) ||
+                    (n.contenido && n.contenido.toLowerCase().includes(textoBuscador))
+                );
+            }
+            renderizarNotas(filtrados);
+            actualizarEstadoConexionUI();
+        }
+
+        function filtrarNotas() {
+            aplicarFiltrosLocales();
+        }
+    </script>
 </body>
 </html>
