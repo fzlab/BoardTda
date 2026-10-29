@@ -29,8 +29,8 @@
       "url": "./tickets/index.html",
       "icons": [
         {
-          "src": "/src/img/icons/mediacapture-96x96.png",
-          "sizes": "96x96",
+          "src": "/src/icons/tickets-192.png",
+          "sizes": "192x192",
           "type": "image/png"
         }
       ]
