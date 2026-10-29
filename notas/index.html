@@ -41,11 +41,9 @@
         body, .card, .topbar, input, select, button {
             transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
         }
-        /* Estilos visuales para H1 y H2 en notas y vistas */
         .note-card h1, #verNotaContenido h1, #inputContenido h1 { font-size: 1.2rem; font-weight: bold; line-height: 1.3; margin: 0.2rem 0; }
         .note-card h2, #verNotaContenido h2, #inputContenido h2 { font-size: 1.1rem; font-weight: bold; line-height: 1.3; margin: 0.2rem 0; }
 
-        /* Estilo Masonry Keep Grid - Forzado a 2 columnas en móviles y más en pantallas grandes */
         .notes-grid {
             column-count: 2;
             column-gap: 0.5rem;
@@ -114,11 +112,11 @@
                     </div>
                 </div>
 
-                <!-- Buscador y Filtro por Categoría -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-slate-200 dark:border-slate-700/60 text-xs">
+                <!-- Buscador y Filtros (Categoría, Estatus y Fechas) -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t border-slate-200 dark:border-slate-700/60 text-xs">
                     <!-- Buscador -->
                     <div class="relative">
-                        <input type="text" id="filtroBuscador" placeholder="Buscar en notas por título o contenido..." oninput="filtrarNotas()" class="w-full bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/50 rounded-xl px-3 py-1.5 text-slate-800 dark:text-slate-200 outline-none focus:border-teal-500">
+                        <input type="text" id="filtroBuscador" placeholder="Buscar por título o contenido..." oninput="filtrarNotas()" class="w-full bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/50 rounded-xl px-3 py-1.5 text-slate-800 dark:text-slate-200 outline-none focus:border-teal-500">
                     </div>
                     <!-- Filtro por Categoría -->
                     <div>
@@ -128,6 +126,20 @@
                                 <span id="text_filtroCategoria" class="truncate">Todas las Categorías</span> <i class="fa-solid fa-chevron-down" style="font-size: 9px; margin-left: 2px;"></i>
                             </button>
                             <div id="menu_filtroCategoria" class="dropdown-content hidden absolute left-0 mt-1 bg-white dark:bg-slate-800 w-full shadow-xl border border-slate-200 dark:border-slate-700 rounded-xl z-[9999] py-1 text-left"></div>
+                        </div>
+                    </div>
+                    <!-- Filtro por Estatus y Fechas -->
+                    <div>
+                        <input type="hidden" id="filtroEstatus" value="" onchange="filtrarNotas()">
+                        <div class="dropdown relative inline-block w-full">
+                            <button type="button" id="btn_filtroEstatus" class="w-full h-7 flex items-center justify-between px-2.5 rounded-xl text-[11px] font-semibold bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 transition-colors" onclick="toggleDropdown(event, 'menu_filtroEstatus')">
+                                <span id="text_filtroEstatus" class="truncate">Todos los Estatus y Fechas</span> <i class="fa-solid fa-chevron-down" style="font-size: 9px; margin-left: 2px;"></i>
+                            </button>
+                            <div id="menu_filtroEstatus" class="dropdown-content hidden absolute left-0 mt-1 bg-white dark:bg-slate-800 w-full shadow-xl border border-slate-200 dark:border-slate-700 rounded-xl z-[9999] py-1 text-left">
+                                <button type="button" onclick="seleccionarOpcionDropdown('filtroEstatus', 'text_filtroEstatus', 'menu_filtroEstatus', '', 'Todos los Estatus y Fechas')" class="w-full px-3 py-2 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60">Todos</button>
+                                <button type="button" onclick="seleccionarOpcionDropdown('filtroEstatus', 'text_filtroEstatus', 'menu_filtroEstatus', 'favorito', '⭐ Solo Favoritas')" class="w-full px-3 py-2 text-left text-xs font-semibold text-amber-600 dark:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-700/60">⭐ Solo Favoritas</button>
+                                <button type="button" onclick="seleccionarOpcionDropdown('filtroEstatus', 'text_filtroEstatus', 'menu_filtroEstatus', 'con_recordatorio', '🔔 Con Recordatorio (Fecha)')" class="w-full px-3 py-2 text-left text-xs font-semibold text-teal-600 dark:text-teal-400 hover:bg-slate-100 dark:hover:bg-slate-700/60">🔔 Con Recordatorio (Fecha)</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -203,9 +215,9 @@
                         <div id="menu_inputCategoria" class="dropdown-content hidden absolute left-0 mt-1 bg-white dark:bg-slate-800 w-full shadow-xl border border-slate-200 dark:border-slate-700 rounded-xl z-[9999] py-1 text-left"></div>
                     </div>
                 </div>
-                <!-- Sistema de Recordatorios -->
+                <!-- Sistema de Recordatorios y Fechas -->
                 <div>
-                    <label class="font-semibold text-slate-600 dark:text-slate-400 block mb-1">Recordatorio (Fecha y Hora)</label>
+                    <label class="font-semibold text-slate-600 dark:text-slate-400 block mb-1">Recordatorio / Fecha Límite</label>
                     <input type="datetime-local" id="inputRecordatorio" class="w-full bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/50 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-200 outline-none">
                 </div>
                 <!-- Selector de Color Estilo Keep -->
@@ -459,7 +471,7 @@
             container.innerHTML = checklistEditItems.map((item, idx) => `
                 <div class="flex items-center justify-between bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/50 p-2 rounded-xl text-xs">
                     <div class="flex items-center gap-2">
-                        <input type="checkbox" ${item.completado ? 'checked' : ''} onchange="checklistEditItems[${idx}].checked = this.checked; checklistEditItems[${idx}].completado = this.checked;" class="w-4 h-4 accent-teal-500 rounded">
+                        <input type="checkbox" ${item.completado ? 'checked' : ''} onchange="checklistEditItems[${idx}].completado = this.checked;" class="w-4 h-4 accent-teal-500 rounded">
                         <span class="${item.completado ? 'line-through text-slate-400' : 'text-slate-800 dark:text-slate-200'}">${item.texto}</span>
                     </div>
                     <button type="button" onclick="eliminarItemChecklist(${idx})" class="text-rose-500 hover:text-rose-700 p-1"><i class="fa-solid fa-trash-can"></i></button>
@@ -470,7 +482,6 @@
         function populateSelectsCategorias() {
             let htmlFiltro = `<button type="button" onclick="seleccionarOpcionDropdown('filtroCategoria', 'text_filtroCategoria', 'menu_filtroCategoria', '', 'Todas las Categorías')" class="w-full px-3 py-2 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60">Todas las Categorías</button>`;
             htmlFiltro += `<button type="button" onclick="seleccionarOpcionDropdown('filtroCategoria', 'text_filtroCategoria', 'menu_filtroCategoria', 'sin_categoria', 'Sin categoría')" class="w-full px-3 py-2 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60">Sin categoría</button>`;
-            htmlFiltro += `<button type="button" onclick="seleccionarOpcionDropdown('filtroCategoria', 'text_filtroCategoria', 'menu_filtroCategoria', 'con_recordatorio', 'Con recordatorio')" class="w-full px-3 py-2 text-left text-xs font-semibold text-amber-600 dark:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-700/60"><i class="fa-solid fa-bell mr-1"></i> Con recordatorio</button>`;
             
             categoriasData.forEach(cat => {
                 htmlFiltro += `<button type="button" onclick="seleccionarOpcionDropdown('filtroCategoria', 'text_filtroCategoria', 'menu_filtroCategoria', '${cat.id}', '${cat.nombre}')" class="w-full px-3 py-2 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60">${cat.nombre}</button>`;
@@ -514,36 +525,23 @@
             setInterval(updateClock, 1000);
         }
 
-        // Formato de fecha para recordatorio
         function formatearFechaRecordatorio(fechaStr) {
             if (!fechaStr) return '';
             const fecha = new Date(fechaStr);
             return fecha.toLocaleString('es-ES', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
         }
 
-        // -------------------------------------------------------------
-        // FUNCIONALIDAD DE COMPARTIR VÍA WHATSAPP CON FORMATOS
-        // -------------------------------------------------------------
+        // Compartir por WhatsApp
         function convertirHtmlAWhatsApp(htmlContent) {
             if (!htmlContent) return '';
             let tempDiv = document.createElement('div');
             tempDiv.innerHTML = htmlContent;
 
-            tempDiv.querySelectorAll('b, strong').forEach(el => {
-                el.outerHTML = `*${el.textContent}*`;
-            });
-            tempDiv.querySelectorAll('i, em').forEach(el => {
-                el.outerHTML = `_${el.textContent}_`;
-            });
-            tempDiv.querySelectorAll('u').forEach(el => {
-                el.outerHTML = `~${el.textContent}~`;
-            });
-            tempDiv.querySelectorAll('h1, h2').forEach(el => {
-                el.outerHTML = `*${el.textContent.toUpperCase()}*\n`;
-            });
-            tempDiv.querySelectorAll('div, p').forEach(el => {
-                el.outerHTML = `${el.innerHTML}\n`;
-            });
+            tempDiv.querySelectorAll('b, strong').forEach(el => { el.outerHTML = `*${el.textContent}*`; });
+            tempDiv.querySelectorAll('i, em').forEach(el => { el.outerHTML = `_${el.textContent}_`; });
+            tempDiv.querySelectorAll('u').forEach(el => { el.outerHTML = `~${el.textContent}~`; });
+            tempDiv.querySelectorAll('h1, h2').forEach(el => { el.outerHTML = `*${el.textContent.toUpperCase()}*\n`; });
+            tempDiv.querySelectorAll('div, p').forEach(el => { el.outerHTML = `${el.innerHTML}\n`; });
 
             return tempDiv.textContent.replace(/\n\s*\n/g, '\n').trim();
         }
@@ -556,25 +554,14 @@
 
             const tituloTexto = nota.titulo ? `*${nota.titulo}*` : '';
             const categoriaTexto = `📂 _Categoría: ${nombreCat}_`;
-            let contenidoFormateado = '';
-            
-            if (nota.es_lista && nota.checklist) {
-                try {
-                    const items = typeof nota.checklist === 'string' ? JSON.parse(nota.checklist) : nota.checklist;
-                    contenidoFormateado = items.map(i => `${i.completado ? '☑️' : '◻️'} ${i.texto}`).join('\n');
-                } catch(e) { contenidoFormateado = ''; }
-            } else {
-                contenidoFormateado = convertirHtmlAWhatsApp(nota.contenido || '');
-            }
+            const contenidoFormateado = convertirHtmlAWhatsApp(nota.contenido || '');
 
             let mensajeFinal = `${tituloTexto}\n${categoriaTexto}\n\n${contenidoFormateado}`.trim();
             const urlWhatsApp = `https://api.whatsapp.com/send?text=${encodeURIComponent(mensajeFinal)}`;
             window.open(urlWhatsApp, '_blank');
         }
 
-        // -------------------------------------------------------------
-        // OFFLINE-FIRST QUEUE & SYNC
-        // -------------------------------------------------------------
+        // Offline Queue & Sync
         function obtenerColaPendiente() { return JSON.parse(localStorage.getItem('cola_keep_offline') || '[]'); }
         function guardarColaPendiente(cola) { localStorage.setItem('cola_keep_offline', JSON.stringify(cola)); }
         
@@ -643,9 +630,6 @@
         window.addEventListener('online', () => { procesarSincronizacionOffline(); });
         window.addEventListener('offline', () => { actualizarEstadoConexionUI(); });
 
-        // -------------------------------------------------------------
-        // CARGA Y OPERACIONES DE DATOS
-        // -------------------------------------------------------------
         window.onload = async function() {
             initClock();
             
@@ -699,7 +683,7 @@
             actualizarEstadoConexionUI();
         }
 
-        // --- GESTIÓN DE NOTAS ---
+        // Gestión de Notas
         function abrirModalNota(id = null) {
             document.getElementById('modalNota').style.display = 'flex';
             populateSelectsCategorias();
@@ -711,7 +695,6 @@
                     document.getElementById('modalNotaTitulo').innerText = 'Editar Nota';
                     document.getElementById('editNotaId').value = nota.id;
                     document.getElementById('inputTitulo').value = nota.titulo || '';
-                    document.getElementById('inputContenido').innerHTML = nota.contenido || '';
                     document.getElementById('inputCategoriaId').value = nota.categoria_id || '';
                     document.getElementById('inputRecordatorio').value = nota.recordatorio ? nota.recordatorio.slice(0, 16) : '';
                     
@@ -721,17 +704,29 @@
                     const colorNota = nota.color_nota || 'default';
                     seleccionarColorNota(colorNota);
 
-                    const esLista = nota.es_lista || false;
-                    document.getElementById('inputEsLista').value = esLista ? 'true' : 'false';
-                    if (esLista) {
+                    // Detectar si el contenido es lista (contiene checkboxes HTML)
+                    const contenidoHtml = nota.contenido || '';
+                    if (contenidoHtml.includes('type="checkbox"')) {
+                        document.getElementById('inputEsLista').value = 'true';
                         document.getElementById('wrapNotaTexto').classList.add('hidden');
                         document.getElementById('wrapNotaLista').classList.remove('hidden');
                         document.getElementById('btnAlternarLista').textContent = 'Cambiar a Nota de Texto';
-                        try {
-                            checklistEditItems = typeof nota.checklist === 'string' ? JSON.parse(nota.checklist) : (nota.checklist || []);
-                        } catch(e) { checklistEditItems = []; }
+                        
+                        // Extraer items del HTML guardado
+                        const temp = document.createElement('div');
+                        temp.innerHTML = contenidoHtml;
+                        checklistEditItems = [];
+                        temp.querySelectorAll('div').forEach(div => {
+                            const chk = div.querySelector('input[type="checkbox"]');
+                            const span = div.querySelector('span');
+                            if (span) {
+                                checklistEditItems.push({ texto: span.textContent, completado: chk ? chk.checked : false });
+                            }
+                        });
                         renderizarChecklistModal();
                     } else {
+                        document.getElementById('inputEsLista').value = 'false';
+                        document.getElementById('inputContenido').innerHTML = contenidoHtml;
                         document.getElementById('wrapNotaLista').classList.add('hidden');
                         document.getElementById('wrapNotaTexto').classList.remove('hidden');
                         document.getElementById('btnAlternarLista').textContent = 'Cambiar a Lista de Tareas';
@@ -755,7 +750,7 @@
         }
         function cerrarModalNota() { document.getElementById('modalNota').style.display = 'none'; }
 
-        // --- VER / MAXIMIZAR NOTA ---
+        // Ver / Maximizar Nota
         function abrirModalVerNota(id) {
             const nota = notasData.find(n => n.id == id);
             if (!nota) return;
@@ -775,20 +770,7 @@
                 recBadge.classList.add('hidden');
             }
 
-            const contenidoDiv = document.getElementById('verNotaContenido');
-            if (nota.es_lista && nota.checklist) {
-                try {
-                    const items = typeof nota.checklist === 'string' ? JSON.parse(nota.checklist) : nota.checklist;
-                    contenidoDiv.innerHTML = items.map(i => `
-                        <div class="flex items-center gap-2 py-1">
-                            <input type="checkbox" ${i.completado ? 'checked' : ''} onclick="toggleItemChecklistDirecto('${nota.id}', ${items.indexOf(i)})" class="w-4 h-4 accent-teal-500 rounded">
-                            <span class="${i.completado ? 'line-through text-slate-400' : ''}">${i.texto}</span>
-                        </div>
-                    `).join('');
-                } catch(e) { contenidoDiv.innerHTML = nota.contenido || ''; }
-            } else {
-                contenidoDiv.innerHTML = nota.contenido || '';
-            }
+            document.getElementById('verNotaContenido').innerHTML = nota.contenido || '';
 
             const modalContentEl = document.getElementById('modalVerNotaContent');
             const colorClases = obtenerClasesColorNota(nota.color_nota);
@@ -799,26 +781,6 @@
 
         function cerrarModalVerNota() {
             document.getElementById('modalVerNota').style.display = 'none';
-        }
-
-        async function toggleItemChecklistDirecto(notaId, itemIndex) {
-            const nota = notasData.find(n => n.id == notaId);
-            if (!nota) return;
-            try {
-                let items = typeof nota.checklist === 'string' ? JSON.parse(nota.checklist) : (nota.checklist || []);
-                items[itemIndex].completado = !items[itemIndex].completado;
-                nota.checklist = items;
-
-                if (!navigator.onLine) {
-                    agregarAColaOffline('EDITAR', 'NOTA', { id: notaId, checklist: JSON.stringify(items) });
-                    localStorage.setItem(NOTAS_CACHE_KEY, JSON.stringify(notasData));
-                    aplicarFiltrosLocales();
-                    return;
-                }
-                await supabaseClient.from('notas').update({ checklist: JSON.stringify(items) }).eq('id', notaId);
-                localStorage.setItem(NOTAS_CACHE_KEY, JSON.stringify(notasData));
-                aplicarFiltrosLocales();
-            } catch(e) {}
         }
 
         async function guardarNota() {
@@ -832,15 +794,17 @@
             if (!categoria_id) categoria_id = null;
 
             let contenido = '';
-            let checklistJson = null;
-
             if (es_lista) {
                 if (checklistEditItems.length === 0) {
                     mostrarAlerta('Agrega al menos un elemento a la lista de tareas.');
                     return;
                 }
-                checklistJson = JSON.stringify(checklistEditItems);
-                contenido = checklistEditItems.map(i => `${i.completado ? '[X]' : '[ ]'} ${i.texto}`).join('\n');
+                contenido = checklistEditItems.map((i, idx) => `
+                    <div class="flex items-center gap-2 py-0.5">
+                        <input type="checkbox" ${i.completado ? 'checked' : ''} onclick="toggleItemChecklistDirecto('${editId || 'temp'}', ${idx})" class="w-3.5 h-3.5 accent-teal-500 rounded">
+                        <span class="${i.completado ? 'line-through text-slate-400' : ''}">${i.texto}</span>
+                    </div>
+                `).join('');
             } else {
                 contenido = document.getElementById('inputContenido').innerHTML.trim();
             }
@@ -850,13 +814,12 @@
                 return;
             }
 
+            // PAYLOAD ÚNICAMENTE CON LAS COLUMNAS EXISTENTES EN SUPABASE
             const payload = {
                 titulo: titulo || 'Sin título',
                 contenido,
                 categoria_id,
                 color_nota,
-                es_lista,
-                checklist: checklistJson,
                 recordatorio: recordatorioVal ? new Date(recordatorioVal).toISOString() : null,
                 updated_at: new Date().toISOString()
             };
@@ -891,6 +854,8 @@
                         if (idx !== -1) notasData[idx] = { ...notasData[idx], ...data[0] };
                     }
                 } else {
+                    payload.favorito = false;
+                    payload.en_papelera = false;
                     const { data, error } = await supabaseClient.from('notas').insert([payload]).select();
                     if (error) throw error;
                     if (data && data[0]) {
@@ -902,10 +867,11 @@
                 aplicarFiltrosLocales();
             } catch (err) {
                 console.error("Error al guardar nota online:", err);
+                mostrarAlerta("Error al guardar en Supabase: " + (err.message || err));
             }
         }
 
-        // --- FAVORITO (FUNCIONA COMO FIJAR / PIN) ---
+        // Favorito / Fijar Nota
         async function toggleFavorito(id) {
             const nota = notasData.find(n => n.id == id);
             if (!nota) return;
@@ -923,7 +889,7 @@
             aplicarFiltrosLocales();
         }
 
-        // --- PAPELERA DE RECICLAJE (SOFT DELETE) ---
+        // Papelera
         function toggleVistaPapelera() {
             enVistaPapelera = !enVistaPapelera;
             const btnPapelera = document.getElementById('btnPapelera');
@@ -991,7 +957,7 @@
             });
         }
 
-        // --- GESTIÓN DE CATEGORÍAS ---
+        // Categorías
         function abrirModalCategoria() {
             document.getElementById('modalCategoria').style.display = 'flex';
             renderizarListaCategoriasModal();
@@ -1057,37 +1023,16 @@
             });
         }
 
-        // --- RENDERIZADO Y FILTRADO ESTILO KEEP ---
+        // Renderizado y Filtrado
         function obtenerClasesColorNota(color) {
             switch(color) {
-                case 'slate':
-                    return 'bg-slate-200/80 dark:bg-slate-700/70 border-slate-300 dark:border-slate-600';
-                case 'amber':
-                    return 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800/60';
-                case 'emerald':
-                    return 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/60';
-                case 'teal':
-                    return 'bg-teal-50 dark:bg-teal-950/40 border-teal-200 dark:border-teal-800/60';
-                case 'rose':
-                    return 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800/60';
-                default:
-                    return 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700/80';
+                case 'slate': return 'bg-slate-200/80 dark:bg-slate-700/70 border-slate-300 dark:border-slate-600';
+                case 'amber': return 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800/60';
+                case 'emerald': return 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/60';
+                case 'teal': return 'bg-teal-50 dark:bg-teal-950/40 border-teal-200 dark:border-teal-800/60';
+                case 'rose': return 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800/60';
+                default: return 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700/80';
             }
-        }
-
-        function construirHtmlContenidoNota(nota) {
-            if (nota.es_lista && nota.checklist) {
-                try {
-                    const items = typeof nota.checklist === 'string' ? JSON.parse(nota.checklist) : nota.checklist;
-                    return items.map((i, idx) => `
-                        <div class="flex items-center gap-2 py-0.5">
-                            <input type="checkbox" ${i.completado ? 'checked' : ''} onclick="toggleItemChecklistDirecto('${nota.id}', ${idx})" class="w-3.5 h-3.5 accent-teal-500 rounded">
-                            <span class="${i.completado ? 'line-through text-slate-400' : ''}">${i.texto}</span>
-                        </div>
-                    `).join('');
-                } catch(e) { return nota.contenido || ''; }
-            }
-            return nota.contenido || '';
         }
 
         function renderizarListaEnContenedor(lista, containerId, esPapelera = false) {
@@ -1153,7 +1098,7 @@
                             </div>
                         </div>
                         ${recordatorioHtml}
-                        <div class="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 whitespace-pre-line leading-relaxed overflow-hidden max-h-28">${construirHtmlContenidoNota(nota)}</div>
+                        <div class="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 whitespace-pre-line leading-relaxed overflow-hidden max-h-28">${nota.contenido || ''}</div>
                     </div>
                     <div class="pt-2 border-t border-slate-200/50 dark:border-slate-700/50 flex items-center justify-between text-[10px]">
                         <span class="px-2 py-0.5 rounded-full font-semibold bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20 truncate max-w-[90px]">${nombreCat}</span>
@@ -1169,15 +1114,20 @@
         function aplicarFiltrosLocales() {
             const textoBuscador = document.getElementById('filtroBuscador').value.trim().toLowerCase();
             const filtroCat = document.getElementById('filtroCategoria').value;
+            const filtroEstatus = document.getElementById('filtroEstatus').value;
 
             let filtrados = notasData.filter(n => enVistaPapelera ? n.en_papelera : !n.en_papelera);
 
             if (filtroCat === 'sin_categoria') {
                 filtrados = filtrados.filter(n => !n.categoria_id);
-            } else if (filtroCat === 'con_recordatorio') {
-                filtrados = filtrados.filter(n => n.recordatorio !== null && n.recordatorio !== undefined);
             } else if (filtroCat) {
                 filtrados = filtrados.filter(n => n.categoria_id === filtroCat);
+            }
+
+            if (filtroEstatus === 'favorito') {
+                filtrados = filtrados.filter(n => n.favorito);
+            } else if (filtroEstatus === 'con_recordatorio') {
+                filtrados = filtrados.filter(n => n.recordatorio !== null && n.recordatorio !== undefined && n.recordatorio !== '');
             }
 
             if (textoBuscador) {
