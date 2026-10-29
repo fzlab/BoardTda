@@ -157,6 +157,19 @@
                         <div id="menu_inputCategoria" class="dropdown-content hidden absolute left-0 mt-1 bg-white dark:bg-slate-800 w-full shadow-xl border border-slate-200 dark:border-slate-700 rounded-xl z-[9999] py-1 text-left"></div>
                     </div>
                 </div>
+                <!-- Selector de Color Estilo Keep -->
+                <div>
+                    <label class="font-semibold text-slate-600 dark:text-slate-400 block mb-1">Color de Nota</label>
+                    <input type="hidden" id="inputColorNota" value="default">
+                    <div class="flex items-center gap-2 pt-1" id="paletteContainer">
+                        <button type="button" onclick="seleccionarColorNota('default')" class="w-6 h-6 rounded-full bg-white dark:bg-slate-700 border-2 border-slate-300 dark:border-slate-600 hover:scale-110 transition-transform shadow-sm" data-color="default" title="Predeterminado"></button>
+                        <button type="button" onclick="seleccionarColorNota('slate')" class="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-600 border-2 border-transparent hover:scale-110 transition-transform shadow-sm" data-color="slate" title="Gris"></button>
+                        <button type="button" onclick="seleccionarColorNota('amber')" class="w-6 h-6 rounded-full bg-amber-100 dark:bg-amber-950/60 border-2 border-transparent hover:scale-110 transition-transform shadow-sm" data-color="amber" title="Amarillo"></button>
+                        <button type="button" onclick="seleccionarColorNota('emerald')" class="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-950/60 border-2 border-transparent hover:scale-110 transition-transform shadow-sm" data-color="emerald" title="Verde"></button>
+                        <button type="button" onclick="seleccionarColorNota('teal')" class="w-6 h-6 rounded-full bg-teal-100 dark:bg-teal-950/60 border-2 border-transparent hover:scale-110 transition-transform shadow-sm" data-color="teal" title="Teal"></button>
+                        <button type="button" onclick="seleccionarColorNota('rose')" class="w-6 h-6 rounded-full bg-rose-100 dark:bg-rose-950/60 border-2 border-transparent hover:scale-110 transition-transform shadow-sm" data-color="rose" title="Rosa"></button>
+                    </div>
+                </div>
                 <div>
                     <label class="font-semibold text-slate-600 dark:text-slate-400 block mb-1">Contenido</label>
                     <textarea id="inputContenido" placeholder="Escribe tu nota aquí..." rows="5" class="w-full bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/50 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-200 outline-none leading-relaxed"></textarea>
@@ -277,6 +290,19 @@
                 input.dispatchEvent(new Event('change'));
             }
             document.getElementById(menuId).classList.add('hidden');
+        }
+
+        // Selección de color en el Modal
+        function seleccionarColorNota(color) {
+            document.getElementById('inputColorNota').value = color;
+            const buttons = document.querySelectorAll('#paletteContainer button');
+            buttons.forEach(btn => {
+                if (btn.getAttribute('data-color') === color) {
+                    btn.classList.add('ring-2', 'ring-teal-500', 'scale-110');
+                } else {
+                    btn.classList.remove('ring-2', 'ring-teal-500', 'scale-110');
+                }
+            });
         }
 
         function populateSelectsCategorias() {
@@ -464,6 +490,9 @@
                     document.getElementById('inputCategoriaId').value = nota.categoria_id || '';
                     const catObj = categoriasData.find(c => c.id == nota.categoria_id);
                     document.getElementById('text_inputCategoria').textContent = catObj ? catObj.nombre : 'Sin categoría';
+                    
+                    const colorNota = nota.color_nota || 'default';
+                    seleccionarColorNota(colorNota);
                 }
             } else {
                 document.getElementById('modalNotaTitulo').innerText = 'Crear Nota';
@@ -472,6 +501,7 @@
                 document.getElementById('inputContenido').value = '';
                 document.getElementById('inputCategoriaId').value = '';
                 document.getElementById('text_inputCategoria').textContent = 'Sin categoría';
+                seleccionarColorNota('default');
             }
         }
         function cerrarModalNota() { document.getElementById('modalNota').style.display = 'none'; }
@@ -481,6 +511,7 @@
             const titulo = document.getElementById('inputTitulo').value.trim();
             const contenido = document.getElementById('inputContenido').value.trim();
             let categoria_id = document.getElementById('inputCategoriaId').value.trim();
+            const color_nota = document.getElementById('inputColorNota').value || 'default';
             if (!categoria_id) categoria_id = null;
 
             if (!titulo && !contenido) {
@@ -492,6 +523,7 @@
                 titulo: titulo || 'Sin título',
                 contenido,
                 categoria_id,
+                color_nota,
                 updated_at: new Date().toISOString()
             };
 
@@ -651,6 +683,23 @@
         }
 
         // --- RENDERIZADO Y FILTRADO ESTILO KEEP ---
+        function obtenerClasesColorNota(color) {
+            switch(color) {
+                case 'slate':
+                    return 'bg-slate-200/80 dark:bg-slate-700/70 border-slate-300 dark:border-slate-600';
+                case 'amber':
+                    return 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800/60';
+                case 'emerald':
+                    return 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/60';
+                case 'teal':
+                    return 'bg-teal-50 dark:bg-teal-950/40 border-teal-200 dark:border-teal-800/60';
+                case 'rose':
+                    return 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800/60';
+                default:
+                    return 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700/80';
+            }
+        }
+
         function renderizarNotas(lista) {
             const container = document.getElementById('notasContainer');
             container.innerHTML = '';
@@ -670,13 +719,14 @@
                 const catObj = categoriasData.find(c => c.id == nota.categoria_id);
                 const nombreCat = catObj ? catObj.nombre : 'Sin categoría';
 
-                // Solución al parpadeo de la estrella de favoritos
+                // Color e indicador de favoritos
+                const colorClases = obtenerClasesColorNota(nota.color_nota);
                 const starColorClass = nota.favorito 
                     ? 'text-amber-500 dark:text-amber-400' 
                     : 'text-slate-300 dark:text-slate-600 hover:text-amber-500 dark:hover:text-amber-400';
 
                 const card = document.createElement('div');
-                card.className = "note-card bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-3.5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-2 relative group";
+                card.className = `note-card ${colorClases} border rounded-2xl p-3.5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-2 relative group`;
                 card.innerHTML = `
                     <div class="space-y-1">
                         <div class="flex items-start justify-between gap-2">
@@ -687,7 +737,7 @@
                         </div>
                         <p class="text-xs text-slate-600 dark:text-slate-300 whitespace-pre-line leading-relaxed">${nota.contenido || ''}</p>
                     </div>
-                    <div class="pt-2 border-t border-slate-100 dark:border-slate-700/50 flex items-center justify-between text-[10px]">
+                    <div class="pt-2 border-t border-slate-200/50 dark:border-slate-700/50 flex items-center justify-between text-[10px]">
                         <span class="px-2 py-0.5 rounded-full font-semibold bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">${nombreCat}</span>
                         <div class="flex items-center gap-1.5 opacity-90 sm:opacity-0 group-hover:opacity-100 transition-opacity">
                             <button onclick="abrirModalNota('${nota.id}')" class="p-1 text-teal-600 hover:text-teal-800 dark:text-teal-400" title="Editar nota"><i class="fa-solid fa-pen"></i></button>
