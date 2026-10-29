@@ -712,8 +712,10 @@
                 return;
             }
 
-            // Simular el botón actualizar de manera automática para reflejar cambios al instante
-            await actualizarDatosManual();
+            // Esperar 1 segundo antes de disparar el botón actualizar automáticamente
+            setTimeout(async () => {
+                await actualizarDatosManual();
+            }, 1000);
         }
 
         function eliminarNota(id) {
@@ -736,8 +738,10 @@
                     aplicarFiltrosLocales();
                     return;
                 }
-                // Simular el botón actualizar de manera automática tras confirmar eliminación
-                await actualizarDatosManual();
+                // Esperar 1 segundo antes de disparar el botón actualizar automáticamente tras confirmar eliminación
+                setTimeout(async () => {
+                    await actualizarDatosManual();
+                }, 1000);
             });
         }
 
