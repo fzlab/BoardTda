@@ -174,7 +174,7 @@
             Selecciona un rango de fechas
           </div>
 
-          <!-- Rango de Fechas: Desde y Hasta en la misma línea -->
+          <!-- Rango de Fechas: Desde y Hasta en la misma línea (en blanco por defecto) -->
           <div class="grid grid-cols-2 gap-2">
             <div class="flex items-center gap-1 bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/50 rounded-xl px-2 py-1">
               <span class="text-[10px] font-semibold text-slate-400 shrink-0">Desde:</span>
@@ -568,15 +568,10 @@
       actualizarEstadoConexionUI();
     });
 
-    // Carga inicial optimizada con lectura desde localStorage y fechas por defecto actuales
+    // Carga inicial optimizada con lectura desde localStorage (fechas en blanco por defecto)
     window.onload = async function() {
       initClock();
       populateSelects();
-
-      // Establecer la fecha actual por defecto en los campos de fecha
-      const hoy = new Date().toISOString().slice(0, 10);
-      document.getElementById('filtroFechaInicio').value = hoy;
-      document.getElementById('filtroFechaFin').value = hoy;
       
       // 1. Cargar datos locales de inmediato para visualización offline instantánea
       const datosLocales = localStorage.getItem(TICKETS_CACHE_KEY);
