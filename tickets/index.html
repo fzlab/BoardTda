@@ -453,8 +453,25 @@
     }
 
     // -------------------------------------------------------------
-    // MANEJO Y SINCRONIZACIÓN OFFLINE Y MANUAL
+    // MANEJO Y SINCRONIZACIÓN OFFLINE Y MANUAL (ACTUALIZADO)
     // -------------------------------------------------------------
+    function actualizarEstadoConexionUI() {
+      const statusEl = document.getElementById('conexionStatus');
+      const cola = obtenerColaPendiente();
+      if (!statusEl) return;
+      
+      if (!navigator.onLine) {
+        statusEl.className = "inline-flex items-center gap-1 text-[11px] text-amber-500 font-bold";
+        statusEl.innerHTML = `<i class="fa-solid fa-wifi"></i> Modo Sin Conexión (${cola.length} pendientes)`;
+      } else if (cola.length > 0) {
+        statusEl.className = "inline-flex items-center gap-1 text-[11px] text-amber-500 font-bold animate-pulse";
+        statusEl.innerHTML = `<i class="fa-solid fa-arrows-rotate fa-spin"></i> Sincronizando (${cola.length})...`;
+      } else {
+        statusEl.className = "inline-flex items-center gap-1 text-[11px] text-emerald-500 font-semibold";
+        statusEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> Base de Datos: En Línea`;
+      }
+    }
+
     async function actualizarDatosManual() {
       const icono = document.getElementById('iconActualizar');
       if (icono) icono.classList.add('fa-spin');
@@ -484,17 +501,15 @@
       const cola = obtenerColaPendiente();
       cola.push({ idTemp: Date.now(), accion, ticketData });
       guardarColaPendiente(cola);
-      
-      const statusEl = document.getElementById('conexionStatus');
-      if (statusEl) {
-        statusEl.className = "inline-flex items-center gap-1 text-[11px] text-amber-500 font-bold";
-        statusEl.innerHTML = `<i class="fa-solid fa-wifi"></i> Guardado Local (Offline - ${cola.length} pendientes)`;
-      }
+      actualizarEstadoConexionUI();
     }
 
     async function procesarSincronizacionOffline() {
       const cola = obtenerColaPendiente();
-      if (cola.length === 0) return;
+      if (cola.length === 0) {
+        actualizarEstadoConexionUI();
+        return;
+      }
 
       const statusEl = document.getElementById('conexionStatus');
       if (statusEl) {
@@ -528,11 +543,15 @@
       if (colaFallida.length === 0) {
         mostrarAlerta('¡Conexión reestablecida! Todos los cambios locales fueron sincronizados con la Base de Datos.');
       }
+      actualizarEstadoConexionUI();
       await filtrarTickets();
     }
 
     window.addEventListener('online', () => {
       procesarSincronizacionOffline();
+    });
+    window.addEventListener('offline', () => {
+      actualizarEstadoConexionUI();
     });
 
     // Carga inicial optimizada con lectura desde localStorage
@@ -556,7 +575,7 @@
         await procesarSincronizacionOffline();
         await filtrarTickets();
       } else {
-        aplicarFiltrosLocales();
+        actualizarEstadoConexionUI();
       }
     };
 
@@ -604,7 +623,7 @@
     }
 
     // -------------------------------------------------------------
-    // OPERACIONES CRUD CON SOPORTE ONLINE / OFFLINE (ACTUALIZADAS)
+    // OPERACIONES CRUD CON SOPORTE ONLINE / OFFLINE
     // -------------------------------------------------------------
     async function guardarTicket() {
       const editId = document.getElementById('editTicketId').value;
@@ -841,12 +860,7 @@
       const fechaIni = document.getElementById('filtroFechaInicio').value;
       const fechaFin = document.getElementById('filtroFechaFin').value;
 
-      const statusEl = document.getElementById('conexionStatus');
-      const cola = obtenerColaPendiente();
-      if (statusEl) {
-        statusEl.className = "inline-flex items-center gap-1 text-[11px] text-amber-500 font-bold";
-        statusEl.innerHTML = `<i class="fa-solid fa-wifi"></i> Modo Sin Conexión (${cola.length} pendientes)`;
-      }
+      actualizarEstadoConexionUI();
 
       let filtrados = ticketsData;
       if (filtroResp) filtrados = filtrados.filter(t => t.responsable === filtroResp);
@@ -894,11 +908,7 @@
         return;
       }
 
-      const cola = obtenerColaPendiente();
-      if (statusEl && cola.length === 0) {
-        statusEl.className = "inline-flex items-center gap-1 text-[11px] text-emerald-500 font-semibold";
-        statusEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> Base de Datos: En Línea`;
-      }
+      actualizarEstadoConexionUI();
 
       ticketsData = data || [];
 
