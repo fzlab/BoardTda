@@ -604,7 +604,7 @@
     }
 
     // -------------------------------------------------------------
-    // OPERACIONES CRUD CON SOPORTE ONLINE / OFFLINE
+    // OPERACIONES CRUD CON SOPORTE ONLINE / OFFLINE (ACTUALIZADAS)
     // -------------------------------------------------------------
     async function guardarTicket() {
       const editId = document.getElementById('editTicketId').value;
@@ -648,6 +648,8 @@
       document.getElementById('filtroEstatus').value = '';
       document.getElementById('text_filtroEstatus').textContent = 'Estatus';
 
+      cerrarModalTicket();
+
       if (!navigator.onLine) {
         if (editId) {
           payload.id = editId;
@@ -661,38 +663,30 @@
         }
         localStorage.setItem(TICKETS_CACHE_KEY, JSON.stringify(ticketsData));
         aplicarFiltrosLocales();
-        cerrarModalTicket();
         return;
       }
 
       try {
         if (editId) {
-          const { error } = await supabaseClient.from('tickets').update(payload).eq('id', editId);
+          const { data, error } = await supabaseClient.from('tickets').update(payload).eq('id', editId).select();
           if (error) throw error;
+          if (data && data[0]) {
+            const idx = ticketsData.findIndex(t => t.id == editId);
+            if (idx !== -1) ticketsData[idx] = { ...ticketsData[idx], ...data[0] };
+          }
         } else {
-          const { error } = await supabaseClient.from('tickets').insert([payload]);
+          const { data, error } = await supabaseClient.from('tickets').insert([payload]).select();
           if (error) throw error;
+          if (data && data[0]) {
+            ticketsData.unshift(data[0]);
+          }
         }
-      } catch (err) {
-        console.error("Error al guardar en Supabase, guardando en cola offline:", err);
-        if (editId) { 
-          payload.id = editId; 
-          agregarAColaOffline('EDITAR', payload);
-          const idx = ticketsData.findIndex(t => t.id == editId);
-          if (idx !== -1) ticketsData[idx] = { ...ticketsData[idx], ...payload };
-        } else { 
-          payload.id = 'temp_' + Date.now();
-          agregarAColaOffline('CREAR', payload);
-          ticketsData.unshift(payload);
-        }
+        ticketsData.sort((a, b) => new Date(b.created_at || b.fecha) - new Date(a.created_at || a.fecha));
         localStorage.setItem(TICKETS_CACHE_KEY, JSON.stringify(ticketsData));
         aplicarFiltrosLocales();
-        cerrarModalTicket();
-        return;
+      } catch (err) {
+        console.error("Error al guardar ticket online:", err);
       }
-
-      await filtrarTickets();
-      cerrarModalTicket();
     }
 
     function eliminarTicket(id) {
@@ -709,16 +703,12 @@
           try {
             const { error } = await supabaseClient.from('tickets').delete().eq('id', id);
             if (error) throw error;
-          } catch (err) {
-            console.error("Error al eliminar en Supabase, guardando en cola offline:", err);
-            agregarAColaOffline('ELIMINAR', { id });
             ticketsData = ticketsData.filter(t => t.id != id);
             localStorage.setItem(TICKETS_CACHE_KEY, JSON.stringify(ticketsData));
             aplicarFiltrosLocales();
-            return;
+          } catch (err) {
+            console.error("Error al eliminar ticket:", err);
           }
-
-          await filtrarTickets();
         }
       });
     }
