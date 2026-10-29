@@ -688,34 +688,26 @@
 
             try {
                 if (editId) {
-                    const { error } = await supabaseClient.from('notas').update(payload).eq('id', editId);
+                    const { data, error } = await supabaseClient.from('notas').update(payload).eq('id', editId).select();
                     if (error) throw error;
+                    if (data && data[0]) {
+                        const idx = notasData.findIndex(n => n.id == editId);
+                        if (idx !== -1) notasData[idx] = { ...notasData[idx], ...data[0] };
+                    }
                 } else {
-                    const { error } = await supabaseClient.from('notas').insert([payload]);
+                    const { data, error } = await supabaseClient.from('notas').insert([payload]).select();
                     if (error) throw error;
+                    if (data && data[0]) {
+                        notasData.unshift(data[0]);
+                    }
                 }
-            } catch (err) {
-                console.error("Error al guardar nota online, guardando offline:", err);
-                if (editId) {
-                    payload.id = editId;
-                    agregarAColaOffline('EDITAR', 'NOTA', payload);
-                    const idx = notasData.findIndex(n => n.id == editId);
-                    if (idx !== -1) notasData[idx] = { ...notasData[idx], ...payload };
-                } else {
-                    payload.id = 'temp_' + Date.now();
-                    payload.created_at = new Date().toISOString();
-                    agregarAColaOffline('CREAR', 'NOTA', payload);
-                    notasData.unshift(payload);
-                }
+                // Ordenar notas por fecha para que la nueva o editada quede correcta al instante
+                notasData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
                 localStorage.setItem(NOTAS_CACHE_KEY, JSON.stringify(notasData));
                 aplicarFiltrosLocales();
-                return;
+            } catch (err) {
+                console.error("Error al guardar nota online:", err);
             }
-
-            // Esperar 1 segundo antes de disparar el botón actualizar automáticamente
-            setTimeout(async () => {
-                await actualizarDatosManual();
-            }, 1000);
         }
 
         function eliminarNota(id) {
@@ -731,17 +723,12 @@
                 try {
                     const { error } = await supabaseClient.from('notas').delete().eq('id', id);
                     if (error) throw error;
-                } catch (err) {
-                    agregarAColaOffline('ELIMINAR', 'NOTA', { id });
                     notasData = notasData.filter(n => n.id != id);
                     localStorage.setItem(NOTAS_CACHE_KEY, JSON.stringify(notasData));
                     aplicarFiltrosLocales();
-                    return;
+                } catch (err) {
+                    console.error("Error al eliminar nota:", err);
                 }
-                // Esperar 1 segundo antes de disparar el botón actualizar automáticamente tras confirmar eliminación
-                setTimeout(async () => {
-                    await actualizarDatosManual();
-                }, 1000);
             });
         }
 
