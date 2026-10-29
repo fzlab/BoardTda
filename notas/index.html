@@ -41,17 +41,17 @@
         body, .card, .topbar, input, select, button {
             transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
         }
-        /* Estilo Masonry Keep Grid */
+        /* Estilo Masonry Keep Grid - Forzado a 2 columnas en móviles y más en pantallas grandes */
         .notes-grid {
-            column-count: 1;
-            column-gap: 0.75rem;
+            column-count: 2;
+            column-gap: 0.5rem;
         }
-        @media (min-width: 640px) { .notes-grid { column-count: 2; } }
-        @media (min-width: 1024px) { .notes-grid { column-count: 3; } }
-        @media (min-width: 1280px) { .notes-grid { column-count: 4; } }
+        @media (min-width: 640px) { .notes-grid { column-count: 2; column-gap: 0.75rem; } }
+        @media (min-width: 1024px) { .notes-grid { column-count: 3; column-gap: 0.75rem; } }
+        @media (min-width: 1280px) { .notes-grid { column-count: 4; column-gap: 0.75rem; } }
         .note-card {
             break-inside: avoid;
-            margin-bottom: 0.75rem;
+            margin-bottom: 0.5rem;
         }
     </style>
 </head>
@@ -126,7 +126,7 @@
                 </div>
             </div>
 
-            <!-- Contenedor Estilo Keep (Masonry Grid de Tarjetas) -->
+            <!-- Contenedor Estilo Keep (Masonry Grid de Tarjetas - 2 columnas en móviles) -->
             <div id="notasContainer" class="notes-grid w-full">
                 <!-- Se llena dinámicamente -->
             </div>
@@ -767,20 +767,20 @@
                     : 'text-slate-300 dark:text-slate-600 hover:text-amber-500 dark:hover:text-amber-400';
 
                 const card = document.createElement('div');
-                card.className = `note-card ${colorClases} border rounded-2xl p-3.5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-2 relative group`;
+                card.className = `note-card ${colorClases} border rounded-2xl p-3 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-2 relative group`;
                 card.innerHTML = `
                     <div class="space-y-1">
-                        <div class="flex items-start justify-between gap-2">
-                            <h4 class="font-bold text-slate-900 dark:text-slate-100 text-sm leading-snug">${nota.titulo || ''}</h4>
-                            <button onclick="toggleFavorito('${nota.id}')" class="${starColorClass} transition-colors" title="Marcar como favorita">
+                        <div class="flex items-start justify-between gap-1.5">
+                            <h4 class="font-bold text-slate-900 dark:text-slate-100 text-xs sm:text-sm leading-snug">${nota.titulo || ''}</h4>
+                            <button onclick="toggleFavorito('${nota.id}')" class="${starColorClass} transition-colors shrink-0" title="Marcar como favorita">
                                 <i class="fa-solid fa-star text-xs"></i>
                             </button>
                         </div>
-                        <p class="text-xs text-slate-600 dark:text-slate-300 whitespace-pre-line leading-relaxed">${nota.contenido || ''}</p>
+                        <p class="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 whitespace-pre-line leading-relaxed">${nota.contenido || ''}</p>
                     </div>
                     <div class="pt-2 border-t border-slate-200/50 dark:border-slate-700/50 flex items-center justify-between text-[10px]">
-                        <span class="px-2 py-0.5 rounded-full font-semibold bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">${nombreCat}</span>
-                        <div class="flex items-center gap-1.5 opacity-90 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span class="px-2 py-0.5 rounded-full font-semibold bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20 truncate max-w-[90px]">${nombreCat}</span>
+                        <div class="flex items-center gap-1 opacity-90 sm:opacity-0 group-hover:opacity-100 transition-opacity">
                             <button onclick="abrirModalVerNota('${nota.id}')" class="p-1 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors" title="Ver / Maximizar nota"><i class="fa-solid fa-expand"></i></button>
                             <button onclick="abrirModalNota('${nota.id}')" class="p-1 text-teal-600 hover:text-teal-800 dark:text-teal-400 transition-colors" title="Editar nota"><i class="fa-solid fa-pen"></i></button>
                             <button onclick="eliminarNota('${nota.id}')" class="p-1 text-rose-500 hover:text-rose-700 transition-colors" title="Eliminar nota"><i class="fa-solid fa-trash-can"></i></button>
