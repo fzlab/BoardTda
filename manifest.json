@@ -34,6 +34,30 @@
           "type": "image/png"
         }
       ]
+    },
+    {
+      "name": "Notas y Pendientes",
+      "short_name": "Notas",
+      "url": "./notas/index.html",
+      "icons": [
+        {
+          "src": "/src/icons/notas-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Corte de Cajas",
+      "short_name": "Corte",
+      "url": "./corte/index.html",
+      "icons": [
+        {
+          "src": "/src/icons/corte-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     }
   ]
 }
