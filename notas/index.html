@@ -726,7 +726,8 @@
                             const chk = div.querySelector('input[type="checkbox"]');
                             const span = div.querySelector('span');
                             if (span) {
-                                checklistEditItems.push({ texto: span.textContent, completado: chk ? chk.checked : false });
+                                const isChecked = chk && (chk.hasAttribute('checked') || chk.checked);
+                                checklistEditItems.push({ texto: span.textContent, completado: isChecked });
                             }
                         });
                         renderizarChecklistModal();
@@ -777,7 +778,7 @@
                 recBadge.classList.add('hidden');
             }
 
-            // Procesar contenido para que los checks sean interactivos directamente desde el modal de lectura
+            // Procesar contenido para que los checks sean interactivos y sincronicen correctamente el estado checked
             let contenidoHtml = nota.contenido || '';
             if (contenidoHtml.includes('type="checkbox"')) {
                 const temp = document.createElement('div');
@@ -786,10 +787,10 @@
                     const chk = div.querySelector('input[type="checkbox"]');
                     const span = div.querySelector('span');
                     if (chk && span) {
-                        const isChecked = chk.checked;
+                        const isChecked = chk.hasAttribute('checked') || chk.checked;
                         div.className = "flex items-center gap-2 py-0.5";
                         div.innerHTML = `
-                            <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleItemChecklistModalVer('${nota.id}', ${idx}, this.checked)" class="w-4 h-4 accent-teal-500 rounded cursor-pointer">
+                            <input type="checkbox" ${isChecked ? 'checked="checked"' : ''} onchange="toggleItemChecklistModalVer('${nota.id}', ${idx}, this.checked)" class="w-4 h-4 accent-teal-500 rounded cursor-pointer">
                             <span class="${isChecked ? 'line-through text-slate-400' : 'text-slate-800 dark:text-slate-200'}">${span.textContent}</span>
                         `;
                     }
@@ -816,10 +817,21 @@
             if (items[indexItem]) {
                 const chk = items[indexItem].querySelector('input[type="checkbox"]');
                 const span = items[indexItem].querySelector('span');
-                if (chk) chk.checked = nuevoEstado;
+                if (chk) {
+                    if (nuevoEstado) {
+                        chk.setAttribute('checked', 'checked');
+                        chk.checked = true;
+                    } else {
+                        chk.removeAttribute('checked');
+                        chk.checked = false;
+                    }
+                }
                 if (span) {
-                    if (nuevoEstado) span.className = "line-through text-slate-400";
-                    else span.className = "text-slate-800 dark:text-slate-200";
+                    if (nuevoEstado) {
+                        span.className = "line-through text-slate-400";
+                    } else {
+                        span.className = "text-slate-800 dark:text-slate-200";
+                    }
                 }
             }
 
@@ -867,7 +879,7 @@
                 }
                 contenido = checklistEditItems.map(i => `
                     <div class="flex items-center gap-2 py-0.5">
-                        <input type="checkbox" ${i.completado ? 'checked' : ''} class="w-4 h-4 accent-teal-500 rounded pointer-events-none">
+                        <input type="checkbox" ${i.completado ? 'checked="checked"' : ''} class="w-4 h-4 accent-teal-500 rounded pointer-events-none">
                         <span class="${i.completado ? 'line-through text-slate-400' : 'text-slate-800 dark:text-slate-200'}">${i.texto}</span>
                     </div>
                 `).join('');
