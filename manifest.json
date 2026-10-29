@@ -1,3 +1,4 @@
+
 {
   "name": "FZ Board TDA",
   "short_name": "Board TDA",
@@ -20,23 +21,19 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
+  ],
+  "shortcuts": [
+    {
+      "name": "Gestor de Tickets",
+      "short_name": "Tickets",
+      "url": "./tickets/index.html",
+      "icons": [
+        {
+          "src": "/src/img/icons/mediacapture-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    }
   ]
-  
-"shortcuts": [
-  {
-    "name": "Gestor de Tickets",
-    "short_name": "Tickets",
-    "url": "/tickets",
-    "icons": [
-      {
-        "src": "/src/img/icons/mediacapture-96x96.png",
-        "sizes": "96x96"
-      }
-    ]
-  },
-  
-
-  
-]
-      
 }
