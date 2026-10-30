@@ -112,7 +112,7 @@
                         </button>
                     </div>
                 </div>
-                <!-- Buscador y Filtros (Categoría y Estatus) FORZADOS EN 1 SOLA FILA EN PANTALLAS PEQUEÑAS (grid-cols-3) -->
+                <!-- Buscador y Filtros -->
                 <div class="grid grid-cols-3 gap-1.5 pt-2 border-t border-slate-200 dark:border-slate-700/60 text-xs">
                     <!-- Buscador -->
                     <div class="relative min-w-0">
@@ -145,7 +145,7 @@
                 </div>
             </div>
 
-            <!-- Contenedor Estilo Keep (Secciones para Favoritas y Otras / O Papelera) -->
+            <!-- Contenedor Estilo Keep -->
             <div id="seccionesContainer" class="space-y-4">
                 <div id="seccionFavoritasContainer" class="space-y-2 hidden">
                     <h3 class="text-xs font-bold text-amber-500 dark:text-amber-400 uppercase tracking-wider px-1 flex items-center gap-1">
@@ -216,12 +216,10 @@
                         <div id="menu_inputCategoria" class="dropdown-content hidden absolute left-0 mt-1 bg-white dark:bg-slate-800 w-full shadow-xl border border-slate-200 dark:border-slate-700 rounded-xl z-[9999] py-1 text-left"></div>
                     </div>
                 </div>
-                <!-- Sistema de Recordatorios y Fechas -->
                 <div>
                     <label class="font-semibold text-slate-600 dark:text-slate-400 block mb-1">Recordatorio / Fecha Límite</label>
                     <input type="datetime-local" id="inputRecordatorio" class="w-full bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/50 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-200 outline-none">
                 </div>
-                <!-- Selector de Color Estilo Keep -->
                 <div>
                     <label class="font-semibold text-slate-600 dark:text-slate-400 block mb-1">Color de Nota</label>
                     <input type="hidden" id="inputColorNota" value="default">
@@ -241,7 +239,6 @@
                     </div>
                     <input type="hidden" id="inputEsLista" value="false">
                     
-                    <!-- Contenedor Texto Enriquecido -->
                     <div id="wrapNotaTexto">
                         <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700/60 rounded-t-xl px-2 py-1.5 text-slate-600 dark:text-slate-300 text-xs">
                             <button type="button" onclick="aplicarFormato('formatBlock', '<h1>')" class="px-2 py-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded font-bold" title="Encabezado 1">H1</button>
@@ -254,7 +251,6 @@
                         <div id="inputContenido" contenteditable="true" onkeyup="actualizarEstadoBotonesFormat()" onmouseup="actualizarEstadoBotonesFormat()" class="w-full bg-slate-50 dark:bg-slate-900/40 border border-t-0 border-slate-200 dark:border-slate-700/50 rounded-b-xl px-3 py-2.5 text-slate-800 dark:text-slate-200 outline-none leading-relaxed min-h-[120px] max-h-[220px] overflow-y-auto"></div>
                     </div>
 
-                    <!-- Contenedor Lista de Verificación (Checklist) -->
                     <div id="wrapNotaLista" class="hidden space-y-1.5">
                         <div class="flex gap-2">
                             <input type="text" id="inputNuevaTarea" placeholder="Añadir elemento de lista..." class="flex-1 bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/50 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-200 outline-none" onkeypress="if(event.key==='Enter'){event.preventDefault(); agregarItemChecklist();}">
@@ -283,9 +279,7 @@
                     <input type="text" id="nuevaCategoriaNombre" placeholder="Nueva categoría..." class="flex-1 bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/50 rounded-xl px-3 py-2 font-semibold text-slate-800 dark:text-slate-200 outline-none" onkeypress="if(event.key==='Enter'){event.preventDefault(); crearCategoria();}">
                     <button onclick="crearCategoria()" class="px-3 py-2 bg-teal-500/10 border border-teal-500/30 text-teal-600 dark:text-teal-400 rounded-xl font-semibold shadow-sm">Agregar</button>
                 </div>
-                <div id="listaCategoriasContainer" class="space-y-1.5 max-h-48 overflow-y-auto pr-1">
-                    <!-- Se llena dinámicamente -->
-                </div>
+                <div id="listaCategoriasContainer" class="space-y-1.5 max-h-48 overflow-y-auto pr-1"></div>
             </div>
             <div class="mt-4 flex justify-end">
                 <button onclick="cerrarModalCategoria()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold rounded-xl text-xs">Cerrar</button>
@@ -319,9 +313,6 @@
     </div>
 
     <script>
-        // -------------------------------------------------------------
-        // CONFIGURACIÓN SUPABASE & CACHÉ LOCAL
-        // -------------------------------------------------------------
         const SUPABASE_URL = "https://mifbcyxtafeacwkzqzsq.supabase.co";
         const SUPABASE_ANON_KEY = "sb_publishable_O6EAbkSba1NQPq08k_7bHg_PZ_x4ZU5";
         const NOTAS_CACHE_KEY = 'keep_notes_cache_data';
@@ -334,7 +325,6 @@
         let enVistaPapelera = false;
         let checklistEditItems = [];
 
-        // Tema Oscuro / Claro
         const btnThemeToggle = document.getElementById('btn-theme-toggle');
         const htmlElement = document.documentElement;
         function setTheme(isDark) {
@@ -354,7 +344,6 @@
         });
         lucide.createIcons();
 
-        // Control de Menús Desplegables Custom
         window.onclick = function(event) {
             if (!event.target.closest('.dropdown')) {
                 const dropdowns = document.getElementsByClassName("dropdown-content");
@@ -383,7 +372,6 @@
             document.getElementById(menuId).classList.add('hidden');
         }
 
-        // Aplicar formato de texto enriquecido e indicadores de estado en botones
         function aplicarFormato(command, value = null) {
             document.execCommand(command, false, value);
             document.getElementById('inputContenido').focus();
@@ -415,7 +403,6 @@
             } catch (e) {}
         }
 
-        // Selección de color en el Modal
         function seleccionarColorNota(color) {
             document.getElementById('inputColorNota').value = color;
             const buttons = document.querySelectorAll('#paletteContainer button');
@@ -428,7 +415,6 @@
             });
         }
 
-        // Alternar entre Nota de Texto y Lista de Tareas (Checklist)
         function alternarModoLista() {
             const esListaInput = document.getElementById('inputEsLista');
             const wrapTexto = document.getElementById('wrapNotaTexto');
@@ -496,7 +482,6 @@
             document.getElementById('menu_inputCategoria').innerHTML = htmlModal;
         }
 
-        // Modales Alerta y Confirmación
         let confirmCallback = null;
         function mostrarAlerta(texto) {
             document.getElementById('alertModalText').innerText = texto;
@@ -515,7 +500,6 @@
             if (confirmCallback) { confirmCallback(res); confirmCallback = null; }
         }
 
-        // Reloj en vivo
         function initClock() {
             const updateClock = () => {
                 const now = new Date();
@@ -532,7 +516,6 @@
             return fecha.toLocaleString('es-ES', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
         }
 
-        // Compartir por WhatsApp
         function convertirHtmlAWhatsApp(htmlContent) {
             if (!htmlContent) return '';
             let tempDiv = document.createElement('div');
@@ -562,7 +545,6 @@
             window.open(urlWhatsApp, '_blank');
         }
 
-        // Offline Queue & Sync
         function obtenerColaPendiente() { return JSON.parse(localStorage.getItem('cola_keep_offline') || '[]'); }
         function guardarColaPendiente(cola) { localStorage.setItem('cola_keep_offline', JSON.stringify(cola)); }
         
@@ -684,7 +666,6 @@
             actualizarEstadoConexionUI();
         }
 
-        // Gestión de Notas
         function abrirModalNota(id = null) {
             document.getElementById('modalNota').style.display = 'flex';
             populateSelectsCategorias();
@@ -750,7 +731,6 @@
         }
         function cerrarModalNota() { document.getElementById('modalNota').style.display = 'none'; }
 
-        // Ver / Maximizar Nota
         function abrirModalVerNota(id) {
             const nota = notasData.find(n => n.id == id);
             if (!nota) return;
@@ -940,7 +920,6 @@
             }
         }
 
-        // Favorito / Fijar Nota
         async function toggleFavorito(id) {
             const nota = notasData.find(n => n.id == id);
             if (!nota) return;
@@ -958,7 +937,6 @@
             aplicarFiltrosLocales();
         }
 
-        // Papelera
         function toggleVistaPapelera() {
             enVistaPapelera = !enVistaPapelera;
             const btnPapelera = document.getElementById('btnPapelera');
@@ -1026,9 +1004,6 @@
             });
         }
 
-        // -------------------------------------------------------------
-        // GESTIÓN DE CATEGORÍAS (CREAR, EDITAR, ELIMINAR INSTANTÁNEO)
-        // -------------------------------------------------------------
         function abrirModalCategoria() {
             document.getElementById('modalCategoria').style.display = 'flex';
             renderizarListaCategoriasModal();
@@ -1060,7 +1035,6 @@
             const nuevoId = 'temp_cat_' + Date.now();
             const nuevaCat = { id: nuevoId, nombre };
 
-            // Actualización local inmediata
             categoriasData.push(nuevaCat);
             categoriasData.sort((a, b) => a.nombre.localeCompare(b.nombre));
             localStorage.setItem(CATEGORIAS_CACHE_KEY, JSON.stringify(categoriasData));
@@ -1100,7 +1074,6 @@
                 return;
             }
 
-            // Actualización local inmediata
             const cat = categoriasData.find(c => c.id == id);
             if (cat) cat.nombre = nombreTrim;
             categoriasData.sort((a, b) => a.nombre.localeCompare(b.nombre));
@@ -1128,7 +1101,6 @@
             mostrarConfirmacion('¿Desea eliminar esta categoría? Las notas asociadas quedarán como "Sin categoría".', async (aceptado) => {
                 if (!aceptado) return;
 
-                // Actualización local inmediata
                 categoriasData = categoriasData.filter(c => c.id != id);
                 notasData.forEach(n => {
                     if (n.categoria_id == id) n.categoria_id = null;
@@ -1154,7 +1126,6 @@
             });
         }
 
-        // Renderizado y Filtrado
         function obtenerClasesColorNota(color) {
             switch(color) {
                 case 'slate': return 'bg-slate-200/80 dark:bg-slate-700/70 border-slate-300 dark:border-slate-600';
@@ -1171,8 +1142,9 @@
             container.innerHTML = '';
 
             if (lista.length === 0) {
+                // CORRECCIÓN APLICADA AQUÍ: style="column-span: all;" para que ocupe todo el ancho del multi-column
                 container.innerHTML = `
-                    <div class="col-span-full py-8 text-center space-y-2">
+                    <div class="col-span-full py-8 text-center space-y-2" style="column-span: all;">
                         <div class="w-10 h-10 bg-teal-500/10 text-teal-600 dark:text-teal-400 rounded-full flex items-center justify-center mx-auto border border-teal-500/20">
                             <i class="fa-solid fa-note-sticky text-base"></i>
                         </div>
@@ -1287,10 +1259,11 @@
                     seccionFavoritas.classList.add('hidden');
                 }
                 if (favoritas.length > 0 && otras.length > 0) {
-                                   tituloOtras.classList.remove('hidden');
+                    tituloOtras.classList.remove('hidden');
                 } else {
-                                                   tituloOtras.classList.add('hidden');
-                }               renderizarListaEnContenedor(otras, 'notasContainer', false);
+                    tituloOtras.classList.add('hidden');
+                }
+                renderizarListaEnContenedor(otras, 'notasContainer', false);
             }
             actualizarEstadoConexionUI();
         }
