@@ -1190,7 +1190,7 @@
 
             lista.forEach(nota => {
                 const catObj = categoriasData.find(c => c.id == nota.categoria_id);
-                const nombreCat = catObj ? catObj.nombre : 'Sin categoría';
+                const nombreCat = catObj ? catObj.nombre : 'Sin\nCategoría';
 
                 const colorClases = obtenerClasesColorNota(nota.color_nota);
                 const starColorClass = nota.favorito 
@@ -1211,15 +1211,15 @@
                 let botonesAccionHtml = '';
                 if (esPapelera) {
                     botonesAccionHtml = `
-                        <button onclick="restaurarNotaPapelera('${nota.id}')" class="p-1 text-teal-600 hover:text-teal-800 dark:text-teal-400 transition-colors" title="Restaurar nota"><i class="fa-solid fa-rotate-left"></i></button>
-                        <button onclick="eliminarDefinitivo('${nota.id}')" class="p-1 text-rose-500 hover:text-rose-700 transition-colors" title="Eliminar definitivamente"><i class="fa-solid fa-trash-can"></i></button>
+                        <button onclick="restaurarNotaPapelera('${nota.id}')" class="p-1.5 bg-teal-500/10 hover:bg-teal-500/20 text-teal-600 dark:text-teal-400 border border-teal-500/20 rounded-lg transition-colors flex items-center justify-center gap-1 text-[10px] font-semibold" title="Restaurar nota"><i class="fa-solid fa-rotate-left"></i> Restaurar</button>
+                        <button onclick="eliminarDefinitivo('${nota.id}')" class="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/20 rounded-lg transition-colors flex items-center justify-center gap-1 text-[10px] font-semibold" title="Eliminar definitivamente"><i class="fa-solid fa-trash-can"></i> Eliminar</button>
                     `;
                 } else {
                     botonesAccionHtml = `
-                        <button onclick="abrirModalVerNota('${nota.id}')" class="p-1 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors" title="Ver / Maximizar nota"><i class="fa-solid fa-expand"></i></button>
-                        <button onclick="compartirNotaWhatsApp('${nota.id}')" class="p-1 text-teal-600 hover:text-teal-800 dark:text-teal-400 transition-colors" title="Compartir nota por WhatsApp"><i class="fa-solid fa-share-nodes"></i></button>
-                        <button onclick="abrirModalNota('${nota.id}')" class="p-1 text-teal-600 hover:text-teal-800 dark:text-teal-400 transition-colors" title="Editar nota"><i class="fa-solid fa-pen"></i></button>
-                        <button onclick="enviarAPapelera('${nota.id}')" class="p-1 text-rose-500 hover:text-rose-700 transition-colors" title="Enviar a papelera"><i class="fa-solid fa-trash-can"></i></button>
+                        <button onclick="abrirModalVerNota('${nota.id}')" class="p-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700/60 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/60 rounded-lg transition-colors flex items-center justify-center gap-1 text-[10px] font-semibold" title="Ver nota"><i class="fa-solid fa-expand text-[9px]"></i> Ver nota</button>
+                        <button onclick="compartirNotaWhatsApp('${nota.id}')" class="p-1.5 bg-teal-500/10 hover:bg-teal-500/20 text-teal-600 dark:text-teal-400 border border-teal-500/20 rounded-lg transition-colors flex items-center justify-center gap-1 text-[10px] font-semibold" title="Compartir"><i class="fa-solid fa-share-nodes text-[9px]"></i> Compartir</button>
+                        <button onclick="abrirModalNota('${nota.id}')" class="p-1.5 bg-teal-500/10 hover:bg-teal-500/20 text-teal-600 dark:text-teal-400 border border-teal-500/20 rounded-lg transition-colors flex items-center justify-center gap-1 text-[10px] font-semibold" title="Editar"><i class="fa-solid fa-pen text-[9px]"></i> Editar</button>
+                        <button onclick="enviarAPapelera('${nota.id}')" class="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/20 rounded-lg transition-colors flex items-center justify-center gap-1 text-[10px] font-semibold" title="Eliminar"><i class="fa-solid fa-trash-can text-[9px]"></i> Eliminar</button>
                     `;
                 }
 
@@ -1238,9 +1238,9 @@
                         ${recordatorioHtml}
                         <div class="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 leading-relaxed overflow-hidden max-h-28 space-y-1">${nota.contenido || ''}</div>
                     </div>
-                    <div class="pt-2 border-t border-slate-200/50 dark:border-slate-700/50 flex items-center justify-between text-[10px]">
-                        <span class="px-2 py-0.5 rounded-full font-semibold bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20 truncate max-w-[90px]">${nombreCat}</span>
-                        <div class="flex items-center gap-1 opacity-90 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div class="pt-2.5 border-t border-slate-200/50 dark:border-slate-700/50 flex items-center justify-between gap-2">
+                        <span class="px-2.5 py-1 rounded-xl font-semibold bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20 text-center text-[10px] leading-tight max-w-[100px] whitespace-pre-line break-words">${nombreCat}</span>
+                        <div class="grid grid-cols-2 gap-1.5 w-[160px] shrink-0">
                             ${botonesAccionHtml}
                         </div>
                     </div>
@@ -1271,7 +1271,7 @@
             if (textoBuscador) {
                 filtrados = filtrados.filter(n =>
                     (n.titulo && n.titulo.toLowerCase().includes(textoBuscador)) ||
-                    (n.contenido && n.contenido.toLowerCase().includes(textoBuscador))
+                    (n.contenido && n.contenido.toLowerCase().includes(textoBussador))
                 );
             }
 
