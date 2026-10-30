@@ -4,8 +4,8 @@ const CACHE_NAME = 'fz-board-tda-v1.8.61';
 const STATIC_ASSETS = [
     './',
     './fonts.css',
-    './fonts/SimplySans-Book.ttf',
-    './fonts/SimplySans-Bold.ttf',
+    './fonts/PlusJakartaSans-Regular.ttf',
+    './fonts/PlusJakartaSans-SemiBold.ttf',
     './index.html',
     './manifest.json',
     './icon-192.png',
