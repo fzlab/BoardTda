@@ -1,5 +1,4 @@
-const CACHE_NAME = 'fz-board-tda-v1.8.62';
-
+const CACHE_NAME = 'fz-board-tda-v1.8.63';
 // Agregamos las URLs exactas de los CDNs que usa index.html
 const STATIC_ASSETS = [
     './',
@@ -20,7 +19,6 @@ const STATIC_ASSETS = [
     'https://unpkg.com/lucide@latest',
     'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'
 ];
-
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
