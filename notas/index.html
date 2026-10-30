@@ -287,7 +287,7 @@
             </div>
             <div class="space-y-3 text-xs">
                 <div class="flex gap-2">
-                    <input type="text" id="nuevaCategoriaNombre" placeholder="Nueva categoría..." class="flex-1 bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/50 rounded-xl px-3 py-2 font-semibold text-slate-800 dark:text-slate-200 outline-none">
+                    <input type="text" id="nuevaCategoriaNombre" placeholder="Nueva categoría..." class="flex-1 bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/50 rounded-xl px-3 py-2 font-semibold text-slate-800 dark:text-slate-200 outline-none" onkeypress="if(event.key==='Enter'){event.preventDefault(); crearCategoria();}">
                     <button onclick="crearCategoria()" class="px-3 py-2 bg-teal-500/10 border border-teal-500/30 text-teal-600 dark:text-teal-400 rounded-xl font-semibold shadow-sm">Agregar</button>
                 </div>
                 <div id="listaCategoriasContainer" class="space-y-1.5 max-h-48 overflow-y-auto pr-1">
@@ -778,7 +778,6 @@
                 recBadge.classList.add('hidden');
             }
 
-            // Procesar contenido para que los checks sean interactivos y sincronicen correctamente el estado checked
             let contenidoHtml = nota.contenido || '';
             if (contenidoHtml.includes('type="checkbox"')) {
                 const temp = document.createElement('div');
@@ -1034,7 +1033,9 @@
             });
         }
 
-        // Categorías
+        // -------------------------------------------------------------
+        // GESTIÓN DE CATEGORÍAS (CREAR, EDITAR, ELIMINAR INSTANTÁNEO)
+        // -------------------------------------------------------------
         function abrirModalCategoria() {
             document.getElementById('modalCategoria').style.display = 'flex';
             renderizarListaCategoriasModal();
@@ -1050,7 +1051,10 @@
             container.innerHTML = categoriasData.map(cat => `
                 <div class="flex items-center justify-between bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/50 p-2 rounded-xl">
                     <span class="font-semibold text-slate-800 dark:text-slate-200">${cat.nombre}</span>
-                    <button onclick="eliminarCategoria('${cat.id}')" class="text-red-500 hover:text-red-700 p-1 text-xs" title="Eliminar categoría"><i class="fa-solid fa-trash-can"></i></button>
+                    <div class="flex items-center gap-1">
+                        <button onclick="editarCategoriaPrompt('${cat.id}', '${cat.nombre.replace(/'/g, "\\'")}')" class="text-teal-600 hover:text-teal-800 dark:text-teal-400 p-1 text-xs" title="Editar categoría"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="eliminarCategoria('${cat.id}')" class="text-red-500 hover:text-red-700 p-1 text-xs" title="Eliminar categoría"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
                 </div>
             `).join('');
         }
@@ -1060,43 +1064,100 @@
             const nombre = input.value.trim();
             if (!nombre) { mostrarAlerta('Escribe el nombre de la categoría.'); return; }
             
-            const payload = { nombre };
+            const nuevoId = 'temp_cat_' + Date.now();
+            const nuevaCat = { id: nuevoId, nombre };
+
+            // Actualización local inmediata
+            categoriasData.push(nuevaCat);
+            categoriasData.sort((a, b) => a.nombre.localeCompare(b.nombre));
+            localStorage.setItem(CATEGORIAS_CACHE_KEY, JSON.stringify(categoriasData));
+            input.value = '';
+            renderizarListaCategoriasModal();
+            populateSelectsCategorias();
+            aplicarFiltrosLocales();
+
             if (!navigator.onLine) {
-                payload.id = 'temp_cat_' + Date.now();
-                agregarAColaOffline('CREAR', 'CATEGORIA', payload);
-                categoriasData.push(payload);
-                localStorage.setItem(CATEGORIAS_CACHE_KEY, JSON.stringify(categoriasData));
-                input.value = '';
-                renderizarListaCategoriasModal();
-                populateSelectsCategorias();
+                agregarAColaOffline('CREAR', 'CATEGORIA', nuevaCat);
                 return;
             }
 
-            const { error } = await supabaseClient.from('categorias').insert([payload]);
-            if (error) {
-                mostrarAlerta('Error al crear categoría (puede que ya exista).');
+            try {
+                const { data, error } = await supabaseClient.from('categorias').insert([{ nombre }]).select();
+                if (error) throw error;
+                if (data && data[0]) {
+                    const idx = categoriasData.findIndex(c => c.id === nuevoId);
+                    if (idx !== -1) categoriasData[idx] = data[0];
+                    categoriasData.sort((a, b) => a.nombre.localeCompare(b.nombre));
+                    localStorage.setItem(CATEGORIAS_CACHE_KEY, JSON.stringify(categoriasData));
+                    populateSelectsCategorias();
+                    aplicarFiltrosLocales();
+                }
+            } catch (err) {
+                console.error("Error al crear categoría online:", err);
+                mostrarAlerta("Error al guardar categoría: " + (err.message || err));
+            }
+        }
+
+        async function editarCategoriaPrompt(id, nombreActual) {
+            const nuevoNombre = prompt("Editar nombre de la categoría:", nombreActual);
+            if (nuevoNombre === null) return;
+            const nombreTrim = nuevoNombre.trim();
+            if (!nombreTrim) {
+                mostrarAlerta("El nombre de la categoría no puede estar vacío.");
                 return;
             }
-            input.value = '';
-            await cargarDatosRemotos();
+
+            // Actualización local inmediata
+            const cat = categoriasData.find(c => c.id == id);
+            if (cat) cat.nombre = nombreTrim;
+            categoriasData.sort((a, b) => a.nombre.localeCompare(b.nombre));
+            localStorage.setItem(CATEGORIAS_CACHE_KEY, JSON.stringify(categoriasData));
             renderizarListaCategoriasModal();
+            populateSelectsCategorias();
+            aplicarFiltrosLocales();
+
+            const payload = { id, nombre: nombreTrim };
+            if (!navigator.onLine) {
+                agregarAColaOffline('EDITAR', 'CATEGORIA', payload);
+                return;
+            }
+
+            try {
+                const { error } = await supabaseClient.from('categorias').update({ nombre: nombreTrim }).eq('id', id);
+                if (error) throw error;
+            } catch (err) {
+                console.error("Error al editar categoría online:", err);
+                mostrarAlerta("Error al actualizar categoría en Supabase.");
+            }
         }
 
         async function eliminarCategoria(id) {
             mostrarConfirmacion('¿Desea eliminar esta categoría? Las notas asociadas quedarán como "Sin categoría".', async (aceptado) => {
                 if (!aceptado) return;
+
+                // Actualización local inmediata
+                categoriasData = categoriasData.filter(c => c.id != id);
+                notasData.forEach(n => {
+                    if (n.categoria_id == id) n.categoria_id = null;
+                });
+                localStorage.setItem(CATEGORIAS_CACHE_KEY, JSON.stringify(categoriasData));
+                localStorage.setItem(NOTAS_CACHE_KEY, JSON.stringify(notasData));
+                renderizarListaCategoriasModal();
+                populateSelectsCategorias();
+                aplicarFiltrosLocales();
+
                 if (!navigator.onLine) {
                     agregarAColaOffline('ELIMINAR', 'CATEGORIA', { id });
-                    categoriasData = categoriasData.filter(c => c.id != id);
-                    localStorage.setItem(CATEGORIAS_CACHE_KEY, JSON.stringify(categoriasData));
-                    renderizarListaCategoriasModal();
-                    populateSelectsCategorias();
-                    aplicarFiltrosLocales();
                     return;
                 }
-                await supabaseClient.from('categorias').delete().eq('id', id);
-                await cargarDatosRemotos();
-                renderizarListaCategoriasModal();
+
+                try {
+                    const { error } = await supabaseClient.from('categorias').delete().eq('id', id);
+                    if (error) throw error;
+                } catch (err) {
+                    console.error("Error al eliminar categoría online:", err);
+                    mostrarAlerta("Error al eliminar categoría en Supabase.");
+                }
             });
         }
 
