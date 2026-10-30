@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <link rel="stylesheet" href="../fonts.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Keep Notes - T0151 G.P Mérida</title>
+    <title>Notas - T0151</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -42,8 +42,7 @@
             transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
         }
         .note-card h1, #verNotaContenido h1, #inputContenido h1 { font-size: 1.2rem; font-weight: bold; line-height: 1.3; margin: 0.2rem 0; }
-        .note-card h2, #verNotaContenido h2, #inputContenido h2 { font-size: 1.1rem; font-weight: bold; line-height: 1.3; margin: 0.2rem 0; }
-
+        .note-card h2, #verNotaContenido h2, #inputContenido h2 { font-size: 1.1rem; font-weight: bold; line-height: 1.3; margin: 0.2rem 0; }        
         .notes-grid {
             column-count: 2;
             column-gap: 0.5rem;
@@ -58,38 +57,35 @@
     </style>
 </head>
 <body class="h-full bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 flex flex-col font-sans overflow-hidden antialiased">
-    <div class="main-content flex-1 flex flex-col overflow-y-auto">
-        
-        <!-- Topbar -->
+    <div class="main-content flex-1 flex flex-col overflow-y-auto">        
+        <!-- Barra superior -->
         <header class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-700/60 px-3 py-2 flex items-center justify-between shrink-0 z-50">
             <div class="flex items-center space-x-2.5">
                 <div class="p-1.5 bg-teal-500/10 rounded-xl border border-teal-500/20 text-teal-600 shadow-md dark:text-teal-400">
                     <i data-lucide="sticky-note" class="w-5 h-5"></i>
                 </div>
                 <div>
-                    <h1 class="font-bold text-base leading-tight text-slate-900 dark:text-slate-100">Notas & Categorías</h1>
+                    <h1 class="font-bold text-base leading-tight text-slate-900 dark:text-slate-100">Notas & Pendientes</h1>
                     <p class="text-[11px] text-teal-600 dark:text-teal-400 flex items-center gap-1 font-medium">
-                        <span class="w-1.5 h-1.5 rounded-full bg-teal-500 dark:bg-teal-400 inline-block"></span> Keep Sub-Web - T0151
+                        <span class="w-1.5 h-1.5 rounded-full bg-teal-500 dark:bg-teal-400 inline-block"></span> T0151 - Gran Plaza Mérida
                     </p>
                 </div>
             </div>
             <div class="flex items-center gap-2">
-                <!-- Widget de reloj -->
+                <!-- Widget del reloj -->
                 <div class="flex flex-col items-end px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700/60 text-right">
                     <span id="liveClock" class="text-xs font-mono font-semibold text-teal-700 dark:text-teal-300">00:00:00</span>
                     <span id="liveDate" class="text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-wider">--,--</span>
                 </div>
-                <!-- Dark / Light Toggle -->
+                <!-- Botón Oscuro / Claro -->
                 <button id="btn-theme-toggle" class="w-7 h-7 flex items-center justify-center rounded-full bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 transition-colors" title="Cambiar modo">
                     <i id="theme-icon" data-lucide="moon" class="w-3.5 h-3.5 dark-icon"></i>
                     <i data-lucide="sun" class="w-3.5 h-3.5 light-icon hidden"></i>
                 </button>
             </div>
         </header>
-
         <!-- Contenido Principal -->
-        <div class="p-3 max-w-7xl mx-auto w-full space-y-4 flex-1 relative z-10">
-            
+        <div class="p-3 max-w-7xl mx-auto w-full space-y-4 flex-1 relative z-10">            
             <!-- Barra de Acciones, Filtros y Estado Offline -->
             <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl p-3 shadow-md space-y-2.5">
                 <!-- Fila Superior: Estado de la Base de Datos y Botón Actualizar alineados -->
@@ -99,7 +95,6 @@
                         <i id="iconActualizar" class="fa-solid fa-rotate text-[9px]"></i> Actualizar
                     </button>
                 </div>
-
                 <div class="space-y-2">
                     <!-- Fila de Botones Secundarios (Categorías y Papelera) -->
                     <div class="grid grid-cols-2 gap-2">
@@ -110,7 +105,6 @@
                             <i class="fa-solid fa-trash-can text-rose-500"></i> Papelera <span id="badgePapeleraCount" class="hidden ml-1 px-1.5 py-0.2 bg-rose-500 text-white rounded-full text-[9px]">0</span>
                         </button>
                     </div>
-
                     <!-- Botón Principal (Nueva Nota) -->
                     <div>
                         <button onclick="abrirModalNota()" class="w-full py-2.5 px-4 bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 text-teal-700 dark:text-teal-300 rounded-xl transition-all font-bold text-xs shadow-sm flex items-center justify-center gap-2 cursor-pointer">
@@ -118,7 +112,6 @@
                         </button>
                     </div>
                 </div>
-
                 <!-- Buscador y Filtros (Categoría y Estatus) FORZADOS EN 1 SOLA FILA EN PANTALLAS PEQUEÑAS (grid-cols-3) -->
                 <div class="grid grid-cols-3 gap-1.5 pt-2 border-t border-slate-200 dark:border-slate-700/60 text-xs">
                     <!-- Buscador -->
@@ -971,7 +964,7 @@
             const btnPapelera = document.getElementById('btnPapelera');
             if (enVistaPapelera) {
                 btnPapelera.className = "py-2 px-3 bg-rose-500/20 border border-rose-500/40 text-rose-600 dark:text-rose-400 rounded-xl transition-all font-semibold text-xs shadow-md flex items-center justify-center gap-1.5 cursor-pointer col-span-2";
-                btnPapelera.innerHTML = `<i class="fa-solid fa-arrow-left"></i> Volver a Notas <span id="badgePapeleraCount" class="hidden"></span>`;
+                btnPapelera.innerHTML = `<i class="fa-solid fa-arrow-left"></i> Regresar <span  class="hidden"></span>`;
             } else {
                 btnPapelera.className = "py-2 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700/50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/60 rounded-xl transition-all font-semibold text-xs flex items-center justify-center gap-1.5 cursor-pointer";
                 btnPapelera.innerHTML = `<i class="fa-solid fa-trash-can text-rose-500"></i> Papelera <span id="badgePapeleraCount" class="hidden ml-1 px-1.5 py-0.2 bg-rose-500 text-white rounded-full text-[9px]">0</span>`;
@@ -1250,7 +1243,6 @@
                 container.appendChild(card);
             });
         }
-
         function aplicarFiltrosLocales() {
             const textoBuscador = document.getElementById('filtroBuscador').value.trim().toLowerCase();
             const filtroCat = document.getElementById('filtroCategoria').value;
@@ -1294,19 +1286,14 @@
                 } else {
                     seccionFavoritas.classList.add('hidden');
                 }
-
                 if (favoritas.length > 0 && otras.length > 0) {
-                    tituloOtras.classList.remove('hidden');
+                                   tituloOtras.classList.remove('hidden');
                 } else {
-                    tituloOtras.classList.add('hidden');
-                }
-
-                renderizarListaEnContenedor(otras, 'notasContainer', false);
+                                                   tituloOtras.classList.add('hidden');
+                }               renderizarListaEnContenedor(otras, 'notasContainer', false);
             }
-
             actualizarEstadoConexionUI();
         }
-
         function filtrarNotas() {
             aplicarFiltrosLocales();
         }
