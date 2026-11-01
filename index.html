@@ -312,7 +312,7 @@
         }
         // Definición de permisos por rol
         const ROLE_PERMISSIONS = {
-            gerencial: ['ventas_diarias', 'corte_cajas', 'consultor_fases', 'consultor_existencias', 'gestor_tickets','notas'],
+            gerencial: ['ventas_diarias', 'corte_cajas', 'consultor_fases', 'consultor_existencias', 'gestor_tickets','notas','checks'],
             promotor: ['consultor_fases', 'consultor_existencias']
         };
         let currentUserRole = null;
@@ -372,6 +372,15 @@
                 category: 'utilidad',
                 icon: 'notebook-pen',
                 desc: 'App de Notas y Pendientes',
+                embed: true
+            },
+            {
+                id: 'checks',
+                title: 'Checks Remotos',
+                url: 'checks/',
+                category: 'utilidad',
+                icon: 'copy-check',
+                desc: 'Seguimiento a los Checks Remotos',
                 embed: true
             }
         ];
