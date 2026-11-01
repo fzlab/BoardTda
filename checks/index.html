@@ -1172,54 +1172,48 @@
         renderizarApp();
     }
 
-        async function abrirPdfCheck(id) {
+    async function abrirPdfCheck(id) {
         const check = checksData.find(c => c.id == id);
         if (!check || !check.pdfPath) {
             mostrarAlerta('Este check no cuenta con un PDF adjunto en la nube.');
             return;
         }
 
-        // 1. Abrir la pestaña inmediatamente para retener la interacción del usuario (evita bloqueo móvil)
-        const ventanaNueva = window.open('', '_blank');
-        if (ventanaNueva) {
-            ventanaNueva.document.write('<html><body style="font-family:sans-serif; text-align:center; padding-top:60px; background:#0f172a; color:#fff;"><h3>Cargando documento PDF...</h3></body></html>');
-        }
-
         try {
-            // 2. Descargar el archivo como Blob desde Supabase Storage
+            // Descargamos el archivo directamente como Blob desde Supabase Storage
             const { data, error } = await supabaseClient.storage
                 .from('checks-pdfs')
                 .download(check.pdfPath);
 
             if (error) throw error;
 
-            // 3. Crear el objeto Blob local y mostrarlo en la ventana abierta
+            // Creamos un objeto Blob local con el tipo MIME correcto para PDF
             const blob = new Blob([data], { type: 'application/pdf' });
             const blobUrl = URL.createObjectURL(blob);
 
-            if (ventanaNueva) {
-                ventanaNueva.location.href = blobUrl;
-            } else {
-                // Fallback si el navegador bloqueó el popup
-                const a = document.createElement('a');
-                a.href = blobUrl;
-                a.download = check.pdfName || 'check_remoto.pdf';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-            }
+            // Creamos un elemento <a> invisible para forzar la descarga nativa en Android
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = check.pdfName || `Check_${check.numeroCheck || 'remoto'}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
 
-            // Liberar memoria temporalmente después de un momento
-            setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+            // Liberamos el objeto URL temporal después de unos segundos
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
 
         } catch (e) {
             console.error("Error al descargar el PDF:", e);
-            if (ventanaNueva) ventanaNueva.close();
-            
-            // Fallback de respaldo usando URL pública si falla la descarga directa
+            // Fallback de respaldo usando la URL pública si ocurre algún detalle con la red
             const { data: pubData } = supabaseClient.storage.from('checks-pdfs').getPublicUrl(check.pdfPath);
             if (pubData && pubData.publicUrl) {
-                window.open(pubData.publicUrl, '_blank');
+                const a = document.createElement('a');
+                a.href = pubData.publicUrl;
+                a.download = check.pdfName || 'check.pdf';
+                a.target = '_blank';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
             } else {
                 mostrarAlerta('No se pudo descargar el documento PDF adjunto.');
             }
