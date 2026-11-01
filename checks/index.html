@@ -1182,8 +1182,6 @@ const filePath = `${Date.now()}_${nombreSeguro}`;
     }
 
     try {
-        console.log("Generando enlace de descarga...");
-
         // 1. Obtener la URL pública del archivo
         const { data } = supabaseClient.storage
             .from('checks-pdfs')
@@ -1194,19 +1192,22 @@ const filePath = `${Date.now()}_${nombreSeguro}`;
             return;
         }
 
-        // 2. Añadir el parámetro ?download para forzar la descarga y el nombre del archivo
-        // Se usa encodeURIComponent para manejar nombres con espacios o acentos.
+        // 2. Añadir el parámetro ?download para forzar la descarga
         const downloadUrl = `${data.publicUrl}?download=${encodeURIComponent(check.pdfName || 'Check_Remoto.pdf')}`;
 
-        // 3. Crear un enlace temporal y simular el clic
-        const a = document.createElement('a');
-        a.href = downloadUrl;
-        a.download = check.pdfName || 'Check_Remoto.pdf';
-        a.target = '_blank';
-        a.rel = 'noopener';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        // 3. SOLUCIÓN: Usar un iframe oculto para forzar la descarga
+        //    Esto evita que los navegadores móviles bloqueen la acción como un popup.
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = downloadUrl;
+        document.body.appendChild(iframe);
+
+        // 4. Limpiar el iframe después de unos segundos para no saturar el DOM
+        setTimeout(() => {
+            if (document.body.contains(iframe)) {
+                document.body.removeChild(iframe);
+            }
+        }, 5000);
 
     } catch (e) {
         console.error('Error inesperado al generar la descarga:', e);
