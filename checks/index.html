@@ -1179,46 +1179,20 @@
             return;
         }
 
-        try {
-            // Descargamos el archivo directamente como Blob desde Supabase Storage
-            const { data, error } = await supabaseClient.storage
-                .from('checks-pdfs')
-                .download(check.pdfPath);
+        // Obtenemos la URL pública directamente de Supabase de forma instantánea (sin llamadas de red asíncronas)
+        const { data } = supabaseClient.storage
+            .from('checks-pdfs')
+            .getPublicUrl(check.pdfPath);
 
-            if (error) throw error;
-
-            // Creamos un objeto Blob local con el tipo MIME correcto para PDF
-            const blob = new Blob([data], { type: 'application/pdf' });
-            const blobUrl = URL.createObjectURL(blob);
-
-            // Creamos un elemento <a> invisible para forzar la descarga nativa en Android
-            const a = document.createElement('a');
-            a.href = blobUrl;
-            a.download = check.pdfName || `Check_${check.numeroCheck || 'remoto'}.pdf`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-
-            // Liberamos el objeto URL temporal después de unos segundos
-            setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
-
-        } catch (e) {
-            console.error("Error al descargar el PDF:", e);
-            // Fallback de respaldo usando la URL pública si ocurre algún detalle con la red
-            const { data: pubData } = supabaseClient.storage.from('checks-pdfs').getPublicUrl(check.pdfPath);
-            if (pubData && pubData.publicUrl) {
-                const a = document.createElement('a');
-                a.href = pubData.publicUrl;
-                a.download = check.pdfName || 'check.pdf';
-                a.target = '_blank';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-            } else {
-                mostrarAlerta('No se pudo descargar el documento PDF adjunto.');
-            }
+        if (data && data.publicUrl) {
+            // Forzamos la navegación directa. En Android, esto activará 
+            // la descarga nativa o abrirá el menú para elegir tu app de PDF.
+            window.location.href = data.publicUrl;
+        } else {
+            mostrarAlerta('No se pudo obtener el enlace del archivo PDF.');
         }
     }
+
 
 
     async function cambiarEstadoCheck(id, campo, valor) {
