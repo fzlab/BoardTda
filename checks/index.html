@@ -1180,37 +1180,35 @@
     }
 
     try {
-        // Mostrar un aviso de que está descargando (opcional)
-        console.log("Descargando PDF...");
+        console.log("Generando enlace de descarga...");
 
-        // 1. Descargar el archivo desde Supabase Storage
-        const { data: blob, error } = await supabaseClient.storage
+        // 1. Obtener la URL pública del archivo
+        const { data } = supabaseClient.storage
             .from('checks-pdfs')
-            .download(check.pdfPath);
+            .getPublicUrl(check.pdfPath);
 
-        if (error) {
-            console.error('Error al descargar:', error);
-            mostrarAlerta('Error al descargar el PDF. Revisa tu conexión o los permisos.');
+        if (!data || !data.publicUrl) {
+            mostrarAlerta('No se pudo generar el enlace del archivo.');
             return;
         }
 
-        // 2. Crear un objeto URL temporal para el archivo descargado
-        const url = URL.createObjectURL(blob);
-        
-        // 3. Crear un enlace invisible y simular un clic para forzar la descarga
+        // 2. Añadir el parámetro ?download para forzar la descarga y el nombre del archivo
+        // Se usa encodeURIComponent para manejar nombres con espacios o acentos.
+        const downloadUrl = `${data.publicUrl}?download=${encodeURIComponent(check.pdfName || 'Check_Remoto.pdf')}`;
+
+        // 3. Crear un enlace temporal y simular el clic
         const a = document.createElement('a');
-        a.href = url;
-        a.download = check.pdfName || 'Check_Remoto.pdf'; // Nombre con el que se guardará
+        a.href = downloadUrl;
+        a.download = check.pdfName || 'Check_Remoto.pdf';
+        a.target = '_blank';
+        a.rel = 'noopener';
         document.body.appendChild(a);
         a.click();
-        
-        // 4. Limpiar la memoria
         document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 5000); // Liberar memoria después de 5s
 
     } catch (e) {
-        console.error('Error inesperado:', e);
-        mostrarAlerta('Ocurrió un error al intentar descargar el PDF.');
+        console.error('Error inesperado al generar la descarga:', e);
+        mostrarAlerta('Ocurrió un error al intentar generar la descarga del PDF.');
     }
 }
 
