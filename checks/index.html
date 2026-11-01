@@ -1049,6 +1049,7 @@
     }
 
     async function procesarPdfYGuardar(file, editId, numeroCheck) {
+        async function procesarPdfYGuardar(file, editId, numeroCheck) {
         try {
             const arrayBuffer = await file.arrayBuffer();
             const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
@@ -1079,10 +1080,22 @@
 
             if (navigator.onLine) {
                 const filePath = `${Date.now()}_${pdfName}`;
-                const { error } = await supabaseClient.storage.from('checks-pdfs').upload(filePath, file);
-                if (!error) {
-                    pdfPath = filePath;
+                
+                // Realizamos la subida y capturamos el objeto 'error'
+                const { data, error } = await supabaseClient.storage
+                    .from('checks-pdfs')
+                    .upload(filePath, file);
+
+                if (error) {
+                    console.error("Error al subir PDF a Supabase Storage:", error);
+                    mostrarAlerta("Error al subir el PDF al bucket: " + (error.message || JSON.stringify(error)));
+                    return; // Detenemos el guardado si falla la subida del archivo físico
                 }
+                
+                pdfPath = filePath;
+            } else {
+                mostrarAlerta("No hay conexión a internet. No se puede subir el archivo PDF al bucket en modo offline.");
+                return;
             }
 
             await finalizarGuardadoCheck(editId, numeroCheck, fechaIso, calificacion, pdfName, pdfPath);
@@ -1092,6 +1105,7 @@
             mostrarAlerta('No se pudo procesar el archivo PDF. Asegúrese de que sea un documento válido.');
         }
     }
+
 
     async function finalizarGuardadoCheck(editId, numeroCheck, fecha, calificacion, pdfName, pdfPath) {
         let registro;
