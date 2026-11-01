@@ -1175,45 +1175,46 @@
     }
 
     async function descargarPdfCheck(id) {
-        const check = checksData.find(c => c.id == id);
-        if (!check || !check.pdfPath) {
-            mostrarAlerta('Este check no cuenta con un PDF adjunto en la nube.');
+    const check = checksData.find(c => c.id == id);
+    if (!check || !check.pdfPath) {
+        mostrarAlerta('Este check no cuenta con un PDF adjunto en la nube.');
+        return;
+    }
+
+    try {
+        // 1. Descargar el archivo directamente como binario usando el SDK de Supabase
+        const { data, error } = await supabaseClient.storage
+            .from('checks-pdfs')
+            .download(check.pdfPath);
+
+        if (error) {
+            console.error("Error al descargar desde Supabase:", error);
+            mostrarAlerta("No se pudo descargar el archivo: " + (error.message || JSON.stringify(error)));
             return;
         }
 
-        try {
-            // 1. Obtener la URL pública del archivo
-            const { data } = supabaseClient.storage
-                .from('checks-pdfs')
-                .getPublicUrl(check.pdfPath);
+        // 2. Crear un objeto Blob local de tipo PDF
+        const blob = new Blob([data], { type: 'application/pdf' });
+        const blobUrl = URL.createObjectURL(blob);
 
-            if (!data || !data.publicUrl) {
-                mostrarAlerta('No se pudo generar el enlace del archivo.');
-                return;
-            }
+        // 3. Crear un enlace temporal invisible para forzar la descarga en móviles
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = check.pdfName || 'Check_Remoto.pdf';
+        document.body.appendChild(a);
+        a.click();
 
-            // 2. Añadir el parámetro ?download para forzar la descarga
-            const downloadUrl = `${data.publicUrl}?download=${encodeURIComponent(check.pdfName || 'Check_Remoto.pdf')}`;
+        // 4. Limpiar los recursos de la memoria tras iniciar la descarga
+        setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(blobUrl);
+        }, 200);
 
-            // 3. SOLUCIÓN: Usar un iframe oculto para forzar la descarga
-            //    Esto evita que los navegadores móviles bloqueen la acción como un popup.
-            const iframe = document.createElement('iframe');
-            iframe.style.display = 'none';
-            iframe.src = downloadUrl;
-            document.body.appendChild(iframe);
-
-            // 4. Limpiar el iframe después de unos segundos para no saturar el DOM
-            setTimeout(() => {
-                if (document.body.contains(iframe)) {
-                    document.body.removeChild(iframe);
-                }
-            }, 5000);
-
-        } catch (e) {
-            console.error('Error inesperado al generar la descarga:', e);
-            mostrarAlerta('Ocurrió un error al intentar generar la descarga del PDF.');
-        }
+    } catch (e) {
+        console.error('Error inesperado al descargar el PDF:', e);
+        mostrarAlerta('Ocurrió un error al intentar descargar el PDF.');
     }
+}
 
     async function cambiarEstadoCheck(id, campo, valor) {
         const check = checksData.find(c => c.id == id);
