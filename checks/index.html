@@ -1172,7 +1172,7 @@
         renderizarApp();
     }
 
-    async function abrirPdfCheck(id) {
+        async function abrirPdfCheck(id) {
         const check = checksData.find(c => c.id == id);
         if (!check || !check.pdfPath) {
             mostrarAlerta('Este check no cuenta con un PDF adjunto en la nube.');
