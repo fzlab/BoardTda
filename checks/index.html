@@ -1078,7 +1078,9 @@
             let pdfPath = '';
 
             if (navigator.onLine) {
-                const filePath = `${Date.now()}_${pdfName}`;
+                // Limpia el nombre para que sea seguro en cualquier sistema
+const nombreSeguro = pdfName.replace(/[^\w.\-]+/g, '_');
+const filePath = `${Date.now()}_${nombreSeguro}`;
                 
                 // Realizamos la subida y capturamos el objeto 'error'
                 const { data, error } = await supabaseClient.storage
