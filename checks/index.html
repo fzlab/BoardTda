@@ -1173,27 +1173,46 @@
     }
 
     async function abrirPdfCheck(id) {
-        const check = checksData.find(c => c.id == id);
-        if (!check || !check.pdfPath) {
-            mostrarAlerta('Este check no cuenta con un PDF adjunto en la nube.');
+    const check = checksData.find(c => c.id == id);
+    if (!check || !check.pdfPath) {
+        mostrarAlerta('Este check no cuenta con un PDF adjunto en la nube.');
+        return;
+    }
+
+    try {
+        // Mostrar un aviso de que está descargando (opcional)
+        console.log("Descargando PDF...");
+
+        // 1. Descargar el archivo desde Supabase Storage
+        const { data: blob, error } = await supabaseClient.storage
+            .from('checks-pdfs')
+            .download(check.pdfPath);
+
+        if (error) {
+            console.error('Error al descargar:', error);
+            mostrarAlerta('Error al descargar el PDF. Revisa tu conexión o los permisos.');
             return;
         }
 
-        // Obtenemos la URL pública directamente de Supabase de forma instantánea (sin llamadas de red asíncronas)
-        const { data } = supabaseClient.storage
-            .from('checks-pdfs')
-            .getPublicUrl(check.pdfPath);
+        // 2. Crear un objeto URL temporal para el archivo descargado
+        const url = URL.createObjectURL(blob);
+        
+        // 3. Crear un enlace invisible y simular un clic para forzar la descarga
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = check.pdfName || 'Check_Remoto.pdf'; // Nombre con el que se guardará
+        document.body.appendChild(a);
+        a.click();
+        
+        // 4. Limpiar la memoria
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 5000); // Liberar memoria después de 5s
 
-        if (data && data.publicUrl) {
-            // Forzamos la navegación directa. En Android, esto activará 
-            // la descarga nativa o abrirá el menú para elegir tu app de PDF.
-            window.location.href = data.publicUrl;
-        } else {
-            mostrarAlerta('No se pudo obtener el enlace del archivo PDF.');
-        }
+    } catch (e) {
+        console.error('Error inesperado:', e);
+        mostrarAlerta('Ocurrió un error al intentar descargar el PDF.');
     }
-
-
+}
 
     async function cambiarEstadoCheck(id, campo, valor) {
         const check = checksData.find(c => c.id == id);
