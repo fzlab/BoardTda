@@ -1049,7 +1049,6 @@
     }
 
     async function procesarPdfYGuardar(file, editId, numeroCheck) {
-        async function procesarPdfYGuardar(file, editId, numeroCheck) {
         try {
             const arrayBuffer = await file.arrayBuffer();
             const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
@@ -1105,7 +1104,6 @@
             mostrarAlerta('No se pudo procesar el archivo PDF. Asegúrese de que sea un documento válido.');
         }
     }
-
 
     async function finalizarGuardadoCheck(editId, numeroCheck, fecha, calificacion, pdfName, pdfPath) {
         let registro;
@@ -1175,46 +1173,45 @@
     }
 
     async function abrirPdfCheck(id) {
-    const check = checksData.find(c => c.id == id);
-    if (check && check.pdfPath) {
-        try {
-            // Descargamos el archivo directamente como Blob desde Supabase Storage
-            const { data, error } = await supabaseClient.storage
-                .from('checks-pdfs')
-                .download(check.pdfPath);
+        const check = checksData.find(c => c.id == id);
+        if (check && check.pdfPath) {
+            try {
+                // Descargamos el archivo directamente como Blob desde Supabase Storage
+                const { data, error } = await supabaseClient.storage
+                    .from('checks-pdfs')
+                    .download(check.pdfPath);
 
-            if (error) throw error;
+                if (error) throw error;
 
-            // Creamos un objeto Blob local con el PDF
-            const blob = new Blob([data], { type: 'application/pdf' });
-            const blobUrl = URL.createObjectURL(blob);
+                // Creamos un objeto Blob local con el PDF
+                const blob = new Blob([data], { type: 'application/pdf' });
+                const blobUrl = URL.createObjectURL(blob);
 
-            // Forzamos la descarga/apertura en el dispositivo móvil de forma segura
-            const a = document.createElement('a');
-            a.href = blobUrl;
-            a.download = check.pdfName || `Check_${check.numeroCheck || 'remoto'}.pdf`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+                // Forzamos la descarga/apertura en el dispositivo móvil de forma segura
+                const a = document.createElement('a');
+                a.href = blobUrl;
+                a.download = check.pdfName || `Check_${check.numeroCheck || 'remoto'}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
 
-            // Liberamos el objeto URL temporal después de un momento
-            setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+                // Liberamos el objeto URL temporal después de un momento
+                setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
 
-        } catch (e) {
-            console.error("Error al descargar el PDF:", e);
-            // Fallback de respaldo por si ocurre algún inconveniente de red
-            const { data: pubData } = supabaseClient.storage.from('checks-pdfs').getPublicUrl(check.pdfPath);
-            if (pubData && pubData.publicUrl) {
-                window.open(pubData.publicUrl, '_blank');
-            } else {
-                mostrarAlerta('No se pudo descargar el documento PDF adjunto.');
+            } catch (e) {
+                console.error("Error al descargar el PDF:", e);
+                // Fallback de respaldo por si ocurre algún inconveniente de red
+                const { data: pubData } = supabaseClient.storage.from('checks-pdfs').getPublicUrl(check.pdfPath);
+                if (pubData && pubData.publicUrl) {
+                    window.open(pubData.publicUrl, '_blank');
+                } else {
+                    mostrarAlerta('No se pudo descargar el documento PDF adjunto.');
+                }
             }
+        } else {
+            mostrarAlerta('Este check no cuenta con un PDF adjunto en la nube.');
         }
-    } else {
-        mostrarAlerta('Este check no cuenta con un PDF adjunto en la nube.');
     }
-}
-
 
     async function cambiarEstadoCheck(id, campo, valor) {
         const check = checksData.find(c => c.id == id);
