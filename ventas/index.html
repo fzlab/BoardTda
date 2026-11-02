@@ -72,7 +72,7 @@
                 <span id="liveClock" class="text-xs font-mono font-semibold text-teal-700 dark:text-teal-300">00:00:00</span>
                 <span id="liveDate" class="text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-wider">--,--</span>
             </div>
-<!-- Dark / Light Toggle -->
+            <!-- Dark / Light Toggle -->
             <button id="btn-theme-toggle" class="w-7 h-7 flex items-center justify-center rounded-full bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 transition-colors" title="Cambiar modo">
                 <i id="theme-icon" data-lucide="moon" class="w-3.5 h-3.5 dark-icon"></i>
                 <i data-lucide="sun" class="w-3.5 h-3.5 light-icon hidden"></i>
@@ -494,7 +494,9 @@
 
       <div class="mt-4 flex justify-between items-center">
         <button class="px-3 py-2 rounded-lg bg-teal-500/10 hover:bg-teal-500/20 text-teal-600 dark:text-teal-400 border border-teal-500/30 text-xs shadow-md font-semibold" onclick="enviarReporteAccion()">Copiar información</button>
-        <button class="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold rounded-xl text-xs" onclick="cerrarModalEnviarReporte()">Cerrar</button>
+        <button class="px-3 py-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-xs shadow-md font-semibold flex items-center gap-1.5" onclick="enviarReporteWhatsApp()">
+          <i data-lucide="send" class="w-3.5 h-3.5"></i> Enviar
+        </button>
       </div>
     </div>
   </div>
@@ -1098,6 +1100,61 @@
       document.getElementById("st-tt-pct").innerText = fmtPct(promedio);
     }
 
+    function generarTextoReporteDiario() {
+      const diaActual = document.getElementById("diaSelect").value;
+      const pto = presupuestoData[diaActual] || { venta: 0, tickets: 0, piezas: 0 };
+      const real = seguimientoDiarioData[diaActual] || { venta: 0, tickets: 0, piezas: 0, minisolovereal: 0 };
+
+      const ventaReal = real.venta;
+      const ventaPto = pto.venta;
+      const diffVenta = ventaPto - ventaReal;
+      const alcanceVenta = ventaPto > 0 ? (ventaReal / ventaPto) * 100 : 0;
+      const faltaImporte = diffVenta > 0 ? diffVenta : 0;
+
+      const ticketReal = real.tickets > 0 ? ventaReal / real.tickets : 0;
+      const ticketPto = pto.tickets > 0 ? ventaPto / pto.tickets : 0;
+      const alcanceTicket = ticketPto > 0 ? (ticketReal / ticketPto) * 100 : 0;
+
+      const uptReal = real.tickets > 0 ? real.piezas / real.tickets : 0;
+      const uptPto = pto.tickets > 0 ? pto.piezas / pto.tickets : 0;
+      const alcanceUpt = uptPto > 0 ? (uptReal / uptPto) * 100 : 0;
+
+      const minisoLovePto = Math.ceil(pto.tickets * (minisolovepto / 100));
+      const minisoLoveReal = real.minisolovereal;
+      const alcanceMinisoLove = minisoLovePto > 0 ? (minisoLoveReal / minisoLovePto) * 100 : 0;
+
+      const vp = shellTrueData.vinylPlush;
+      const bb = shellTrueData.blindBox;
+      const ttPct = shellTrueData.trendyToys.pct;
+
+      return `📊 *REPORTE DIARIO - ${diaActual.toUpperCase()}* 📊\n` +
+             `📍 *Tienda:* T0151 Gran Plaza Mérida\n\n` +
+             `💰 *Ventas:* ${fmtMoney(ventaReal)}\n` +
+             `🎯 *Objetivo:* ${fmtMoney(ventaPto)}\n` +
+             `📈 *Alcance:* ${fmtPct(alcanceVenta)}\n` +
+             `⚠️ *Falta:* ${fmtMoney(faltaImporte)}\n\n` +
+             `🧾 *TP:* ${fmtMoney(ticketReal)}\n` +
+             `🎯 *Objetivo:* ${fmtMoney(ticketPto)}\n` +
+             `📈 *Alcance:* ${fmtPct(alcanceTicket)}\n\n` +
+             `📦 *UPT:* ${fmtNum(uptReal)}\n` +
+             `🔋 *Objetivo:* ${fmtNum(uptPto)}\n` +
+             `📈 *Alcance:* ${fmtPct(alcanceUpt)}\n\n` +
+             `❤️ *MinisoLove objetivo:* ${fmtNum(minisoLovePto, 0)}\n` +
+             `👥 *Total de clientes:* ${fmtNum(minisoLoveReal, 0)}\n` +
+             `🎯 *Alcance:* ${fmtPct(alcanceMinisoLove)}\n\n` +
+             `🧸 *Vinyl Plush:*\n` +
+             `   - Stock VP: ${fmtNum(vp.stock, 0)}\n` +
+             `   - Objetivo semanal: ${fmtNum(vp.objetivo, 0)}\n` +
+             `   - Venta semanal: ${fmtNum(vp.venta, 0)}\n` +
+             `   - Sellthrue: ${fmtPct(vp.pct)}\n\n` +
+             `📦 *Blind Box:*\n` +
+             `   - Stock Blind Box: ${fmtNum(bb.stock, 0)}\n` +
+             `   - Objetivo semanal: ${fmtNum(bb.objetivo, 0)}\n` +
+             `   - Venta semanal: ${fmtNum(bb.venta, 0)}\n` +
+             `   - Sellthrue: ${fmtPct(bb.pct)}\n\n` +
+             `⭐ *Total Trendy toy:* ${fmtPct(ttPct)}`;
+    }
+
     function abrirModalEnviarReporte() {
       const diaActual = document.getElementById("diaSelect").value;
       document.getElementById("enviarReporteTituloDia").innerText = `Reporte Diario - ${diaActual}`;
@@ -1152,6 +1209,7 @@
 
       document.getElementById("contenidoReporteEnviar").innerHTML = htmlContent;
       document.getElementById("modalEnviarReporte").style.display = "flex";
+      lucide.createIcons();
     }
 
     function cerrarModalEnviarReporte() {
@@ -1159,58 +1217,7 @@
     }
 
     function enviarReporteAccion() {
-      const diaActual = document.getElementById("diaSelect").value;
-      const pto = presupuestoData[diaActual] || { venta: 0, tickets: 0, piezas: 0 };
-      const real = seguimientoDiarioData[diaActual] || { venta: 0, tickets: 0, piezas: 0, minisolovereal: 0 };
-
-      const ventaReal = real.venta;
-      const ventaPto = pto.venta;
-      const diffVenta = ventaPto - ventaReal;
-      const alcanceVenta = ventaPto > 0 ? (ventaReal / ventaPto) * 100 : 0;
-      const faltaImporte = diffVenta > 0 ? diffVenta : 0;
-
-      const ticketReal = real.tickets > 0 ? ventaReal / real.tickets : 0;
-      const ticketPto = pto.tickets > 0 ? ventaPto / pto.tickets : 0;
-      const alcanceTicket = ticketPto > 0 ? (ticketReal / ticketPto) * 100 : 0;
-
-      const uptReal = real.tickets > 0 ? real.piezas / real.tickets : 0;
-      const uptPto = pto.tickets > 0 ? pto.piezas / pto.tickets : 0;
-      const alcanceUpt = uptPto > 0 ? (uptReal / uptPto) * 100 : 0;
-
-      const minisoLovePto = Math.ceil(pto.tickets * (minisolovepto / 100));
-      const minisoLoveReal = real.minisolovereal;
-      const alcanceMinisoLove = minisoLovePto > 0 ? (minisoLoveReal / minisoLovePto) * 100 : 0;
-
-      const vp = shellTrueData.vinylPlush;
-      const bb = shellTrueData.blindBox;
-      const ttPct = shellTrueData.trendyToys.pct;
-
-      let mensaje = `📊 *REPORTE DIARIO - ${diaActual.toUpperCase()}* 📊\n` +
-                    `📍 *Tienda:* T0151 Gran Plaza Mérida\n\n` +
-                    `💰 *Ventas:* ${fmtMoney(ventaReal)}\n` +
-                    `🎯 *Objetivo:* ${fmtMoney(ventaPto)}\n` +
-                    `📈 *Alcance:* ${fmtPct(alcanceVenta)}\n` +
-                    `⚠️ *Falta:* ${fmtMoney(faltaImporte)}\n\n` +
-                    `🧾 *TP:* ${fmtMoney(ticketReal)}\n` +
-                    `🎯 *Objetivo:* ${fmtMoney(ticketPto)}\n` +
-                    `📈 *Alcance:* ${fmtPct(alcanceTicket)}\n\n` +
-                    `📦 *UPT:* ${fmtNum(uptReal)}\n` +
-                    `🔋 *Objetivo:* ${fmtNum(uptPto)}\n` +
-                    `📈 *Alcance:* ${fmtPct(alcanceUpt)}\n\n` +
-                    `❤️ *MinisoLove objetivo:* ${fmtNum(minisoLovePto, 0)}\n` +
-                    `👥 *Total de clientes:* ${fmtNum(minisoLoveReal, 0)}\n` +
-                    `🎯 *Alcance:* ${fmtPct(alcanceMinisoLove)}\n\n` +
-                    `🧸 *Vinyl Plush:*\n` +
-                    `   - Stock VP: ${fmtNum(vp.stock, 0)}\n` +
-                    `   - Objetivo semanal: ${fmtNum(vp.objetivo, 0)}\n` +
-                    `   - Venta semanal: ${fmtNum(vp.venta, 0)}\n` +
-                    `   - Sellthrue: ${fmtPct(vp.pct)}\n\n` +
-                    `📦 *Blind Box:*\n` +
-                    `   - Stock Blind Box: ${fmtNum(bb.stock, 0)}\n` +
-                    `   - Objetivo semanal: ${fmtNum(bb.objetivo, 0)}\n` +
-                    `   - Venta semanal: ${fmtNum(bb.venta, 0)}\n` +
-                    `   - Sellthrue: ${fmtPct(bb.pct)}\n\n` +
-                    `⭐ *Total Trendy toy:* ${fmtPct(ttPct)}`;
+      const mensaje = generarTextoReporteDiario();
 
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(mensaje).then(() => {
@@ -1222,6 +1229,13 @@
       } else {
         fallbackCopyText(mensaje);
       }
+    }
+
+    function enviarReporteWhatsApp() {
+      const mensaje = generarTextoReporteDiario();
+      const urlWhatsApp = `https://api.whatsapp.com/send?text=${encodeURIComponent(mensaje)}`;
+      window.open(urlWhatsApp, '_blank');
+      cerrarModalEnviarReporte();
     }
 
     function fallbackCopyText(text) {
