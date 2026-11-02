@@ -1231,12 +1231,16 @@
       }
     }
 
-    function enviarReporteWhatsApp() {
+        function enviarReporteWhatsApp() {
       const mensaje = generarTextoReporteDiario();
-      const urlWhatsApp = `https://api.whatsapp.com/send?text=${encodeURIComponent(mensaje)}`;
+      
+      // Usamos el enlace corto oficial de WhatsApp para evitar errores de longitud en la URL
+      const urlWhatsApp = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+      
       window.open(urlWhatsApp, '_blank');
       cerrarModalEnviarReporte();
     }
+
 
     function fallbackCopyText(text) {
       const textArea = document.createElement("textarea");
