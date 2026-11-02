@@ -187,11 +187,12 @@
             </div>
         </div> 
     </main>
-    <!-- Modal: Catálogo / Tienda de Proyectos Predefinidos -->
-<div id="catalogModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md hidden">
-    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 w-full max-w-2xl shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
-        <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-3 shrink-0">
-            <div class="flex items-center gap-2 text-slate-900 dark:text-slate-100 font-bold text-base">
+<!-- Modal: Catálogo / Tienda de Proyectos Predefinidos -->
+<div id="catalogModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-900/60 backdrop-blur-md hidden">
+    <!-- MODIFICACIÓN: Se aumenta la altura máxima a 92vh para aprovechar mejor la pantalla vertical -->
+    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 w-full max-w-2xl shadow-2xl space-y-3 max-h-[92vh] flex flex-col">
+        <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-2.5 shrink-0">
+            <div class="flex items-center gap-2 text-slate-900 dark:text-slate-100 font-bold text-sm sm:text-base">
                 <i data-lucide="store" class="w-5 h-5 text-teal-500"></i>
                 <span>Catálogo de Apps Disponibles</span>
             </div>
@@ -202,9 +203,8 @@
         <p class="text-xs text-slate-500 dark:text-slate-400 shrink-0">
             Selecciona la App que deseas tener en tu pantalla principal:
         </p>
-        <!-- MODIFICACIÓN: Se cambia de lista vertical a una cuadrícula de 2 columnas -->
-        <!-- Catálogo de Apps Disponibles -->
-<div id="catalogContainer" class="overflow-y-auto grid grid-cols-2 gap-2 pr-1 flex-1"></div>
+        <!-- Cuadrícula de 2 columnas con mayor espacio disponible -->
+        <div id="catalogContainer" class="overflow-y-auto grid grid-cols-2 gap-2.5 pr-1 flex-1"></div>
         <div class="pt-2 border-t border-slate-200 dark:border-slate-700 flex justify-end shrink-0">
             <button id="finishCatalogBtn" class="px-4 py-2 bg-teal-500/10 border border-teal-500/30 text-teal-600 dark:text-teal-400 hover:bg-teal-500/20 rounded-xl text-xs font-semibold shadow-md transition-all cursor-pointer">
                 Listo
@@ -212,6 +212,7 @@
         </div>
     </div>
 </div>
+
 
     <!-- Modal: Add / Edit Project Manual -->
     <div id="projectModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md hidden">
