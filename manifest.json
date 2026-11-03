@@ -5,7 +5,7 @@
   "description": "Dashboard centralizador de proyectos",
   "start_url": "./index.html",
   "scope": "./",
-  "display": "standalone",
+  "display": "fullscreen",
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
   "icons": [
