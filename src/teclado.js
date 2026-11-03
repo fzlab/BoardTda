@@ -120,23 +120,24 @@
         const botonesPos = menuPosiciones.querySelectorAll('button[data-pos]');
         const botones = teclado.querySelectorAll('button[data-key]');
 
-        // Usar pointerdown para asegurar la detección en inputs readonly y dentro de modales
-        document.addEventListener('pointerdown', (e) => {
-            const targetInput = e.target.closest('input[data-teclado]');
-            if (targetInput) {
-                e.preventDefault();
-                activeInput = targetInput;
-                activeInput.focus();
+        // Detección robusta mediante eventos 'focus' y 'click' para inputs con atributo [data-teclado]
+        document.addEventListener('focusin', (e) => {
+            if (e.target && e.target.hasAttribute && e.target.hasAttribute('data-teclado')) {
+                activeInput = e.target;
                 teclado.classList.remove('teclado-oculto');
             }
         });
 
-        // Ocultar al hacer clic fuera (excluyendo modales y botones del teclado)
         document.addEventListener('click', (e) => {
-            if (!teclado.contains(e.target) && !e.target.closest('input[data-teclado]') && !e.target.closest('.modal') && !e.target.closest('.dropdown')) {
-                teclado.classList.add('teclado-oculto');
-                menuPosiciones.classList.add('menu-oculto');
-                activeInput = null;
+            const targetInput = e.target.closest('[data-teclado]');
+            if (targetInput) {
+                activeInput = targetInput;
+                activeInput.focus();
+                teclado.classList.remove('teclado-oculto');
+                e.stopPropagation();
+            } else if (!teclado.contains(e.target) && !e.target.closest('.modal') && !e.target.closest('.dropdown')) {
+                // Ocultar si se hace clic fuera del teclado y fuera de modales/dropdowns activos
+                // (Opcional: comentar esta línea si deseas que el teclado permanezca abierto al tocar otras partes de la app)
             }
         });
 
@@ -163,7 +164,7 @@
                 const key = boton.getAttribute('data-key');
                 let valorActual = activeInput.value || '';
                 
-                // Detectar si es un input de moneda (venta)
+                // Detectar si es un campo de moneda (venta)
                 const isCurrencyInput = activeInput.id.includes('venta') || (activeInput.placeholder && activeInput.placeholder.includes('$'));
 
                 if (key === 'backspace') {
