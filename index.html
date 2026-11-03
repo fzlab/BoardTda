@@ -556,7 +556,7 @@
             const searchTerm = searchInputEl ? searchInputEl.value.toLowerCase() : '';
             const allowedProjectIds = currentUserRole 
                 ? (ROLE_PERMISSIONS[currentUserRole] || [])
-                : ['ventas_diarias', 'corte_cajas', 'consultor_fases', 'consultor_existencias', 'gestor_tickets'];
+                : ['ventas_diarias', 'corte_cajas', 'consultor_fases', 'consultor_existencias', 'gestor_tickets', 'notas', 'checks'];
             const predefinedIds = PREDEFINED_CATALOG.map(item => item.id);
             const filtered = projects.filter(p => {
                 const matchesRole = !predefinedIds.includes(p.id) || allowedProjectIds.includes(p.id);
