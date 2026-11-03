@@ -133,7 +133,7 @@
                 <span id="liveClock" class="text-xs font-mono font-semibold text-teal-700 dark:text-teal-300">00:00:00</span>
                 <span id="liveDate" class="text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-wider">--,--</span>
             </div>
-            <!-- Botón de Catálogo (Grande con icono arriba y texto abajo) -->
+            <!-- Botón de Catálogo -->
             <button id="openCatalogBtn" class="flex flex-col items-center justify-center px-3 py-1 rounded-xl bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 text-teal-600 dark:text-teal-400 text-[10px] font-semibold shadow-sm transition-colors cursor-pointer h-[58px]" title="Apps Disponibles">
                 <i data-lucide="store" class="w-4 h-4 mb-0.5"></i>
                 <span>Catálogo</span>
@@ -170,7 +170,7 @@
                     class="w-full pl-9 pr-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700/50 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-teal-500 transition-all font-medium">
             </div>
         </div>
-        <!-- Dashboard Grid Layout: 2 columnas en móvil, 2 en sm/md, 3 en lg -->
+        <!-- Dashboard Grid Layout -->
         <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3" id="projectsContainer"></div>
         <!-- Extra Useful Widgets Panel -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1 shrink-0">
@@ -202,7 +202,6 @@
             <p class="text-xs text-slate-500 dark:text-slate-400 shrink-0">
                 Selecciona la App que deseas tener en tu pantalla principal:
             </p>
-            <!-- Cuadrícula de 2 columnas compacta -->
             <div id="catalogContainer" class="overflow-y-auto grid grid-cols-2 gap-2 pr-1 flex-1"></div>
             <div class="pt-2 border-t border-slate-200 dark:border-slate-700 flex justify-end shrink-0">
                 <button id="finishCatalogBtn" class="px-4 py-2 bg-teal-500/10 border border-teal-500/30 text-teal-600 dark:text-teal-400 hover:bg-teal-500/20 rounded-xl text-xs font-semibold shadow-md transition-all cursor-pointer">
@@ -286,17 +285,17 @@
     <!-- --- VISTA DESLIZANTE DE PANTALLA COMPLETA --- -->
     <div id="iframeModal" class="view-transition flex flex-col">
         <div class="flex items-center justify-between px-4 py-3 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-md shrink-0">
-            <div class="flex items-center gap-3">
-                <button onclick="cerrarIframeAnimado()" class="flex items-center gap-1.5 px-3 py-1.5 bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 text-teal-600 dark:text-teal-400 font-bold text-xs rounded-xl transition-colors cursor-pointer">
-                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
-                    <span>Volver al Hub</span>
-                </button>
-                <span id="iframeTitle" class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate max-w-[180px] sm:max-w-xs">Vista Previa</span> 
-            </div>
-            <a id="iframeExternalLink" href="#" target="_blank" class="text-xs text-slate-500 dark:text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 flex items-center gap-1 font-semibold transition-colors">
-                <span class="hidden sm:inline">Pestaña nueva</span> 
-                <i data-lucide="external-link" class="w-4 h-4"></i> 
-            </a>
+            <!-- Botón Izquierdo: Regresar al Index -->
+            <button onclick="cerrarIframeAnimado()" class="flex items-center gap-1.5 px-3 py-1.5 bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 text-teal-600 dark:text-teal-400 font-bold text-xs rounded-xl transition-colors cursor-pointer">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                <span>Volver al Hub</span>
+            </button>
+            
+            <!-- Botón Derecho: Rotar Pantalla -->
+            <button id="toggleRotateBtn" onclick="toggleIframeOrientation()" class="flex items-center gap-1.5 px-3 py-1.5 bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 text-teal-600 dark:text-teal-400 font-bold text-xs rounded-xl transition-colors cursor-pointer" title="Girar Vista">
+                <i id="rotateIcon" data-lucide="monitor" class="w-4 h-4"></i>
+                <span class="hidden sm:inline" id="rotateText">Girar</span>
+            </button>
         </div>
         <div class="flex-1 w-full h-full bg-slate-900 relative">
              <iframe id="pwaIframe" class="w-full h-full border-0 block" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads" allow="downloads" src="about:blank"></iframe>
@@ -399,31 +398,28 @@
             return url;
         }
         document.addEventListener('DOMContentLoaded', () => {
-    if (!history.state || history.state.view !== 'index') {
-        history.replaceState({ view: 'index' }, '', '#index');
-    }
-    
-    initClock();
-    initNotes();
-    initTheme();
-    initPwaInstaller();
-    initCatalogModal();
-    initLoginForm();
+            if (!history.state || history.state.view !== 'index') {
+                history.replaceState({ view: 'index' }, '', '#index');
+            }
+            
+            initClock();
+            initNotes();
+            initTheme();
+            initPwaInstaller();
+            initCatalogModal();
+            initLoginForm();
 
-    // 1. CARGAR ROL DESDE CACHÉ LOCAL DE INMEDIATO (Offline-First)
-    currentUserRole = localStorage.getItem('fzboard_user_role') || 'gerencial'; // o el rol por defecto que uses
-    
-    // 2. RENDERIZAR TARJETAS AL INSTANTE SIN ESPERAR A RED
-    renderProjects();
-    lucide.createIcons();
+            currentUserRole = localStorage.getItem('fzboard_user_role') || 'gerencial';
+            
+            renderProjects();
+            lucide.createIcons();
 
-    // 3. VERIFICAR SESIÓN CON SUPABASE EN SEGUNDO PLANO (Background Sync)
-    if (supabaseClient) {
-        initAuth().catch(err => console.log("Modo offline activo: usando sesión local."));
-    } else {
-        document.getElementById('loginModal').classList.add('hidden');
-    }
-});
+            if (supabaseClient) {
+                initAuth().catch(err => console.log("Modo offline activo: usando sesión local."));
+            } else {
+                document.getElementById('loginModal').classList.add('hidden');
+            }
+        });
 
         // --- GESTIÓN DE LOGIN MANUAL CON SUPABASE ---
         function initLoginForm() {
@@ -457,7 +453,7 @@
                 });
             }
         }
-        // --- GESTIÓN DE MODAL DE ERROR ---
+
         function mostrarErrorModal(mensaje) {
             const errorModal = document.getElementById('errorModal');
             const errorMessage = document.getElementById('errorMessage');
@@ -471,26 +467,22 @@
             const errorModal = document.getElementById('errorModal');
             if (errorModal) errorModal.classList.add('hidden');
         }
-        // --- GESTIÓN DE AUTENTICACIÓN Y SESIÓN ---
+
         async function initAuth() {
-    try {
-        const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
-        if (!session || sessionError) {
-            // Si no hay sesión válida y estamos offline, no forces el login modal si ya hay datos locales, 
-            // o muestra el login solo si realmente es necesario. 
-            // Para offline-first, si hay sesión en caché de localStorage, Supabase la mantiene.
-            const hasLocalSession = localStorage.getItem('sb-' + SUPABASE_URL.split('//')[1].split('.')[0] + '-auth-token');
-            if (!hasLocalSession) {
-                document.getElementById('loginModal').classList.remove('hidden');
+            try {
+                const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+                if (!session || sessionError) {
+                    const hasLocalSession = localStorage.getItem('sb-' + SUPABASE_URL.split('//')[1].split('.')[0] + '-auth-token');
+                    if (!hasLocalSession) {
+                        document.getElementById('loginModal').classList.remove('hidden');
+                    }
+                } else {
+                    await fetchUserRoleAndInit(session.user);
+                }
+            } catch (e) {
+                console.log("Sin conexión a internet, operando en modo local:", e);
             }
-        } else {
-            await fetchUserRoleAndInit(session.user);
         }
-    } catch (e) {
-        console.error("Sin conexión a internet, operando en modo local:", e);
-        // Mantiene el rol actual en caché y no rompe la UI
-    }
-}
 
         async function fetchUserRoleAndInit(user) {
             try {
@@ -508,13 +500,13 @@
                     localStorage.setItem('fzboard_user_role', currentUserRole);
                 }
             } catch (err) {
-                console.log("Sin conexión para actualizar rol, usando caché local.");
                 if (!currentUserRole) {
                     currentUserRole = localStorage.getItem('fzboard_user_role') || 'promotor';
                 }
             }
             renderProjects();
         }
+
         async function cerrarSesionSupabase() {
             localStorage.removeItem('fzboard_user_role');
             if (supabaseClient) {
@@ -525,7 +517,6 @@
             currentUserRole = null;
         }
 
-        // --- MODO REORDENAR ---
         function toggleReorderMode() {
             isReorderMode = !isReorderMode;
             const btn = document.getElementById('toggleReorderBtn');
@@ -552,7 +543,6 @@
             renderProjects();
         };
 
-        // Renderizado del Tablero de Proyectos Activos
         function renderProjects() {
             const container = document.getElementById('projectsContainer');
             const searchInputEl = document.getElementById('searchInput');
@@ -638,7 +628,7 @@
             container.innerHTML = htmlContent;
             lucide.createIcons();
         }
-        // --- SISTEMA DE CATÁLOGO / TIENDA PREDEFINIDA ---
+
         function initCatalogModal() {
             const catalogModal = document.getElementById('catalogModal');
             const openCatalogBtn = document.getElementById('openCatalogBtn');
@@ -654,7 +644,6 @@
             }
         }
 
-        // --- FUNCIÓN CORREGIDA DEL CATÁLOGO ---
         function renderCatalogList() {
             const catalogContainer = document.getElementById('catalogContainer');
             const allowedProjectIds = currentUserRole 
@@ -680,13 +669,10 @@
                 return `
                     <div class="flex flex-col justify-between p-3 rounded-xl border border-slate-200 dark:border-slate-700/70 bg-slate-50 dark:bg-slate-900/40 hover:border-teal-500/40 transition-all gap-2 shadow-sm">
                         <div>
-                            <!-- Cabecera con Icono y Switch (clases estándar corregidas w-9 h-5) -->
                             <div class="flex items-center justify-between mb-1.5">
                                 <div class="w-7 h-7 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-600 dark:text-teal-400 shrink-0">
                                     ${isEmoji ? `<span class="text-sm">${item.icon}</span>` : `<i data-lucide="${item.icon || 'globe'}" class="w-3.5 h-3.5"></i>`}
                                 </div>
-                                
-                                <!-- Switch deslizante con colores funcionales y medidas estándar -->
                                 <label class="relative inline-flex items-center cursor-pointer">
                                     <input type="checkbox" ${isAdded ? 'checked' : ''} onchange="toggleCatalogProject('${item.id}')" class="sr-only peer">
                                     <div class="w-9 h-5 rounded-full transition-colors duration-200 ${isAdded ? 'bg-emerald-500' : 'bg-rose-500/80'} relative shadow-inner">
@@ -694,13 +680,9 @@
                                     </div>
                                 </label>
                             </div>
-                            
-                            <!-- Título y descripción optimizados y compactos -->
                             <h4 class="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">${item.title}</h4>
                             <p class="text-[10px] text-slate-500 dark:text-slate-400 line-clamp-2 mt-0.5 leading-tight">${item.desc}</p>
                         </div>
-                        
-                        <!-- Pie de tarjeta: Estado en texto -->
                         <div class="pt-1.5 border-t border-slate-200 dark:border-slate-700/50 flex items-center justify-between">
                             <span class="text-[9px] font-bold ${isAdded ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}">
                                 ${isAdded ? '● Añadido' : '○ Retirado'}
@@ -725,7 +707,7 @@
             renderCatalogList();
             renderProjects();
         };
-        // Reloj en tiempo real
+
         function initClock() {
             const updateClock = () => {
                 const now = new Date();
@@ -737,7 +719,7 @@
             updateClock();
             setInterval(updateClock, 1000);
         }
-        // Notas Rápidas
+
         function initNotes() {
             const textarea = document.getElementById('quickNotes');
             const badge = document.getElementById('noteSavedBadge');
@@ -753,7 +735,7 @@
                 }, 500);
             });
         }
-        // Cambio de Modo Claro / Oscuro
+
         const btnThemeToggle = document.getElementById('themeToggle');
         const htmlElement = document.documentElement;
         function setTheme(isDark) {
@@ -768,7 +750,6 @@
         }
         function initTheme() {
             const savedTheme = localStorage.getItem('theme');
-            // MODIFICADO: Modo claro por defecto (solo activa el modo oscuro si está guardado como 'dark')
             setTheme(savedTheme === 'dark');
             if (btnThemeToggle) {
                 btnThemeToggle.addEventListener('click', () => {
@@ -777,7 +758,7 @@
                 });
             }
         }
-        // Modal de Creación / Edición Manual
+
         const modal = document.getElementById('projectModal');
         const form = document.getElementById('projectForm');
         document.getElementById('openAddModalBtn').addEventListener('click', () => {
@@ -811,6 +792,7 @@
             modal.classList.add('hidden');
             renderProjects();
         });
+
         window.deleteProject = (id) => {
             projectToDeleteId = id;
             document.getElementById('confirmDeleteModal').classList.remove('hidden');
@@ -828,16 +810,50 @@
             }
             cerrarConfirmacionEliminar();
         }
+
         const searchInputElem = document.getElementById('searchInput');
         if (searchInputElem) {
             searchInputElem.addEventListener('input', renderProjects);
         }
+
+        // --- FUNCIÓN DE ROTACIÓN CON SCREEN ORIENTATION API Y PANTALLA COMPLETA ---
+        window.toggleIframeOrientation = async () => {
+            const rotateIcon = document.getElementById('rotateIcon');
+            const rotateText = document.getElementById('rotateText');
+            
+            try {
+                // Requerido por la API en la mayoría de navegadores móviles para bloquear la orientación
+                if (!document.fullscreenElement) {
+                    await document.documentElement.requestFullscreen().catch(err => console.log("Fullscreen request error:", err));
+                }
+
+                if (screen.orientation.type.includes('portrait')) {
+                    await screen.orientation.lock('landscape');
+                    rotateIcon.setAttribute('data-lucide', 'smartphone');
+                    if (rotateText) rotateText.textContent = 'Vertical';
+                } else {
+                    await screen.orientation.lock('portrait');
+                    rotateIcon.setAttribute('data-lucide', 'monitor');
+                    if (rotateText) rotateText.textContent = 'Horizontal';
+                }
+            } catch (err) {
+                console.log("El bloqueo de orientación o pantalla completa no está soportado:", err);
+            }
+            lucide.createIcons();
+        };
+
         window.openIframeAnimado = (url, title) => {
             history.pushState({ view: 'iframe', title: title }, '', '#viewer');
             const viewModal = document.getElementById('iframeModal');
             const iframe = document.getElementById('pwaIframe');
-            document.getElementById('iframeTitle').textContent = title;
-            document.getElementById('iframeExternalLink').href = url;
+            
+            // Resetear icono y estado al abrir una nueva app
+            const rotateIcon = document.getElementById('rotateIcon');
+            const rotateText = document.getElementById('rotateText');
+            if (rotateIcon) rotateIcon.setAttribute('data-lucide', 'monitor');
+            if (rotateText) rotateText.textContent = 'Horizontal';
+            lucide.createIcons();
+
             if (iframe.src !== url && !iframe.src.endsWith(url)) {
                 iframe.src = url;
             }
@@ -848,6 +864,18 @@
             const viewModal = document.getElementById('iframeModal');
             const iframe = document.getElementById('pwaIframe');
             
+            // Desbloquear orientación y salir de pantalla completa al cerrar el visor
+            try {
+                if (screen.orientation && screen.orientation.unlock) {
+                    screen.orientation.unlock();
+                }
+                if (document.fullscreenElement) {
+                    document.exitFullscreen().catch(() => {});
+                }
+            } catch (e) {
+                console.log("Error al liberar orientación/pantalla completa:", e);
+            }
+
             if (viewModal) {
                 viewModal.classList.remove('active');
             }
