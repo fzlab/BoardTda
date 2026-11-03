@@ -1,14 +1,14 @@
 (function() {
-    // 1. Inyectar automáticamente los estilos CSS con control estricto de visibilidad
+    // 1. Inyectar automáticamente los estilos CSS con control estricto de visibilidad (Reducido un 25%)
     const style = document.createElement('style');
     style.innerHTML = `
         #tecladoFlotante {
             position: fixed;
             width: 100%;
-            max-width: 500px;
+            max-width: 375px;
             background-color: #e8eaed;
-            box-shadow: 0 -8px 25px rgba(0,0,0,0.25);
-            padding: 12px;
+            box-shadow: 0 -6px 20px rgba(0,0,0,0.25);
+            padding: 9px;
             z-index: 20000;
             margin: 0 auto;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -24,48 +24,48 @@
         }
         
         /* Posiciones preestablecidas */
-        #tecladoFlotante.pos-bottom-center { bottom: 0; left: 0; right: 0; border-radius: 16px 16px 0 0; }
-        #tecladoFlotante.pos-bottom-left { bottom: 20px; left: 20px; right: auto; border-radius: 16px; }
-        #tecladoFlotante.pos-bottom-right { bottom: 20px; right: 20px; left: auto; border-radius: 16px; }
-        #tecladoFlotante.pos-top-center { top: 20px; left: 0; right: 0; border-radius: 16px; }
-        #tecladoFlotante.pos-center { top: 50%; left: 50%; right: auto; bottom: auto; transform: translate(-50%, -50%); border-radius: 16px; }
+        #tecladoFlotante.pos-bottom-center { bottom: 0; left: 0; right: 0; border-radius: 12px 12px 0 0; }
+        #tecladoFlotante.pos-bottom-left { bottom: 15px; left: 15px; right: auto; border-radius: 12px; }
+        #tecladoFlotante.pos-bottom-right { bottom: 15px; right: 15px; left: auto; border-radius: 12px; }
+        #tecladoFlotante.pos-top-center { top: 15px; left: 0; right: 0; border-radius: 12px; }
+        #tecladoFlotante.pos-center { top: 50%; left: 50%; right: auto; bottom: auto; transform: translate(-50%, -50%); border-radius: 12px; }
 
         /* Menú contextual de posiciones */
         .menu-posiciones {
             position: absolute;
-            bottom: 75px;
-            left: 15px;
+            bottom: 56px;
+            left: 11px;
             background: #ffffff;
-            border-radius: 14px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.15);
+            padding: 7px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
             z-index: 20010;
         }
         .menu-posiciones.menu-oculto { display: none !important; }
-        .menu-fila { display: flex; gap: 6px; align-items: center; }
+        .menu-fila { display: flex; gap: 4px; align-items: center; }
         .menu-posiciones button {
-            width: 38px; height: 38px; border: none; background-color: #f0f2f5; color: #333;
-            border-radius: 8px; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            width: 28px; height: 28px; border: none; background-color: #f0f2f5; color: #333;
+            border-radius: 6px; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center;
         }
         .menu-posiciones button:hover { background-color: #e2e8f0; }
 
         /* Grilla del teclado */
-        .teclado-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; max-width: 450px; margin: 0 auto; }
+        .teclado-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; max-width: 338px; margin: 0 auto; }
         .teclado-grid button {
-            height: 52px; font-size: 22px; border: none; border-radius: 10px; background-color: #ffffff;
+            height: 39px; font-size: 16px; border: none; border-radius: 7px; background-color: #ffffff;
             color: #1e293b; cursor: pointer; touch-action: manipulation; display: flex; justify-content: center;
-            align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); user-select: none; font-weight: 600;
+            align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1); user-select: none; font-weight: 600;
         }
         .teclado-grid button:active { background-color: #cbd5e1; }
-        .btn-funcion { background-color: #cbd5e1 !important; font-size: 18px !important; color: #334155 !important; }
-        .btn-ok { background-color: #0d9488 !important; color: white !important; font-weight: bold; font-size: 18px !important; }
+        .btn-funcion { background-color: #cbd5e1 !important; font-size: 14px !important; color: #334155 !important; }
+        .btn-ok { background-color: #0d9488 !important; color: white !important; font-weight: bold; font-size: 14px !important; }
         .text-blue { color: #0d9488 !important; }
         .btn-drag { background-color: #cbd5e1 !important; cursor: pointer; }
-        .btn-drag svg { width: 22px; height: 22px; stroke: #334155; }
+        .btn-drag svg { width: 16px; height: 16px; stroke: #334155; }
     `;
     document.head.appendChild(style);
 
@@ -122,7 +122,6 @@
         const botonesPos = menuPosiciones.querySelectorAll('button[data-pos]');
         const botones = teclado.querySelectorAll('button[data-key]');
 
-        // Detección mediante pointerdown (funciona perfecto en móviles con inputs readonly)
         document.addEventListener('pointerdown', (e) => {
             const targetInput = e.target.closest('[data-teclado]');
             if (targetInput) {
