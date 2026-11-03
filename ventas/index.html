@@ -8,6 +8,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- SDK de Supabase v2 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
       tailwind.config = {
           darkMode: 'class',
@@ -89,6 +91,14 @@
     </header>
 
     <div class="controls-bar bg-white/60 dark:bg-slate-800/60 backdrop-blur-md px-4 py-3 border-b border-slate-200 dark:border-slate-700/60 flex flex-col gap-2.5 relative z-40">
+      <!-- Fila: Estado de Conexión y Botón Actualizar -->
+      <div class="flex items-center justify-between pb-1 border-b border-slate-200 dark:border-slate-700/60">
+          <span id="conexionStatus" class="inline-flex items-center gap-1 text-[10px] text-amber-500 font-bold uppercase tracking-wider"><i class="fa-solid fa-circle-dot"></i> Conectando...</span>
+          <button onclick="actualizarDatosManual()" class="py-1 px-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700/40 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700/50 rounded-lg transition-all font-medium text-[10px] flex items-center justify-center gap-1 cursor-pointer" title="Actualizar datos">
+              <i id="iconActualizar" class="fa-solid fa-rotate text-[9px]"></i> Actualizar
+          </button>
+      </div>
+
       <input type="hidden" id="diaSelect" value="Lunes" onchange="cargarDatosDia()">
       
       <!-- Fila 1: Pestañas de Días -->
@@ -538,6 +548,15 @@
       </div>
   </div>
   <script>
+    // Configuración de Supabase
+    const SUPABASE_URL = "https://mifbcyxtafeacwkzqzsq.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_O6EAbkSba1NQPq08k_7bHg_PZ_x4ZU5";
+    const STORE_CODE = "T0151";
+    const OFFLINE_QUEUE_KEY = 'cola_ventas_offline';
+    const CACHE_KEY = "retail_dashboard_0151_merida_tailwind";
+
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
     const btnThemeToggle = document.getElementById('btn-theme-toggle');
     const htmlElement = document.documentElement;
     function setTheme(isDark) {
@@ -557,6 +576,7 @@
         setTheme(!isDarkActive);
     });
     lucide.createIcons();
+
     const diasSemana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
     let presupuestoData = {};
     let seguimientoDiarioData = {};
@@ -566,7 +586,143 @@
       blindBox: { stock: 0, objetivo: 0, venta: 0, pct: 0 },
       trendyToys: { pct: 0 }
     };
-    window.onload = function() {
+
+    function getWeekIdentifier() {
+        const now = new Date();
+        const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+        const dayNum = d.getUTCDay() || 7;
+        d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+        const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+        const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+        return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
+    }
+
+    function obtenerColaPendiente() { return JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || '[]'); }
+    function guardarColaPendiente(cola) { localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(cola)); }
+
+    function agregarAColaOffline(payload) {
+        const cola = obtenerColaPendiente();
+        const weekId = payload.week_identifier;
+        const existingIdx = cola.findIndex(item => item.week_identifier === weekId);
+        if (existingIdx !== -1) {
+            cola[existingIdx] = payload;
+        } else {
+            cola.push(payload);
+        }
+        guardarColaPendiente(cola);
+        actualizarEstadoConexionUI();
+    }
+
+    function actualizarEstadoConexionUI() {
+        const statusEl = document.getElementById('conexionStatus');
+        const cola = obtenerColaPendiente();
+        if (!statusEl) return;
+
+        if (!navigator.onLine) {
+            statusEl.className = "inline-flex items-center gap-1 text-[10px] text-amber-500 font-bold uppercase tracking-wider";
+            statusEl.innerHTML = `<i class="fa-solid fa-wifi"></i> Sin Conexión (${cola.length})`;
+        } else if (cola.length > 0) {
+            statusEl.className = "inline-flex items-center gap-1 text-[10px] text-amber-500 font-bold uppercase tracking-wider animate-pulse";
+            statusEl.innerHTML = `<i class="fa-solid fa-arrows-rotate fa-spin"></i> Sincronizando (${cola.length})...`;
+        } else {
+            statusEl.className = "inline-flex items-center gap-1 text-[10px] text-emerald-500 font-semibold uppercase tracking-wider";
+            statusEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> Base de Datos: En Línea`;
+        }
+    }
+
+    async function sincronizarConSupabase(payload) {
+        if (!navigator.onLine) {
+            agregarAColaOffline(payload);
+            return;
+        }
+        try {
+            const { error } = await supabaseClient
+                .from('t0151_ventas_semanales')
+                .upsert([payload], { onConflict: 'store_code,week_identifier' });
+            if (error) throw error;
+            actualizarEstadoConexionUI();
+        } catch (err) {
+            console.error("Error al sincronizar con Supabase:", err);
+            agregarAColaOffline(payload);
+        }
+    }
+
+    async function procesarSincronizacionOffline() {
+        const cola = obtenerColaPendiente();
+        if (cola.length === 0 || !navigator.onLine) return;
+        const colaFallida = [];
+
+        for (const payload of cola) {
+            try {
+                const { error } = await supabaseClient
+                    .from('t0151_ventas_semanales')
+                    .upsert([payload], { onConflict: 'store_code,week_identifier' });
+                if (error) {
+                    colaFallida.push(payload);
+                }
+            } catch (err) {
+                colaFallida.push(payload);
+            }
+        }
+        guardarColaPendiente(colaFallida);
+        actualizarEstadoConexionUI();
+    }
+
+    async function cargarDatosRemotos() {
+        if (!navigator.onLine) {
+            actualizarEstadoConexionUI();
+            return;
+        }
+        try {
+            const weekId = getWeekIdentifier();
+            const { data, error } = await supabaseClient
+                .from('t0151_ventas_semanales')
+                .select('*')
+                .eq('store_code', STORE_CODE)
+                .eq('week_identifier', weekId)
+                .maybeSingle();
+
+            if (!error && data) {
+                if (data.presupuesto) presupuestoData = data.presupuesto;
+                if (data.seguimiento) seguimientoDiarioData = data.seguimiento;
+                if (data.minisolove_pto !== undefined) minisolovepto = data.minisolove_pto;
+                if (data.shell_true) shellTrueData = data.shell_true;
+
+                guardarLocalStorage(false); // Guardar en caché sin re-disparar upsert
+                generarTablaModalPresupuesto();
+                cargarDatosDia();
+                calcularSemanal();
+            }
+        } catch (err) {
+            console.error("Error al cargar datos remotos:", err);
+        }
+        actualizarEstadoConexionUI();
+    }
+
+    async function actualizarDatosManual() {
+        const icono = document.getElementById('iconActualizar');
+        if (icono) icono.classList.add('fa-spin');
+        if (navigator.onLine) {
+            await procesarSincronizacionOffline();
+            await cargarDatosRemotos();
+        } else {
+            actualizarEstadoConexionUI();
+        }
+        if (icono) {
+            setTimeout(() => icono.classList.remove('fa-spin'), 500);
+        }
+    }
+
+    window.addEventListener('online', async () => {
+        await procesarSincronizacionOffline();
+        await cargarDatosRemotos();
+    });
+
+    window.addEventListener('offline', () => {
+        actualizarEstadoConexionUI();
+    });
+
+    window.onload = async function() {
       inicializarEstructuras();
       cargarLocalStorage();
       generarTablaModalPresupuesto();
@@ -574,7 +730,15 @@
       cargarDatosDia();
       calcularSemanal();
       initClock();
+
+      if (navigator.onLine) {
+          await procesarSincronizacionOffline();
+          await cargarDatosRemotos();
+      } else {
+          actualizarEstadoConexionUI();
+      }
     };
+
     function initClock() {
         const updateClock = () => {
             const now = new Date();
@@ -1287,17 +1451,27 @@
       calcularSemanal();
       mostrarModalAlerta("Datos eliminados.");
     }
-    function guardarLocalStorage() {
+
+    function guardarLocalStorage(sync = true) {
+      const weekId = getWeekIdentifier();
       const payload = { 
+        store_code: STORE_CODE,
+        week_identifier: weekId,
         presupuesto: presupuestoData, 
         seguimiento: seguimientoDiarioData,
-        minisolovepto: minisolovepto,
-        shellTrue: shellTrueData
+        minisolove_pto: minisolovepto,
+        shell_true: shellTrueData,
+        updated_at: new Date().toISOString()
       };
-      localStorage.setItem("retail_dashboard_0151_merida_tailwind", JSON.stringify(payload));
+      localStorage.setItem(CACHE_KEY, JSON.stringify(payload));
+      
+      if (sync) {
+          sincronizarConSupabase(payload);
+      }
     }
+
     function cargarLocalStorage() {
-      const data = localStorage.getItem("retail_dashboard_0151_merida_tailwind");
+      const data = localStorage.getItem(CACHE_KEY);
       if (data) {
         try {
           const parsed = JSON.parse(data);
@@ -1317,9 +1491,13 @@
           }
           if (parsed.minisolovepto !== undefined) {
             minisolovepto = parsed.minisolovepto;
+          } else if (parsed.minisolove_pto !== undefined) {
+            minisolovepto = parsed.minisolove_pto;
           }
           if (parsed.shellTrue) {
             shellTrueData = { ...parsed.shellTrue };
+          } else if (parsed.shell_true) {
+            shellTrueData = { ...parsed.shell_true };
           }
         } catch (e) {
           console.error("Error al cargar localStorage", e);
