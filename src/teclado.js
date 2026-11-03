@@ -1,5 +1,5 @@
 (function() {
-    // 1. Inyectar automáticamente los estilos CSS necesarios
+    // 1. Inyectar automáticamente los estilos CSS con z-index elevado para superar los modales
     const style = document.createElement('style');
     style.innerHTML = `
         #tecladoFlotante {
@@ -7,9 +7,9 @@
             width: 100%;
             max-width: 500px;
             background-color: #e8eaed;
-            box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
-            padding: 15px;
-            z-index: 1000;
+            box-shadow: 0 -8px 25px rgba(0,0,0,0.25);
+            padding: 12px;
+            z-index: 20000;
             margin: 0 auto;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             transition: opacity 0.2s ease, transform 0.2s ease, bottom 0.3s ease, top 0.3s ease, left 0.3s ease, right 0.3s ease;
@@ -18,13 +18,13 @@
         #tecladoFlotante * { box-sizing: border-box; }
         
         /* Posiciones preestablecidas */
-        #tecladoFlotante.pos-bottom-center { bottom: 0; left: 0; right: 0; border-radius: 15px 15px 0 0; transform: none; }
-        #tecladoFlotante.pos-bottom-left { bottom: 20px; left: 20px; right: auto; border-radius: 15px; transform: none; }
-        #tecladoFlotante.pos-bottom-right { bottom: 20px; right: 20px; left: auto; border-radius: 15px; transform: none; }
-        #tecladoFlotante.pos-top-center { top: 20px; left: 0; right: 0; border-radius: 15px; transform: none; }
-        #tecladoFlotante.pos-center { top: 50%; left: 50%; right: auto; bottom: auto; transform: translate(-50%, -50%); border-radius: 15px; }
+        #tecladoFlotante.pos-bottom-center { bottom: 0; left: 0; right: 0; border-radius: 16px 16px 0 0; transform: none; }
+        #tecladoFlotante.pos-bottom-left { bottom: 20px; left: 20px; right: auto; border-radius: 16px; transform: none; }
+        #tecladoFlotante.pos-bottom-right { bottom: 20px; right: 20px; left: auto; border-radius: 16px; transform: none; }
+        #tecladoFlotante.pos-top-center { top: 20px; left: 0; right: 0; border-radius: 16px; transform: none; }
+        #tecladoFlotante.pos-center { top: 50%; left: 50%; right: auto; bottom: auto; transform: translate(-50%, -50%); border-radius: 16px; }
         
-        .teclado-oculto { opacity: 0 !important; pointer-events: none !important; }
+        .teclado-oculto { opacity: 0 !important; pointer-events: none !important; display: none !important; }
 
         /* Menú contextual de posiciones */
         .menu-posiciones {
@@ -39,7 +39,7 @@
             flex-direction: column;
             align-items: center;
             gap: 6px;
-            z-index: 1010;
+            z-index: 20010;
             transition: opacity 0.2s ease, transform 0.2s ease;
         }
         .menu-oculto { opacity: 0; transform: scale(0.9); pointer-events: none; }
@@ -54,20 +54,20 @@
         /* Grilla del teclado */
         .teclado-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; max-width: 450px; margin: 0 auto; }
         .teclado-grid button {
-            height: 55px; font-size: 22px; border: none; border-radius: 8px; background-color: #ffffff;
-            color: #333; cursor: pointer; touch-action: manipulation; display: flex; justify-content: center;
-            align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); user-select: none;
+            height: 52px; font-size: 22px; border: none; border-radius: 10px; background-color: #ffffff;
+            color: #1e293b; cursor: pointer; touch-action: manipulation; display: flex; justify-content: center;
+            align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); user-select: none; font-weight: 600;
         }
-        .teclado-grid button:active { background-color: #d1d1d1; }
-        .btn-funcion { background-color: #d1d5db !important; font-size: 18px !important; }
-        .btn-ok { background-color: #4CAF50 !important; color: white !important; font-weight: bold; font-size: 18px !important; }
-        .text-blue { color: #1a73e8 !important; }
-        .btn-drag { background-color: #d1d5db !important; cursor: pointer; }
-        .btn-drag svg { width: 22px; height: 22px; stroke: #333; }
+        .teclado-grid button:active { background-color: #cbd5e1; }
+        .btn-funcion { background-color: #cbd5e1 !important; font-size: 18px !important; color: #334155 !important; }
+        .btn-ok { background-color: #0d9488 !important; color: white !important; font-weight: bold; font-size: 18px !important; }
+        .text-blue { color: #0d9488 !important; }
+        .btn-drag { background-color: #cbd5e1 !important; cursor: pointer; }
+        .btn-drag svg { width: 22px; height: 22px; stroke: #334155; }
     `;
     document.head.appendChild(style);
 
-    // 2. Inyectar automáticamente el HTML del teclado en el body de la página
+    // 2. Inyectar automáticamente el HTML del teclado en el body
     const container = document.createElement('div');
     container.innerHTML = `
         <div id="tecladoFlotante" class="teclado-oculto pos-bottom-center">
@@ -111,7 +111,7 @@
     `;
     document.body.appendChild(container);
 
-    // 3. Lógica interna del teclado
+    // 3. Lógica interna adaptada
     function initTeclado() {
         let activeInput = null;
         const teclado = document.getElementById('tecladoFlotante');
@@ -120,12 +120,20 @@
         const botonesPos = menuPosiciones.querySelectorAll('button[data-pos]');
         const botones = teclado.querySelectorAll('button[data-key]');
 
-        // Detectar clics en cualquier input que tenga el atributo `data-teclado`
-        document.addEventListener('click', (e) => {
-            if (e.target.tagName === 'INPUT' && e.target.hasAttribute('data-teclado')) {
-                activeInput = e.target;
+        // Usar pointerdown para asegurar la detección en inputs readonly y dentro de modales
+        document.addEventListener('pointerdown', (e) => {
+            const targetInput = e.target.closest('input[data-teclado]');
+            if (targetInput) {
+                e.preventDefault();
+                activeInput = targetInput;
+                activeInput.focus();
                 teclado.classList.remove('teclado-oculto');
-            } else if (!teclado.contains(e.target) && e.target !== activeInput) {
+            }
+        });
+
+        // Ocultar al hacer clic fuera (excluyendo modales y botones del teclado)
+        document.addEventListener('click', (e) => {
+            if (!teclado.contains(e.target) && !e.target.closest('input[data-teclado]') && !e.target.closest('.modal') && !e.target.closest('.dropdown')) {
                 teclado.classList.add('teclado-oculto');
                 menuPosiciones.classList.add('menu-oculto');
                 activeInput = null;
@@ -153,11 +161,26 @@
                 if (!activeInput) return;
                 
                 const key = boton.getAttribute('data-key');
-                let valorActual = activeInput.value;
+                let valorActual = activeInput.value || '';
+                
+                // Detectar si es un input de moneda (venta)
+                const isCurrencyInput = activeInput.id.includes('venta') || (activeInput.placeholder && activeInput.placeholder.includes('$'));
 
                 if (key === 'backspace') {
-                    activeInput.value = valorActual.slice(0, -1);
+                    if (isCurrencyInput) {
+                        let digits = valorActual.replace(/[^0-9]/g, '');
+                        digits = digits.slice(0, -1);
+                        activeInput.value = digits === '' ? '' : digits;
+                        if (typeof window.formatCurrencyInput === 'function' && activeInput.value !== '') {
+                            window.formatCurrencyInput(activeInput);
+                        }
+                    } else {
+                        activeInput.value = valorActual.slice(0, -1);
+                    }
                 } else if (key === 'enter') {
+                    if (isCurrencyInput && typeof window.formatCurrencyInput === 'function') {
+                        window.formatCurrencyInput(activeInput);
+                    }
                     teclado.classList.add('teclado-oculto');
                     menuPosiciones.classList.add('menu-oculto');
                     activeInput.blur();
@@ -165,7 +188,7 @@
                 } else if (key === 'sign') {
                     if (valorActual.startsWith('-')) {
                         activeInput.value = valorActual.substring(1);
-                    } else if (valorActual !== '' && valorActual !== '0') {
+                    } else if (valorActual !== '' && valorActual !== '0' && valorActual !== '$0.00') {
                         activeInput.value = '-' + valorActual;
                     }
                 } else if (key === '.' || key === ',') {
@@ -177,15 +200,32 @@
                         }
                     }
                 } else {
-                    if (valorActual === '0' && key !== '.') {
-                        activeInput.value = key;
+                    // Ingreso de números (0-9)
+                    if (isCurrencyInput) {
+                        let digits = valorActual.replace(/[^0-9]/g, '');
+                        if (digits === '0') digits = '';
+                        digits += key;
+                        activeInput.value = digits;
+                        if (typeof window.formatCurrencyInput === 'function') {
+                            window.formatCurrencyInput(activeInput);
+                        }
                     } else {
-                        activeInput.value += key;
+                        if (valorActual === '0' && key !== '.') {
+                            activeInput.value = key;
+                        } else {
+                            activeInput.value += key;
+                        }
                     }
                 }
                 
-                // Disparar evento por si el input tiene listeners externos
+                // Disparar eventos y forzar actualización de cálculos en tiempo real
                 activeInput.dispatchEvent(new Event('input', { bubbles: true }));
+                if (typeof window.calcularDiario === 'function') {
+                    window.calcularDiario();
+                }
+                if (typeof window.autoGuardarPresupuesto === 'function') {
+                    window.autoGuardarPresupuesto();
+                }
             });
         });
     }
