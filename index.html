@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es" class="h-full bg-slate-900">
+<html lang="es" class="h-full bg-slate-100 dark:bg-slate-900">
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="./fonts.css">
@@ -765,7 +765,8 @@
         }
         function initTheme() {
             const savedTheme = localStorage.getItem('theme');
-            setTheme(savedTheme !== 'light');
+            // MODIFICADO: Modo claro por defecto (solo activa el modo oscuro si está guardado como 'dark')
+            setTheme(savedTheme === 'dark');
             if (btnThemeToggle) {
                 btnThemeToggle.addEventListener('click', () => {
                     const isDarkActive = htmlElement.classList.contains('dark');
