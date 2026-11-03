@@ -398,24 +398,33 @@
             if (url.startsWith('http://') || url.startsWith('https://')) return url;
             return url;
         }
-        document.addEventListener('DOMContentLoaded', async () => {
-            if (!history.state || history.state.view !== 'index') {
-                history.replaceState({ view: 'index' }, '', '#index');
-            }
-            initClock();
-            initNotes();
-            initTheme();
-            initPwaInstaller();
-            initCatalogModal();
-            initLoginForm();
-            if (supabaseClient) {
-                await initAuth();
-            } else {
-                document.getElementById('loginModal').classList.remove('hidden');
-                renderProjects();
-            }
-            lucide.createIcons();
-        });
+        document.addEventListener('DOMContentLoaded', () => {
+    if (!history.state || history.state.view !== 'index') {
+        history.replaceState({ view: 'index' }, '', '#index');
+    }
+    
+    initClock();
+    initNotes();
+    initTheme();
+    initPwaInstaller();
+    initCatalogModal();
+    initLoginForm();
+
+    // 1. CARGAR ROL DESDE CACHÉ LOCAL DE INMEDIATO (Offline-First)
+    currentUserRole = localStorage.getItem('fzboard_user_role') || 'gerencial'; // o el rol por defecto que uses
+    
+    // 2. RENDERIZAR TARJETAS AL INSTANTE SIN ESPERAR A RED
+    renderProjects();
+    lucide.createIcons();
+
+    // 3. VERIFICAR SESIÓN CON SUPABASE EN SEGUNDO PLANO (Background Sync)
+    if (supabaseClient) {
+        initAuth().catch(err => console.log("Modo offline activo: usando sesión local."));
+    } else {
+        document.getElementById('loginModal').classList.add('hidden');
+    }
+});
+
         // --- GESTIÓN DE LOGIN MANUAL CON SUPABASE ---
         function initLoginForm() {
             const loginForm = document.getElementById('loginForm');
@@ -464,31 +473,25 @@
         }
         // --- GESTIÓN DE AUTENTICACIÓN Y SESIÓN ---
         async function initAuth() {
-            try {
-                const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
-                if (!session || sessionError) {
-                    document.getElementById('loginModal').classList.remove('hidden');
-                    renderProjects();
-                } else {
-                    const cachedRole = localStorage.getItem('fzboard_user_role');
-                    if (cachedRole) {
-                        currentUserRole = cachedRole;
-                        renderProjects();
-                    }
-                    await fetchUserRoleAndInit(session.user);
-                }
-            } catch (e) {
-                console.error("Error al consultar sesión:", e);
-                const cachedRole = localStorage.getItem('fzboard_user_role');
-                if (cachedRole) {
-                    currentUserRole = cachedRole;
-                    renderProjects();
-                } else {
-                    document.getElementById('loginModal').classList.remove('hidden');
-                    renderProjects();
-                }
+    try {
+        const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+        if (!session || sessionError) {
+            // Si no hay sesión válida y estamos offline, no forces el login modal si ya hay datos locales, 
+            // o muestra el login solo si realmente es necesario. 
+            // Para offline-first, si hay sesión en caché de localStorage, Supabase la mantiene.
+            const hasLocalSession = localStorage.getItem('sb-' + SUPABASE_URL.split('//')[1].split('.')[0] + '-auth-token');
+            if (!hasLocalSession) {
+                document.getElementById('loginModal').classList.remove('hidden');
             }
+        } else {
+            await fetchUserRoleAndInit(session.user);
         }
+    } catch (e) {
+        console.error("Sin conexión a internet, operando en modo local:", e);
+        // Mantiene el rol actual en caché y no rompe la UI
+    }
+}
+
         async function fetchUserRoleAndInit(user) {
             try {
                 const { data, error } = await supabaseClient
