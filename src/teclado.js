@@ -90,11 +90,11 @@
                 <button type="button" data-key="4">4</button>
                 <button type="button" data-key="5">5</button>
                 <button type="button" data-key="6">6</button>
-                <button type="button" data-key="sign" class="btn-funcion text-blue">Sig.</button>
+                <button type="button" data-key="prev" class="btn-funcion text-blue">Ant.</button>
                 <button type="button" data-key="7">7</button>
                 <button type="button" data-key="8">8</button>
                 <button type="button" data-key="9">9</button>
-                <button type="button" data-key="." class="btn-funcion">.</button>
+                <button type="button" data-key="next" class="btn-funcion text-blue">Sig.</button>
                 <button type="button" id="dragHandle" class="btn-drag" title="Cambiar posición">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="5 9 2 12 5 15"></polyline>
@@ -106,7 +106,7 @@
                     </svg>
                 </button>
                 <button type="button" data-key="0">0</button>
-                <button type="button" data-key="," class="btn-funcion">,</button>
+                <button type="button" data-key="." class="btn-funcion">.</button>
                 <button type="button" data-key="enter" class="btn-ok">OK</button>
             </div>
         </div>
@@ -127,6 +127,15 @@
             if (targetInput) {
                 activeInput = targetInput;
                 teclado.classList.remove('teclado-oculto');
+                
+                // Posición por defecto: si está en horizontal, se alinea a la derecha; si no, abajo al centro
+                teclado.classList.remove('pos-bottom-center', 'pos-bottom-left', 'pos-bottom-right', 'pos-top-center', 'pos-center');
+                if (window.innerWidth > window.innerHeight) {
+                    teclado.classList.add('pos-bottom-right');
+                } else {
+                    teclado.classList.add('pos-bottom-center');
+                }
+
                 targetInput.focus();
             }
         });
@@ -174,13 +183,41 @@
                     menuPosiciones.classList.add('menu-oculto');
                     activeInput.blur();
                     activeInput = null;
-                } else if (key === 'sign') {
-                    if (valorActual.startsWith('-')) {
-                        activeInput.value = valorActual.substring(1);
-                    } else if (valorActual !== '' && valorActual !== '0' && valorActual !== '$0.00') {
-                        activeInput.value = '-' + valorActual;
+                } else if (key === 'next') {
+                    // Botón "Sig.": Pasa el foco a la celda siguiente
+                    if (isCurrencyInput && typeof window.formatCurrencyInput === 'function' && activeInput.value !== '') {
+                        window.formatCurrencyInput(activeInput);
                     }
-                } else if (key === '.' || key === ',') {
+                    activeInput.blur();
+                    
+                    const inputs = Array.from(document.querySelectorAll('[data-teclado]'));
+                    const currentIndex = inputs.indexOf(activeInput);
+                    if (currentIndex !== -1 && inputs.length > 0) {
+                        const nextIndex = (currentIndex + 1) % inputs.length;
+                        const nextInput = inputs[nextIndex];
+                        activeInput = nextInput;
+                        nextInput.focus();
+                        nextInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                    return;
+                } else if (key === 'prev') {
+                    // Botón "Ant.": Pasa el foco a la celda anterior
+                    if (isCurrencyInput && typeof window.formatCurrencyInput === 'function' && activeInput.value !== '') {
+                        window.formatCurrencyInput(activeInput);
+                    }
+                    activeInput.blur();
+                    
+                    const inputs = Array.from(document.querySelectorAll('[data-teclado]'));
+                    const currentIndex = inputs.indexOf(activeInput);
+                    if (currentIndex !== -1 && inputs.length > 0) {
+                        const prevIndex = (currentIndex - 1 + inputs.length) % inputs.length;
+                        const prevInput = inputs[prevIndex];
+                        activeInput = prevInput;
+                        prevInput.focus();
+                        prevInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                    return;
+                } else if (key === '.') {
                     if (!valorActual.includes('.') && !valorActual.includes(',')) {
                         if (valorActual === '' || valorActual === '-') {
                             activeInput.value += '0' + key;
@@ -190,12 +227,17 @@
                     }
                 } else {
                     if (isCurrencyInput) {
-                        let digits = valorActual.replace(/[^0-9]/g, '');
-                        if (digits === '0') digits = '';
-                        digits += key;
-                        activeInput.value = digits;
-                        if (typeof window.formatCurrencyInput === 'function') {
-                            window.formatCurrencyInput(activeInput);
+                        const hasDecimal = valorActual.includes('.') || valorActual.includes(',');
+                        if (hasDecimal) {
+                            activeInput.value += key;
+                        } else {
+                            let digits = valorActual.replace(/[^0-9]/g, '');
+                            if (digits === '0') digits = '';
+                            digits += key;
+                            activeInput.value = digits;
+                            if (typeof window.formatCurrencyInput === 'function') {
+                                window.formatCurrencyInput(activeInput);
+                            }
                         }
                     } else {
                         if (valorActual === '0' && key !== '.') {
