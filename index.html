@@ -423,7 +423,7 @@
             }
         });
 
-        // --- PANTALLA COMPLETA AUTOMÁTICA DESDE EL INICIO ---
+        // --- PANTALLA COMPLETA AUTOMÁTICA EN EL INDEX ---
         function initFullscreenEnforcer() {
             const enterFullscreen = () => {
                 if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
@@ -432,7 +432,9 @@
                     });
                 }
             };
-            // Activar al primer toque o clic en cualquier parte de la app
+            // Intentar activar fullscreen inmediatamente al cargar
+            enterFullscreen();
+            // Y asegurar activación al primer toque/clic si el navegador lo requería
             document.addEventListener('click', enterFullscreen, { once: true });
             document.addEventListener('touchstart', enterFullscreen, { once: true });
         }
@@ -872,7 +874,6 @@
                         await screen.orientation.lock('portrait');
                     }
                 } else {
-                    // Fallback si screen.orientation.lock no está soportado en algunos navegadores
                     console.log("Orientación bloqueada por API no disponible.");
                 }
             } catch (err) {
@@ -898,7 +899,6 @@
             const viewModal = document.getElementById('iframeModal');
             const iframe = document.getElementById('pwaIframe');
             
-            // Desbloquear orientación y salir de pantalla completa al cerrar el visor
             try {
                 if (screen.orientation && screen.orientation.unlock) {
                     screen.orientation.unlock();
