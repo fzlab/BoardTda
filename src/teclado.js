@@ -1,5 +1,5 @@
 (function() {
-    // 1. Inyectar automáticamente los estilos CSS con z-index elevado para superar los modales
+    // 1. Inyectar automáticamente los estilos CSS con control estricto de visibilidad
     const style = document.createElement('style');
     style.innerHTML = `
         #tecladoFlotante {
@@ -12,19 +12,23 @@
             z-index: 20000;
             margin: 0 auto;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            transition: opacity 0.2s ease, transform 0.2s ease, bottom 0.3s ease, top 0.3s ease, left 0.3s ease, right 0.3s ease;
             box-sizing: border-box;
+            display: block;
         }
         #tecladoFlotante * { box-sizing: border-box; }
         
-        /* Posiciones preestablecidas */
-        #tecladoFlotante.pos-bottom-center { bottom: 0; left: 0; right: 0; border-radius: 16px 16px 0 0; transform: none; }
-        #tecladoFlotante.pos-bottom-left { bottom: 20px; left: 20px; right: auto; border-radius: 16px; transform: none; }
-        #tecladoFlotante.pos-bottom-right { bottom: 20px; right: 20px; left: auto; border-radius: 16px; transform: none; }
-        #tecladoFlotante.pos-top-center { top: 20px; left: 0; right: 0; border-radius: 16px; transform: none; }
-        #tecladoFlotante.pos-center { top: 50%; left: 50%; right: auto; bottom: auto; transform: translate(-50%, -50%); border-radius: 16px; }
+        #tecladoFlotante.teclado-oculto {
+            display: none !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
         
-        .teclado-oculto { opacity: 0 !important; pointer-events: none !important; display: none !important; }
+        /* Posiciones preestablecidas */
+        #tecladoFlotante.pos-bottom-center { bottom: 0; left: 0; right: 0; border-radius: 16px 16px 0 0; }
+        #tecladoFlotante.pos-bottom-left { bottom: 20px; left: 20px; right: auto; border-radius: 16px; }
+        #tecladoFlotante.pos-bottom-right { bottom: 20px; right: 20px; left: auto; border-radius: 16px; }
+        #tecladoFlotante.pos-top-center { top: 20px; left: 0; right: 0; border-radius: 16px; }
+        #tecladoFlotante.pos-center { top: 50%; left: 50%; right: auto; bottom: auto; transform: translate(-50%, -50%); border-radius: 16px; }
 
         /* Menú contextual de posiciones */
         .menu-posiciones {
@@ -40,16 +44,14 @@
             align-items: center;
             gap: 6px;
             z-index: 20010;
-            transition: opacity 0.2s ease, transform 0.2s ease;
         }
-        .menu-oculto { opacity: 0; transform: scale(0.9); pointer-events: none; }
+        .menu-posiciones.menu-oculto { display: none !important; }
         .menu-fila { display: flex; gap: 6px; align-items: center; }
         .menu-posiciones button {
             width: 38px; height: 38px; border: none; background-color: #f0f2f5; color: #333;
             border-radius: 8px; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center;
         }
         .menu-posiciones button:hover { background-color: #e2e8f0; }
-        .menu-posiciones button:active { background-color: #cbd5e1; }
 
         /* Grilla del teclado */
         .teclado-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; max-width: 450px; margin: 0 auto; }
@@ -67,7 +69,7 @@
     `;
     document.head.appendChild(style);
 
-    // 2. Inyectar automáticamente el HTML del teclado en el body
+    // 2. Inyectar HTML del teclado oculto por defecto
     const container = document.createElement('div');
     container.innerHTML = `
         <div id="tecladoFlotante" class="teclado-oculto pos-bottom-center">
@@ -111,7 +113,7 @@
     `;
     document.body.appendChild(container);
 
-    // 3. Lógica interna adaptada
+    // 3. Lógica con pointerdown para detectar toques en inputs readonly
     function initTeclado() {
         let activeInput = null;
         const teclado = document.getElementById('tecladoFlotante');
@@ -120,24 +122,13 @@
         const botonesPos = menuPosiciones.querySelectorAll('button[data-pos]');
         const botones = teclado.querySelectorAll('button[data-key]');
 
-        // Detección robusta mediante eventos 'focus' y 'click' para inputs con atributo [data-teclado]
-        document.addEventListener('focusin', (e) => {
-            if (e.target && e.target.hasAttribute && e.target.hasAttribute('data-teclado')) {
-                activeInput = e.target;
-                teclado.classList.remove('teclado-oculto');
-            }
-        });
-
-        document.addEventListener('click', (e) => {
+        // Detección mediante pointerdown (funciona perfecto en móviles con inputs readonly)
+        document.addEventListener('pointerdown', (e) => {
             const targetInput = e.target.closest('[data-teclado]');
             if (targetInput) {
                 activeInput = targetInput;
-                activeInput.focus();
                 teclado.classList.remove('teclado-oculto');
-                e.stopPropagation();
-            } else if (!teclado.contains(e.target) && !e.target.closest('.modal') && !e.target.closest('.dropdown')) {
-                // Ocultar si se hace clic fuera del teclado y fuera de modales/dropdowns activos
-                // (Opcional: comentar esta línea si deseas que el teclado permanezca abierto al tocar otras partes de la app)
+                targetInput.focus();
             }
         });
 
@@ -163,8 +154,6 @@
                 
                 const key = boton.getAttribute('data-key');
                 let valorActual = activeInput.value || '';
-                
-                // Detectar si es un campo de moneda (venta)
                 const isCurrencyInput = activeInput.id.includes('venta') || (activeInput.placeholder && activeInput.placeholder.includes('$'));
 
                 if (key === 'backspace') {
@@ -201,7 +190,6 @@
                         }
                     }
                 } else {
-                    // Ingreso de números (0-9)
                     if (isCurrencyInput) {
                         let digits = valorActual.replace(/[^0-9]/g, '');
                         if (digits === '0') digits = '';
@@ -219,7 +207,6 @@
                     }
                 }
                 
-                // Disparar eventos y forzar actualización de cálculos en tiempo real
                 activeInput.dispatchEvent(new Event('input', { bubbles: true }));
                 if (typeof window.calcularDiario === 'function') {
                     window.calcularDiario();
