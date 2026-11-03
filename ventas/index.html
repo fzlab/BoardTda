@@ -168,8 +168,8 @@
               <tbody class="divide-y divide-slate-100 dark:divide-slate-700/40 font-medium text-slate-800 dark:text-slate-200">
                 <tr>
                   <td class="py-2 px-1 font-semibold">Vta Real vs Ppto.</td>
-                  <td class="py-1 px-0.5 text-center bg-teal-50/50 dark:bg-teal-950/20 rounded-lg">
-                    <input type="text" id="input-diario-venta" data-teclado inputmode="none" readonly class="w-full bg-transparent text-center font-bold text-teal-800 dark:text-teal-300 outline-none py-1 text-xs" placeholder="$0.00" oninput="calcularDiario()" onblur="formatCurrencyInput(this)" onkeydown="handleEnterDiario(event, 'input-diario-tickets')">
+                  <td class="py-1 px-0.5 text-center">
+                    <input type="text" id="input-diario-venta" data-teclado inputmode="none" readonly class="w-full text-center font-bold text-teal-800 dark:text-teal-300 outline-none py-1.5 text-xs bg-teal-50/50 dark:bg-teal-950/30 rounded-lg transition-all" placeholder="$0.00" oninput="calcularDiario()" onblur="formatCurrencyInput(this)" onkeydown="handleEnterDiario(event, 'input-diario-tickets')">
                   </td>
                   <td class="py-2 px-1 text-center font-bold text-slate-600 dark:text-slate-300 truncate" id="pto-diario-venta">$0.00</td>
                   <td class="py-2 px-1 text-center font-bold truncate" id="diff-diario-venta">$0.00</td>
@@ -191,8 +191,8 @@
                 </tr>
                 <tr>
                   <td class="py-2 px-1 font-semibold"># Tickets</td>
-                  <td class="py-1 px-0.5 text-center bg-teal-50/50 dark:bg-teal-950/20 rounded-lg">
-                    <input type="text" id="input-diario-tickets" data-teclado inputmode="none" readonly class="w-full bg-transparent text-center font-bold text-teal-800 dark:text-teal-300 outline-none py-1 text-xs" placeholder="0" oninput="calcularDiario()" onkeydown="handleEnterDiario(event, 'input-diario-piezas')">
+                  <td class="py-1 px-0.5 text-center">
+                    <input type="text" id="input-diario-tickets" data-teclado inputmode="none" readonly class="w-full text-center font-bold text-teal-800 dark:text-teal-300 outline-none py-1.5 text-xs bg-teal-50/50 dark:bg-teal-950/30 rounded-lg transition-all" placeholder="0" oninput="calcularDiario()" onkeydown="handleEnterDiario(event, 'input-diario-piezas')">
                   </td>
                   <td class="py-2 px-1 text-center font-bold text-slate-600 dark:text-slate-300 truncate" id="pto-diario-tickets">0</td>
                   <td class="py-2 px-1 text-center font-bold truncate" id="diff-diario-tickets">0</td>
@@ -200,8 +200,8 @@
                 </tr>
                 <tr>
                   <td class="py-2 px-1 font-semibold">Piezas Real vs Ppto.</td>
-                  <td class="py-1 px-0.5 text-center bg-teal-50/50 dark:bg-teal-950/20 rounded-lg">
-                    <input type="text" id="input-diario-piezas" data-teclado inputmode="none" readonly class="w-full bg-transparent text-center font-bold text-teal-800 dark:text-teal-300 outline-none py-1 text-xs" placeholder="0" oninput="calcularDiario()" onkeydown="handleEnterDiario(event, 'input-diario-minisolovereal')">
+                  <td class="py-1 px-0.5 text-center">
+                    <input type="text" id="input-diario-piezas" data-teclado inputmode="none" readonly class="w-full text-center font-bold text-teal-800 dark:text-teal-300 outline-none py-1.5 text-xs bg-teal-50/50 dark:bg-teal-950/30 rounded-lg transition-all" placeholder="0" oninput="calcularDiario()" onkeydown="handleEnterDiario(event, 'input-diario-minisolovereal')">
                   </td>
                   <td class="py-2 px-1 text-center font-bold text-slate-600 dark:text-slate-300 truncate" id="pto-diario-piezas">0</td>
                   <td class="py-2 px-1 text-center font-bold truncate" id="diff-diario-piezas">0</td>
@@ -209,8 +209,8 @@
                 </tr>
                 <tr>
                   <td class="py-2 px-1 font-semibold">MinisoLove</td>
-                  <td class="py-1 px-0.5 text-center bg-teal-50/50 dark:bg-teal-950/20 rounded-lg">
-                    <input type="text" id="input-diario-minisolovereal" data-teclado inputmode="none" readonly class="w-full bg-transparent text-center font-bold text-teal-800 dark:text-teal-300 outline-none py-1 text-xs" placeholder="0" oninput="calcularDiario()">
+                  <td class="py-1 px-0.5 text-center">
+                    <input type="text" id="input-diario-minisolovereal" data-teclado inputmode="none" readonly class="w-full text-center font-bold text-teal-800 dark:text-teal-300 outline-none py-1.5 text-xs bg-teal-50/50 dark:bg-teal-950/30 rounded-lg transition-all" placeholder="0" oninput="calcularDiario()">
                   </td>
                   <td class="py-2 px-1 text-center font-bold text-slate-600 dark:text-slate-300 truncate" id="pto-diario-minisolovepto">0</td>
                   <td class="py-2 px-1 text-center font-bold truncate" id="diff-diario-minisolove">0</td>
@@ -316,7 +316,7 @@
           </div>
         </div>
 
-        <!-- SECCIÓN DE OBJETIVOS DE PRESUPUESTO SEMANAL (DISEÑO 2X2 Y TEXTOS SIMPLIFICADOS) -->
+        <!-- SECCIÓN DE OBJETIVOS DE PRESUPUESTO SEMANAL -->
         <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl p-3 shadow-md space-y-2.5">
           <div class="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider mb-2 pb-1 border-b border-slate-200 dark:border-slate-700/60 flex items-center gap-1.5">
             <i class="fa-solid fa-bullseye text-teal-600 dark:text-teal-400"></i> Objetivos de Presupuesto Semanal
@@ -576,6 +576,24 @@
         setTheme(!isDarkActive);
     });
     lucide.createIcons();
+
+    // Efecto visual limpio: solo un borde suave y degradado sutil en el input activo
+    document.addEventListener('focusin', (e) => {
+        const input = e.target.closest('input[data-teclado]');
+        if (input) {
+            document.querySelectorAll('input[data-teclado]').forEach(i => {
+                i.classList.remove('border', 'border-teal-400', 'bg-gradient-to-r', 'from-teal-50/80', 'to-emerald-50/50', 'shadow-sm');
+            });
+            input.classList.add('border', 'border-teal-400', 'bg-gradient-to-r', 'from-teal-50/80', 'to-emerald-50/50', 'shadow-sm');
+        }
+    });
+
+    document.addEventListener('focusout', (e) => {
+        const input = e.target.closest('input[data-teclado]');
+        if (input) {
+            input.classList.remove('border', 'border-teal-400', 'bg-gradient-to-r', 'from-teal-50/80', 'to-emerald-50/50', 'shadow-sm');
+        }
+    });
 
     const diasSemana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
     let presupuestoData = {};
@@ -1104,22 +1122,22 @@
         const nextDia = diasSemana[index + 1];
         tr.innerHTML = `
           <td class="py-2 px-1 font-semibold text-slate-800 dark:text-slate-200">${dia}</td>
-          <td class="py-1 px-1 text-center bg-teal-50/50 dark:bg-teal-950/20 rounded-lg">
+          <td class="py-1 px-1 text-center">
             <input type="text" id="pto-input-venta-${dia}" data-teclado inputmode="none" readonly value="${pto.venta ? fmtMoney(pto.venta) : ''}" placeholder="$0.00" 
-              class="w-full bg-transparent text-center font-bold text-teal-800 dark:text-teal-300 outline-none py-1 text-xs"
+              class="w-full text-center font-bold text-teal-800 dark:text-teal-300 outline-none py-1.5 text-xs bg-teal-50/50 dark:bg-teal-950/30 rounded-lg transition-all"
               oninput="autoGuardarPresupuesto()"
               onblur="formatCurrencyInput(this)"
               onkeydown="handleEnterKey(event, '${nextDia ? 'pto-input-venta-' + nextDia : 'pto-input-minisolove'}')">
           </td>
-          <td class="py-1 px-1 text-center bg-teal-50/50 dark:bg-teal-950/20 rounded-lg">
+          <td class="py-1 px-1 text-center">
             <input type="text" id="pto-input-tickets-${dia}" data-teclado inputmode="none" readonly value="${pto.tickets || ''}" placeholder="0"
-              class="w-full bg-transparent text-center font-bold text-teal-800 dark:text-teal-300 outline-none py-1 text-xs"
+              class="w-full text-center font-bold text-teal-800 dark:text-teal-300 outline-none py-1.5 text-xs bg-teal-50/50 dark:bg-teal-950/30 rounded-lg transition-all"
               oninput="autoGuardarPresupuesto()"
               onkeydown="handleEnterKey(event, '${nextDia ? 'pto-input-tickets-' + nextDia : 'pto-input-minisolove'}')">
           </td>
-          <td class="py-1 px-1 text-center bg-teal-50/50 dark:bg-teal-950/20 rounded-lg">
+          <td class="py-1 px-1 text-center">
             <input type="text" id="pto-input-piezas-${dia}" data-teclado inputmode="none" readonly value="${pto.piezas || ''}" placeholder="0"
-              class="w-full bg-transparent text-center font-bold text-teal-800 dark:text-teal-300 outline-none py-1 text-xs"
+              class="w-full text-center font-bold text-teal-800 dark:text-teal-300 outline-none py-1.5 text-xs bg-teal-50/50 dark:bg-teal-950/30 rounded-lg transition-all"
               oninput="autoGuardarPresupuesto()"
               onkeydown="handleEnterKey(event, '${nextDia ? 'pto-input-piezas-' + nextDia : 'pto-input-minisolove'}')">
           </td>
@@ -1129,9 +1147,9 @@
       const trMiniso = document.createElement("tr");
       trMiniso.innerHTML = `
         <td colspan="1" class="py-3 font-bold text-slate-800 dark:text-slate-200">MinisoLove (%)</td>
-        <td colspan="3" class="py-1 px-1 text-center bg-teal-50/50 dark:bg-teal-950/20 rounded-lg">
+        <td colspan="3" class="py-1 px-1 text-center">
           <input type="text" id="pto-input-minisolove" data-teclado inputmode="none" readonly value="${minisolovepto ? minisolovepto : ''}" placeholder="0"
-            class="w-full bg-transparent text-center font-bold text-teal-800 dark:text-teal-300 outline-none py-1 text-xs"
+            class="w-full text-center font-bold text-teal-800 dark:text-teal-300 outline-none py-1.5 text-xs bg-teal-50/50 dark:bg-teal-950/30 rounded-lg transition-all"
             oninput="autoGuardarPresupuesto()">
         </td>
       `;
