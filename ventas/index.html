@@ -169,7 +169,7 @@
                 <tr>
                   <td class="py-2 px-1 font-semibold">Vta Real vs Ppto.</td>
                   <td class="py-1 px-0.5 text-center bg-teal-50/50 dark:bg-teal-950/20 rounded-lg">
-                    <input type="number" id="input-diario-venta" class="w-full bg-transparent text-center font-bold text-teal-800 dark:text-teal-300 outline-none py-1 text-xs" placeholder="$0.00" oninput="calcularDiario()" onblur="formatCurrencyInput(this)" onkeydown="handleEnterDiario(event, 'input-diario-tickets')">
+                    <input type="text" id="input-diario-venta" data-teclado inputmode="none" readonly class="w-full bg-transparent text-center font-bold text-teal-800 dark:text-teal-300 outline-none py-1 text-xs" placeholder="$0.00" oninput="calcularDiario()" onblur="formatCurrencyInput(this)" onkeydown="handleEnterDiario(event, 'input-diario-tickets')">
                   </td>
                   <td class="py-2 px-1 text-center font-bold text-slate-600 dark:text-slate-300 truncate" id="pto-diario-venta">$0.00</td>
                   <td class="py-2 px-1 text-center font-bold truncate" id="diff-diario-venta">$0.00</td>
@@ -192,7 +192,7 @@
                 <tr>
                   <td class="py-2 px-1 font-semibold"># Tickets</td>
                   <td class="py-1 px-0.5 text-center bg-teal-50/50 dark:bg-teal-950/20 rounded-lg">
-                    <input type="number" id="input-diario-tickets" class="w-full bg-transparent text-center font-bold text-teal-800 dark:text-teal-300 outline-none py-1 text-xs" placeholder="0" oninput="calcularDiario()" onkeydown="handleEnterDiario(event, 'input-diario-piezas')">
+                    <input type="text" id="input-diario-tickets" data-teclado inputmode="none" readonly class="w-full bg-transparent text-center font-bold text-teal-800 dark:text-teal-300 outline-none py-1 text-xs" placeholder="0" oninput="calcularDiario()" onkeydown="handleEnterDiario(event, 'input-diario-piezas')">
                   </td>
                   <td class="py-2 px-1 text-center font-bold text-slate-600 dark:text-slate-300 truncate" id="pto-diario-tickets">0</td>
                   <td class="py-2 px-1 text-center font-bold truncate" id="diff-diario-tickets">0</td>
@@ -201,7 +201,7 @@
                 <tr>
                   <td class="py-2 px-1 font-semibold">Piezas Real vs Ppto.</td>
                   <td class="py-1 px-0.5 text-center bg-teal-50/50 dark:bg-teal-950/20 rounded-lg">
-                    <input type="number" id="input-diario-piezas" class="w-full bg-transparent text-center font-bold text-teal-800 dark:text-teal-300 outline-none py-1 text-xs" placeholder="0" oninput="calcularDiario()" onkeydown="handleEnterDiario(event, 'input-diario-minisolovereal')">
+                    <input type="text" id="input-diario-piezas" data-teclado inputmode="none" readonly class="w-full bg-transparent text-center font-bold text-teal-800 dark:text-teal-300 outline-none py-1 text-xs" placeholder="0" oninput="calcularDiario()" onkeydown="handleEnterDiario(event, 'input-diario-minisolovereal')">
                   </td>
                   <td class="py-2 px-1 text-center font-bold text-slate-600 dark:text-slate-300 truncate" id="pto-diario-piezas">0</td>
                   <td class="py-2 px-1 text-center font-bold truncate" id="diff-diario-piezas">0</td>
@@ -210,7 +210,7 @@
                 <tr>
                   <td class="py-2 px-1 font-semibold">MinisoLove</td>
                   <td class="py-1 px-0.5 text-center bg-teal-50/50 dark:bg-teal-950/20 rounded-lg">
-                    <input type="number" id="input-diario-minisolovereal" class="w-full bg-transparent text-center font-bold text-teal-800 dark:text-teal-300 outline-none py-1 text-xs" placeholder="0" oninput="calcularDiario()">
+                    <input type="text" id="input-diario-minisolovereal" data-teclado inputmode="none" readonly class="w-full bg-transparent text-center font-bold text-teal-800 dark:text-teal-300 outline-none py-1 text-xs" placeholder="0" oninput="calcularDiario()">
                   </td>
                   <td class="py-2 px-1 text-center font-bold text-slate-600 dark:text-slate-300 truncate" id="pto-diario-minisolovepto">0</td>
                   <td class="py-2 px-1 text-center font-bold truncate" id="diff-diario-minisolove">0</td>
@@ -452,19 +452,19 @@
         <div class="grid grid-cols-2 gap-2">
           <div class="bg-slate-50 dark:bg-slate-900/40 p-2 rounded-lg border border-slate-200 dark:border-slate-700/50 flex flex-col gap-1">
             <label class="font-semibold text-slate-500 dark:text-slate-400">STOCK</label>
-            <input type="number" id="st-vp-stock" placeholder="0" oninput="actualizarShellTrue()" class="w-full bg-transparent font-bold text-slate-800 dark:text-slate-200 outline-none">
+            <input type="text" id="st-vp-stock" data-teclado inputmode="none" readonly placeholder="0" oninput="actualizarShellTrue()" class="w-full bg-transparent font-bold text-slate-800 dark:text-slate-200 outline-none">
           </div>
           <div class="bg-slate-50 dark:bg-slate-900/40 p-2 rounded-lg border border-slate-200 dark:border-slate-700/50 flex flex-col gap-1">
             <label class="font-semibold text-slate-500 dark:text-slate-400">Objetivo semanal</label>
-            <input type="number" id="st-vp-obj" placeholder="0" oninput="actualizarShellTrue()" class="w-full bg-transparent font-bold text-slate-800 dark:text-slate-200 outline-none">
+            <input type="text" id="st-vp-obj" data-teclado inputmode="none" readonly placeholder="0" oninput="actualizarShellTrue()" class="w-full bg-transparent font-bold text-slate-800 dark:text-slate-200 outline-none">
           </div>
           <div class="bg-slate-50 dark:bg-slate-900/40 p-2 rounded-lg border border-slate-200 dark:border-slate-700/50 flex flex-col gap-1">
             <label class="font-semibold text-slate-500 dark:text-slate-400">Venta Semanal</label>
-            <input type="number" id="st-vp-venta" placeholder="0" oninput="actualizarShellTrue()" class="w-full bg-transparent font-bold text-slate-800 dark:text-slate-200 outline-none">
+            <input type="text" id="st-vp-venta" data-teclado inputmode="none" readonly placeholder="0" oninput="actualizarShellTrue()" class="w-full bg-transparent font-bold text-slate-800 dark:text-slate-200 outline-none">
           </div>
           <div class="bg-slate-50 dark:bg-slate-900/40 p-2 rounded-lg border border-slate-200 dark:border-slate-700/50 flex flex-col gap-1">
             <label class="font-semibold text-slate-500 dark:text-slate-400">% ShellTrue</label>
-            <input type="number" id="st-vp-pct" placeholder="0.00" oninput="actualizarShellTrue()" class="w-full bg-transparent font-bold text-slate-800 dark:text-slate-200 outline-none">
+            <input type="text" id="st-vp-pct" data-teclado inputmode="none" readonly placeholder="0.00" oninput="actualizarShellTrue()" class="w-full bg-transparent font-bold text-slate-800 dark:text-slate-200 outline-none">
           </div>
         </div>
         <div class="border-t border-slate-200 dark:border-slate-700 my-2"></div>
@@ -472,19 +472,19 @@
         <div class="grid grid-cols-2 gap-2">
           <div class="bg-slate-50 dark:bg-slate-900/40 p-2 rounded-lg border border-slate-200 dark:border-slate-700/50 flex flex-col gap-1">
             <label class="font-semibold text-slate-500 dark:text-slate-400">STOCK</label>
-            <input type="number" id="st-bb-stock" placeholder="0" oninput="actualizarShellTrue()" class="w-full bg-transparent font-bold text-slate-800 dark:text-slate-200 outline-none">
+            <input type="text" id="st-bb-stock" data-teclado inputmode="none" readonly placeholder="0" oninput="actualizarShellTrue()" class="w-full bg-transparent font-bold text-slate-800 dark:text-slate-200 outline-none">
           </div>
           <div class="bg-slate-50 dark:bg-slate-900/40 p-2 rounded-lg border border-slate-200 dark:border-slate-700/50 flex flex-col gap-1">
             <label class="font-semibold text-slate-500 dark:text-slate-400">Objetivo semanal</label>
-            <input type="number" id="st-bb-obj" placeholder="0" oninput="actualizarShellTrue()" class="w-full bg-transparent font-bold text-slate-800 dark:text-slate-200 outline-none">
+            <input type="text" id="st-bb-obj" data-teclado inputmode="none" readonly placeholder="0" oninput="actualizarShellTrue()" class="w-full bg-transparent font-bold text-slate-800 dark:text-slate-200 outline-none">
           </div>
           <div class="bg-slate-50 dark:bg-slate-900/40 p-2 rounded-lg border border-slate-200 dark:border-slate-700/50 flex flex-col gap-1">
             <label class="font-semibold text-slate-500 dark:text-slate-400">Venta Semanal</label>
-            <input type="number" id="st-bb-venta" placeholder="0" oninput="actualizarShellTrue()" class="w-full bg-transparent font-bold text-slate-800 dark:text-slate-200 outline-none">
+            <input type="text" id="st-bb-venta" data-teclado inputmode="none" readonly placeholder="0" oninput="actualizarShellTrue()" class="w-full bg-transparent font-bold text-slate-800 dark:text-slate-200 outline-none">
           </div>
           <div class="bg-slate-50 dark:bg-slate-900/40 p-2 rounded-lg border border-slate-200 dark:border-slate-700/50 flex flex-col gap-1">
             <label class="font-semibold text-slate-500 dark:text-slate-400">% ShellTrue</label>
-            <input type="number" id="st-bb-pct" placeholder="0.00" oninput="actualizarShellTrue()" class="w-full bg-transparent font-bold text-slate-800 dark:text-slate-200 outline-none">
+            <input type="text" id="st-bb-pct" data-teclado inputmode="none" readonly placeholder="0.00" oninput="actualizarShellTrue()" class="w-full bg-transparent font-bold text-slate-800 dark:text-slate-200 outline-none">
           </div>
         </div>
         <div class="border-t border-slate-200 dark:border-slate-700 my-2"></div>
@@ -1105,20 +1105,20 @@
         tr.innerHTML = `
           <td class="py-2 px-1 font-semibold text-slate-800 dark:text-slate-200">${dia}</td>
           <td class="py-1 px-1 text-center bg-teal-50/50 dark:bg-teal-950/20 rounded-lg">
-            <input type="text" id="pto-input-venta-${dia}" value="${pto.venta ? fmtMoney(pto.venta) : ''}" placeholder="$0.00" 
+            <input type="text" id="pto-input-venta-${dia}" data-teclado inputmode="none" readonly value="${pto.venta ? fmtMoney(pto.venta) : ''}" placeholder="$0.00" 
               class="w-full bg-transparent text-center font-bold text-teal-800 dark:text-teal-300 outline-none py-1 text-xs"
               oninput="autoGuardarPresupuesto()"
               onblur="formatCurrencyInput(this)"
               onkeydown="handleEnterKey(event, '${nextDia ? 'pto-input-venta-' + nextDia : 'pto-input-minisolove'}')">
           </td>
           <td class="py-1 px-1 text-center bg-teal-50/50 dark:bg-teal-950/20 rounded-lg">
-            <input type="number" id="pto-input-tickets-${dia}" value="${pto.tickets || ''}" placeholder="0"
+            <input type="text" id="pto-input-tickets-${dia}" data-teclado inputmode="none" readonly value="${pto.tickets || ''}" placeholder="0"
               class="w-full bg-transparent text-center font-bold text-teal-800 dark:text-teal-300 outline-none py-1 text-xs"
               oninput="autoGuardarPresupuesto()"
               onkeydown="handleEnterKey(event, '${nextDia ? 'pto-input-tickets-' + nextDia : 'pto-input-minisolove'}')">
           </td>
           <td class="py-1 px-1 text-center bg-teal-50/50 dark:bg-teal-950/20 rounded-lg">
-            <input type="number" id="pto-input-piezas-${dia}" value="${pto.piezas || ''}" placeholder="0"
+            <input type="text" id="pto-input-piezas-${dia}" data-teclado inputmode="none" readonly value="${pto.piezas || ''}" placeholder="0"
               class="w-full bg-transparent text-center font-bold text-teal-800 dark:text-teal-300 outline-none py-1 text-xs"
               oninput="autoGuardarPresupuesto()"
               onkeydown="handleEnterKey(event, '${nextDia ? 'pto-input-piezas-' + nextDia : 'pto-input-minisolove'}')">
@@ -1130,7 +1130,7 @@
       trMiniso.innerHTML = `
         <td colspan="1" class="py-3 font-bold text-slate-800 dark:text-slate-200">MinisoLove (%)</td>
         <td colspan="3" class="py-1 px-1 text-center bg-teal-50/50 dark:bg-teal-950/20 rounded-lg">
-          <input type="number" id="pto-input-minisolove" value="${minisolovepto ? minisolovepto : ''}" placeholder="0"
+          <input type="text" id="pto-input-minisolove" data-teclado inputmode="none" readonly value="${minisolovepto ? minisolovepto : ''}" placeholder="0"
             class="w-full bg-transparent text-center font-bold text-teal-800 dark:text-teal-300 outline-none py-1 text-xs"
             oninput="autoGuardarPresupuesto()">
         </td>
@@ -1502,5 +1502,6 @@
       }
     }
   </script>
+  <script src="teclado.js"></script>
 </body>
 </html>
