@@ -408,6 +408,8 @@
             initPwaInstaller();
             initCatalogModal();
             initLoginForm();
+            initFullscreenEnforcer();
+            initOrientationListener();
 
             currentUserRole = localStorage.getItem('fzboard_user_role') || 'gerencial';
             
@@ -420,6 +422,20 @@
                 document.getElementById('loginModal').classList.add('hidden');
             }
         });
+
+        // --- PANTALLA COMPLETA AUTOMÁTICA DESDE EL INICIO ---
+        function initFullscreenEnforcer() {
+            const enterFullscreen = () => {
+                if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen().catch(err => {
+                        console.log("Fullscreen automático bloqueado por el navegador hasta una interacción.", err);
+                    });
+                }
+            };
+            // Activar al primer toque o clic en cualquier parte de la app
+            document.addEventListener('click', enterFullscreen, { once: true });
+            document.addEventListener('touchstart', enterFullscreen, { once: true });
+        }
 
         // --- GESTIÓN DE LOGIN MANUAL CON SUPABASE ---
         function initLoginForm() {
@@ -816,30 +832,53 @@
             searchInputElem.addEventListener('input', renderProjects);
         }
 
-        // --- FUNCIÓN DE ROTACIÓN CON SCREEN ORIENTATION API Y PANTALLA COMPLETA ---
-        window.toggleIframeOrientation = async () => {
+        // --- ACTUALIZAR UI DEL BOTÓN SEGÚN LA ORIENTACIÓN ---
+        function updateRotateButtonUI() {
             const rotateIcon = document.getElementById('rotateIcon');
             const rotateText = document.getElementById('rotateText');
-            
+            if (!rotateIcon) return;
+
+            const isLandscape = screen.orientation ? screen.orientation.type.includes('landscape') : window.innerWidth > window.innerHeight;
+
+            if (isLandscape) {
+                rotateIcon.setAttribute('data-lucide', 'smartphone');
+                if (rotateText) rotateText.textContent = 'Vertical';
+            } else {
+                rotateIcon.setAttribute('data-lucide', 'monitor');
+                if (rotateText) rotateText.textContent = 'Horizontal';
+            }
+            lucide.createIcons();
+        }
+
+        function initOrientationListener() {
+            if (screen.orientation) {
+                screen.orientation.addEventListener('change', updateRotateButtonUI);
+            } else {
+                window.addEventListener('resize', updateRotateButtonUI);
+            }
+        }
+
+        // --- FUNCIÓN DE ROTACIÓN CON SCREEN ORIENTATION API Y PANTALLA COMPLETA ---
+        window.toggleIframeOrientation = async () => {
             try {
-                // Requerido por la API en la mayoría de navegadores móviles para bloquear la orientación
-                if (!document.fullscreenElement) {
+                if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
                     await document.documentElement.requestFullscreen().catch(err => console.log("Fullscreen request error:", err));
                 }
 
-                if (screen.orientation.type.includes('portrait')) {
-                    await screen.orientation.lock('landscape');
-                    rotateIcon.setAttribute('data-lucide', 'smartphone');
-                    if (rotateText) rotateText.textContent = 'Vertical';
+                if (screen.orientation && screen.orientation.lock) {
+                    if (screen.orientation.type.includes('portrait')) {
+                        await screen.orientation.lock('landscape');
+                    } else {
+                        await screen.orientation.lock('portrait');
+                    }
                 } else {
-                    await screen.orientation.lock('portrait');
-                    rotateIcon.setAttribute('data-lucide', 'monitor');
-                    if (rotateText) rotateText.textContent = 'Horizontal';
+                    // Fallback si screen.orientation.lock no está soportado en algunos navegadores
+                    console.log("Orientación bloqueada por API no disponible.");
                 }
             } catch (err) {
                 console.log("El bloqueo de orientación o pantalla completa no está soportado:", err);
             }
-            lucide.createIcons();
+            updateRotateButtonUI();
         };
 
         window.openIframeAnimado = (url, title) => {
@@ -847,12 +886,7 @@
             const viewModal = document.getElementById('iframeModal');
             const iframe = document.getElementById('pwaIframe');
             
-            // Resetear icono y estado al abrir una nueva app
-            const rotateIcon = document.getElementById('rotateIcon');
-            const rotateText = document.getElementById('rotateText');
-            if (rotateIcon) rotateIcon.setAttribute('data-lucide', 'monitor');
-            if (rotateText) rotateText.textContent = 'Horizontal';
-            lucide.createIcons();
+            updateRotateButtonUI();
 
             if (iframe.src !== url && !iframe.src.endsWith(url)) {
                 iframe.src = url;
