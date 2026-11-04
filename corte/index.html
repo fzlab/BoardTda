@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="../fonts.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Corte de Cajas - T0151 Gran Plaza Mérida</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -31,6 +31,9 @@
         }
     </script>
     <style>
+        html, body {
+            overscroll-behavior-y: contain;
+        }
         -webkit-tap-highlight-color: transparent;
         body { user-select: none; -webkit-user-select: none; }
         input, select { user-select: text; -webkit-user-select: text; }
@@ -157,63 +160,63 @@
                             </tr>
                             <tr id="row_esp" class="op-row">
                                 <td class="py-2 px-2 text-slate-600 dark:text-slate-300 text-xs">Imp. Esperado</td>
-                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="esp_c1" data-col="1" data-row="1"></td>
-                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="esp_c2" data-col="2" data-row="1"></td>
-                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="esp_c3" data-col="3" data-row="1"></td>
+                                <td class="py-2 px-1"><input type="text" id="esp_c1" data-teclado inputmode="none" readonly class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none transition-all" data-col="1" data-row="1" placeholder="$0.00"></td>
+                                <td class="py-2 px-1"><input type="text" id="esp_c2" data-teclado inputmode="none" readonly class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none transition-all" data-col="2" data-row="1" placeholder="$0.00"></td>
+                                <td class="py-2 px-1"><input type="text" id="esp_c3" data-teclado inputmode="none" readonly class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none transition-all" data-col="3" data-row="1" placeholder="$0.00"></td>
                             </tr>
                             <tr id="row_rec" class="op-row">
                                 <td class="py-2 px-2 text-slate-600 dark:text-slate-300 text-xs">Imp. Recogido</td>
-                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="rec_c1" data-col="1" data-row="2"></td>
-                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="rec_c2" data-col="2" data-row="2"></td>
-                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="rec_c3" data-col="3" data-row="2"></td>
+                                <td class="py-2 px-1"><input type="text" id="rec_c1" data-teclado inputmode="none" readonly class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none transition-all" data-col="1" data-row="2" placeholder="$0.00"></td>
+                                <td class="py-2 px-1"><input type="text" id="rec_c2" data-teclado inputmode="none" readonly class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none transition-all" data-col="2" data-row="2" placeholder="$0.00"></td>
+                                <td class="py-2 px-1"><input type="text" id="rec_c3" data-teclado inputmode="none" readonly class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none transition-all" data-col="3" data-row="2" placeholder="$0.00"></td>
                             </tr>
                             <tr id="row_deb" class="op-row">
                                 <td class="py-2 px-2 text-slate-600 dark:text-slate-300 text-xs">Débito</td>
-                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="deb_c1" data-col="1" data-row="3"></td>
-                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="deb_c2" data-col="2" data-row="3"></td>
-                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="deb_c3" data-col="3" data-row="3"></td>
+                                <td class="py-2 px-1"><input type="text" id="deb_c1" data-teclado inputmode="none" readonly class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none transition-all" data-col="1" data-row="3" placeholder="$0.00"></td>
+                                <td class="py-2 px-1"><input type="text" id="deb_c2" data-teclado inputmode="none" readonly class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none transition-all" data-col="2" data-row="3" placeholder="$0.00"></td>
+                                <td class="py-2 px-1"><input type="text" id="deb_c3" data-teclado inputmode="none" readonly class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none transition-all" data-col="3" data-row="3" placeholder="$0.00"></td>
                             </tr>
                             <tr id="row_cred" class="op-row">
                                 <td class="py-2 px-2 text-slate-600 dark:text-slate-300 text-xs">Crédito</td>
-                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="cred_c1" data-col="1" data-row="4"></td>
-                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="cred_c2" data-col="2" data-row="4"></td>
-                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="cred_c3" data-col="3" data-row="4"></td>
+                                <td class="py-2 px-1"><input type="text" id="cred_c1" data-teclado inputmode="none" readonly class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none transition-all" data-col="1" data-row="4" placeholder="$0.00"></td>
+                                <td class="py-2 px-1"><input type="text" id="cred_c2" data-teclado inputmode="none" readonly class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none transition-all" data-col="2" data-row="4" placeholder="$0.00"></td>
+                                <td class="py-2 px-1"><input type="text" id="cred_c3" data-teclado inputmode="none" readonly class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none transition-all" data-col="3" data-row="4" placeholder="$0.00"></td>
                             </tr>
                             <tr id="row_amex" class="op-row">
                                 <td class="py-2 px-2 text-slate-600 dark:text-slate-300 text-xs">AMEX</td>
-                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="amex_c1" data-col="1" data-row="5"></td>
-                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="amex_c2" data-col="2" data-row="5"></td>
-                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="amex_c3" data-col="3" data-row="5"></td>
+                                <td class="py-2 px-1"><input type="text" id="amex_c1" data-teclado inputmode="none" readonly class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none transition-all" data-col="1" data-row="5" placeholder="$0.00"></td>
+                                <td class="py-2 px-1"><input type="text" id="amex_c2" data-teclado inputmode="none" readonly class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none transition-all" data-col="2" data-row="5" placeholder="$0.00"></td>
+                                <td class="py-2 px-1"><input type="text" id="amex_c3" data-teclado inputmode="none" readonly class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none transition-all" data-col="3" data-row="5" placeholder="$0.00"></td>
                             </tr>
                             <tr id="row_tpv_deb" class="op-row">
                                 <td class="py-2 px-2 text-slate-600 dark:text-slate-300 text-xs">TPV Débito</td>
-                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="tpv_deb_c1" data-col="1" data-row="6"></td>
-                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="tpv_deb_c2" data-col="2" data-row="6"></td>
-                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="tpv_deb_c3" data-col="3" data-row="6"></td>
+                                <td class="py-2 px-1"><input type="text" id="tpv_deb_c1" data-teclado inputmode="none" readonly class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none transition-all" data-col="1" data-row="6" placeholder="$0.00"></td>
+                                <td class="py-2 px-1"><input type="text" id="tpv_deb_c2" data-teclado inputmode="none" readonly class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none transition-all" data-col="2" data-row="6" placeholder="$0.00"></td>
+                                <td class="py-2 px-1"><input type="text" id="tpv_deb_c3" data-teclado inputmode="none" readonly class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none transition-all" data-col="3" data-row="6" placeholder="$0.00"></td>
                             </tr>
                             <tr id="row_tpv_cred" class="op-row">
                                 <td class="py-2 px-2 text-slate-600 dark:text-slate-300 text-xs">TPV Crédito</td>
-                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="tpv_cred_c1" data-col="1" data-row="7"></td>
-                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="tpv_cred_c2" data-col="2" data-row="7"></td>
-                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="tpv_cred_c3" data-col="3" data-row="7"></td>
+                                <td class="py-2 px-1"><input type="text" id="tpv_cred_c1" data-teclado inputmode="none" readonly class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none transition-all" data-col="1" data-row="7" placeholder="$0.00"></td>
+                                <td class="py-2 px-1"><input type="text" id="tpv_cred_c2" data-teclado inputmode="none" readonly class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none transition-all" data-col="2" data-row="7" placeholder="$0.00"></td>
+                                <td class="py-2 px-1"><input type="text" id="tpv_cred_c3" data-teclado inputmode="none" readonly class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none transition-all" data-col="3" data-row="7" placeholder="$0.00"></td>
                             </tr>
                             <tr id="row_rappi" class="op-row">
                                 <td class="py-2 px-2 text-slate-600 dark:text-slate-300 text-xs">Rappi</td>
-                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="rappi_c1" data-col="1" data-row="8"></td>
-                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="rappi_c2" data-col="2" data-row="8"></td>
-                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="rappi_c3" data-col="3" data-row="8"></td>
+                                <td class="py-2 px-1"><input type="text" id="rappi_c1" data-teclado inputmode="none" readonly class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none transition-all" data-col="1" data-row="8" placeholder="$0.00"></td>
+                                <td class="py-2 px-1"><input type="text" id="rappi_c2" data-teclado inputmode="none" readonly class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none transition-all" data-col="2" data-row="8" placeholder="$0.00"></td>
+                                <td class="py-2 px-1"><input type="text" id="rappi_c3" data-teclado inputmode="none" readonly class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none transition-all" data-col="3" data-row="8" placeholder="$0.00"></td>
                             </tr>
                             <tr id="row_uber" class="op-row">
                                 <td class="py-2 px-2 text-slate-600 dark:text-slate-300 text-xs">Uber</td>
-                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="uber_c1" data-col="1" data-row="9"></td>
-                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="uber_c2" data-col="2" data-row="9"></td>
-                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="uber_c3" data-col="3" data-row="9"></td>
+                                <td class="py-2 px-1"><input type="text" id="uber_c1" data-teclado inputmode="none" readonly class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none transition-all" data-col="1" data-row="9" placeholder="$0.00"></td>
+                                <td class="py-2 px-1"><input type="text" id="uber_c2" data-teclado inputmode="none" readonly class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none transition-all" data-col="2" data-row="9" placeholder="$0.00"></td>
+                                <td class="py-2 px-1"><input type="text" id="uber_c3" data-teclado inputmode="none" readonly class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none transition-all" data-col="3" data-row="9" placeholder="$0.00"></td>
                             </tr>
                             <tr id="row_didi" class="op-row">
                                 <td class="py-2 px-2 text-slate-600 dark:text-slate-300 text-xs">DiDi</td>
-                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="didi_c1" data-col="1" data-row="10"></td>
-                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="didi_c2" data-col="2" data-row="10"></td>
-                                <td class="py-2 px-1"><input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="didi_c3" data-col="3" data-row="10"></td>
+                                <td class="py-2 px-1"><input type="text" id="didi_c1" data-teclado inputmode="none" readonly class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none transition-all" data-col="1" data-row="10" placeholder="$0.00"></td>
+                                <td class="py-2 px-1"><input type="text" id="didi_c2" data-teclado inputmode="none" readonly class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none transition-all" data-col="2" data-row="10" placeholder="$0.00"></td>
+                                <td class="py-2 px-1"><input type="text" id="didi_c3" data-teclado inputmode="none" readonly class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none transition-all" data-col="3" data-row="10" placeholder="$0.00"></td>
                             </tr>
                         </tbody>
                     </table>
@@ -221,15 +224,15 @@
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
                     <div class="flex flex-col justify-between">
                         <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1 text-center">Total de Retiros en el Día</label>
-                        <input type="text" inputmode="numeric" class="input-cell raw-number-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-center outline-none" id="num_retiros" placeholder="$0.00">
+                        <input type="text" id="num_retiros" data-teclado inputmode="none" readonly class="input-cell raw-number-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-center outline-none transition-all" placeholder="$0.00">
                     </div>
                     <div class="flex flex-col justify-between">
                         <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1 text-center">Total de Respetos de Precio</label>
-                        <input type="text" inputmode="decimal" class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-center outline-none" id="respeto_precio" placeholder="$0.00">
+                        <input type="text" id="respeto_precio" data-teclado inputmode="none" readonly class="input-cell currency-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-center outline-none transition-all" placeholder="$0.00">
                     </div>
                     <div class="flex flex-col justify-between">
                         <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1 text-center">Total de Cajas Abiertas</label>
-                        <input type="text" inputmode="numeric" class="input-cell raw-number-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-center outline-none" id="cajas_abiertas" placeholder="0">
+                        <input type="text" id="cajas_abiertas" data-teclado inputmode="none" readonly class="input-cell raw-number-input w-full bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 text-center outline-none transition-all" placeholder="0">
                     </div>
                 </div>
             </div>
@@ -389,7 +392,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                         <div class="flex justify-between items-center bg-slate-50 dark:bg-slate-900/40 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700/50">
                             <span class="font-semibold text-slate-600 dark:text-slate-400">Ingresa el Neto del Total POS:</span>
-                            <input type="text" inputmode="decimal" class="input-cell currency-input w-28 bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none" id="total_pos" placeholder="$0.00">
+                            <input type="text" id="total_pos" data-teclado inputmode="none" readonly class="input-cell currency-input w-28 bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/50 focus:border-teal-500 rounded-lg px-2 py-1 text-xs font-semibold text-teal-800 dark:text-teal-300 text-right outline-none transition-all" placeholder="$0.00">
                         </div>
                         <div class="flex justify-between items-center bg-slate-50 dark:bg-slate-900/40 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700/50">
                             <span class="font-semibold text-slate-600 dark:text-slate-400">Conciliación:</span>
@@ -460,6 +463,25 @@
             const isDarkActive = htmlElement.classList.contains('dark');
             setTheme(!isDarkActive);
         });
+
+        // Efecto visual limpio: solo un borde suave y degradado sutil en el input activo con teclado flotante
+        document.addEventListener('focusin', (e) => {
+            const input = e.target.closest('input[data-teclado]');
+            if (input) {
+                document.querySelectorAll('input[data-teclado]').forEach(i => {
+                    i.classList.remove('border', 'border-teal-400', 'bg-gradient-to-r', 'from-teal-50/80', 'to-emerald-50/50', 'shadow-sm');
+                });
+                input.classList.add('border', 'border-teal-400', 'bg-gradient-to-r', 'from-teal-50/80', 'to-emerald-50/50', 'shadow-sm');
+            }
+        });
+
+        document.addEventListener('focusout', (e) => {
+            const input = e.target.closest('input[data-teclado]');
+            if (input) {
+                input.classList.remove('border', 'border-teal-400', 'bg-gradient-to-r', 'from-teal-50/80', 'to-emerald-50/50', 'shadow-sm');
+            }
+        });
+
         const listaCajeros = ["-", "Aria R.", "José M.", "Eduardo P.", "Jesús F.", "Fer I.", "Ana N.", "Apoyo"];
         const listaCierre = ["-", "Jesús F.", "Fer I.", "Ana N.", "Apoyo"];
         window.onclick = function(event) {
@@ -724,7 +746,9 @@
         }
         function limpiarTodosLosDatos() {
             cerrarConfirmacionLimpiar();
-            document.querySelectorAll('input').forEach(input => input.value = '');
+            document.querySelectorAll('input').forEach(input => {
+                if (input.type !== 'hidden') input.value = '';
+            });
             ['cajero_c1', 'cajero_c2', 'cajero_c3', 'responsable_cierre'].forEach(id => {
                 const hiddenEl = document.getElementById(id);
                 if (hiddenEl) hiddenEl.value = "-";
@@ -780,17 +804,21 @@
                 input.addEventListener('focus', handleSelect);
                 input.addEventListener('click', handleSelect);
             });
-            document.querySelectorAll('.currency-input').forEach(input => {
+            document.querySelectorAll('.currency-input, .raw-number-input').forEach(input => {
                 input.addEventListener('focus', function() {
                     unformatInputField(this);
                 });
                 input.addEventListener('blur', function() {
-                    formatInputField(this);
+                    if (this.classList.contains('currency-input')) {
+                        formatInputField(this);
+                    }
                 });
                 input.addEventListener('keydown', function(e) {
                     if (e.key === 'Enter') {
                         e.preventDefault();
-                        formatInputField(this);
+                        if (this.classList.contains('currency-input')) {
+                            formatInputField(this);
+                        }
                         handleEnterNavigation(this);
                     }
                 });
@@ -808,5 +836,6 @@
             calculateAll();
         });
     </script>
+    <script src="../src/teclado.js"></script>
 </body>
 </html>
