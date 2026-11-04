@@ -128,7 +128,13 @@
                 activeInput = targetInput;
                 teclado.classList.remove('teclado-oculto');
                 
-                // Posición por defecto: si está en horizontal, se alinea a la derecha; si no, abajo al centro
+                // Limpieza temporal al enfocar campos monetarios para permitir decimales limpios
+                let currentVal = activeInput.value || '';
+                const isCurrencyInput = activeInput.id.includes('venta') || (activeInput.placeholder && activeInput.placeholder.includes('$'));
+                if (isCurrencyInput && (currentVal.includes('$') || currentVal.includes(','))) {
+                    activeInput.value = currentVal.replace(/[^0-9.]/g, '');
+                }
+
                 teclado.classList.remove('pos-bottom-center', 'pos-bottom-left', 'pos-bottom-right', 'pos-top-center', 'pos-center');
                 if (window.innerWidth > window.innerHeight) {
                     teclado.classList.add('pos-bottom-right');
@@ -155,107 +161,154 @@
             });
         });
 
-        botones.forEach(boton => {
-            boton.addEventListener('pointerdown', (event) => {
-                event.preventDefault();
-                if (!activeInput) return;
-                
-                const key = boton.getAttribute('data-key');
-                let valorActual = activeInput.value || '';
-                const isCurrencyInput = activeInput.id.includes('venta') || (activeInput.placeholder && activeInput.placeholder.includes('$'));
+        function dispararActualizaciones() {
+            if (!activeInput) return;
+            activeInput.dispatchEvent(new Event('input', { bubbles: true }));
+            if (typeof window.calcularDiario === 'function') {
+                window.calcularDiario();
+            }
+            if (typeof window.autoGuardarPresupuesto === 'function') {
+                window.autoGuardarPresupuesto();
+            }
+        }
 
-                if (key === 'backspace') {
-                    if (isCurrencyInput) {
-                        let digits = valorActual.replace(/[^0-9]/g, '');
-                        digits = digits.slice(0, -1);
-                        activeInput.value = digits === '' ? '' : digits;
-                        if (typeof window.formatCurrencyInput === 'function' && activeInput.value !== '') {
+        botones.forEach(boton => {
+            const key = boton.getAttribute('data-key');
+
+            if (key === 'backspace') {
+                let pressTimer = null;
+                let isLongPress = false;
+
+                boton.addEventListener('pointerdown', (event) => {
+                    event.preventDefault();
+                    if (!activeInput) return;
+                    
+                    isLongPress = false;
+                    pressTimer = setTimeout(() => {
+                        isLongPress = true;
+                        activeInput.value = '';
+                        dispararActualizaciones();
+                    }, 450);
+                });
+
+                boton.addEventListener('pointerup', (event) => {
+                    event.preventDefault();
+                    if (pressTimer) clearTimeout(pressTimer);
+                    if (!activeInput) return;
+
+                    if (!isLongPress) {
+                        let valorActual = activeInput.value || '';
+                        const isCurrencyInput = activeInput.id.includes('venta') || (activeInput.placeholder && activeInput.placeholder.includes('$'));
+
+                        if (isCurrencyInput) {
+                            let digits = valorActual.replace(/[^0-9]/g, '');
+                            digits = digits.slice(0, -1);
+                            activeInput.value = digits === '' ? '' : digits;
+                        } else {
+                            activeInput.value = valorActual.slice(0, -1);
+                        }
+                        
+                        dispararActualizaciones();
+                    }
+                });
+
+                boton.addEventListener('pointercancel', () => {
+                    if (pressTimer) clearTimeout(pressTimer);
+                });
+
+            } else {
+                boton.addEventListener('pointerdown', (event) => {
+                    event.preventDefault();
+                    if (!activeInput) return;
+                    
+                    let valorActual = activeInput.value || '';
+                    const isCurrencyInput = activeInput.id.includes('venta') || (activeInput.placeholder && activeInput.placeholder.includes('$'));
+
+                    if (key === 'enter') {
+                        if (isCurrencyInput && typeof window.formatCurrencyInput === 'function') {
                             window.formatCurrencyInput(activeInput);
                         }
-                    } else {
-                        activeInput.value = valorActual.slice(0, -1);
-                    }
-                } else if (key === 'enter') {
-                    if (isCurrencyInput && typeof window.formatCurrencyInput === 'function') {
-                        window.formatCurrencyInput(activeInput);
-                    }
-                    teclado.classList.add('teclado-oculto');
-                    menuPosiciones.classList.add('menu-oculto');
-                    activeInput.blur();
-                    activeInput = null;
-                } else if (key === 'next') {
-                    // Botón "Sig.": Pasa el foco a la celda siguiente
-                    if (isCurrencyInput && typeof window.formatCurrencyInput === 'function' && activeInput.value !== '') {
-                        window.formatCurrencyInput(activeInput);
-                    }
-                    activeInput.blur();
-                    
-                    const inputs = Array.from(document.querySelectorAll('[data-teclado]'));
-                    const currentIndex = inputs.indexOf(activeInput);
-                    if (currentIndex !== -1 && inputs.length > 0) {
-                        const nextIndex = (currentIndex + 1) % inputs.length;
-                        const nextInput = inputs[nextIndex];
-                        activeInput = nextInput;
-                        nextInput.focus();
-                        nextInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
-                    return;
-                } else if (key === 'prev') {
-                    // Botón "Ant.": Pasa el foco a la celda anterior
-                    if (isCurrencyInput && typeof window.formatCurrencyInput === 'function' && activeInput.value !== '') {
-                        window.formatCurrencyInput(activeInput);
-                    }
-                    activeInput.blur();
-                    
-                    const inputs = Array.from(document.querySelectorAll('[data-teclado]'));
-                    const currentIndex = inputs.indexOf(activeInput);
-                    if (currentIndex !== -1 && inputs.length > 0) {
-                        const prevIndex = (currentIndex - 1 + inputs.length) % inputs.length;
-                        const prevInput = inputs[prevIndex];
-                        activeInput = prevInput;
-                        prevInput.focus();
-                        prevInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
-                    return;
-                } else if (key === '.') {
-                    if (!valorActual.includes('.') && !valorActual.includes(',')) {
-                        if (valorActual === '' || valorActual === '-') {
-                            activeInput.value += '0' + key;
-                        } else {
-                            activeInput.value += key;
+                        teclado.classList.add('teclado-oculto');
+                        menuPosiciones.classList.add('menu-oculto');
+                        activeInput.blur();
+                        activeInput = null;
+                    } else if (key === 'next') {
+                        if (isCurrencyInput && typeof window.formatCurrencyInput === 'function' && activeInput.value !== '') {
+                            window.formatCurrencyInput(activeInput);
                         }
-                    }
-                } else {
-                    if (isCurrencyInput) {
-                        const hasDecimal = valorActual.includes('.') || valorActual.includes(',');
-                        if (hasDecimal) {
-                            activeInput.value += key;
-                        } else {
-                            let digits = valorActual.replace(/[^0-9]/g, '');
-                            if (digits === '0') digits = '';
-                            digits += key;
-                            activeInput.value = digits;
-                            if (typeof window.formatCurrencyInput === 'function') {
-                                window.formatCurrencyInput(activeInput);
+                        activeInput.blur();
+                        
+                        const inputs = Array.from(document.querySelectorAll('[data-teclado]'));
+                        const currentIndex = inputs.indexOf(activeInput);
+                        if (currentIndex !== -1 && inputs.length > 0) {
+                            const nextIndex = (currentIndex + 1) % inputs.length;
+                            const nextInput = inputs[nextIndex];
+                            activeInput = nextInput;
+                            let nVal = activeInput.value || '';
+                            if (isCurrencyInput && (nVal.includes('$') || nVal.includes(','))) {
+                                activeInput.value = nVal.replace(/[^0-9.]/g, '');
+                            }
+                            nextInput.focus();
+                            nextInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                        return;
+                    } else if (key === 'prev') {
+                        if (isCurrencyInput && typeof window.formatCurrencyInput === 'function' && activeInput.value !== '') {
+                            window.formatCurrencyInput(activeInput);
+                        }
+                        activeInput.blur();
+                        
+                        const inputs = Array.from(document.querySelectorAll('[data-teclado]'));
+                        const currentIndex = inputs.indexOf(activeInput);
+                        if (currentIndex !== -1 && inputs.length > 0) {
+                            const prevIndex = (currentIndex - 1 + inputs.length) % inputs.length;
+                            const prevInput = inputs[prevIndex];
+                            activeInput = prevInput;
+                            let pVal = activeInput.value || '';
+                            if (isCurrencyInput && (pVal.includes('$') || pVal.includes(','))) {
+                                activeInput.value = pVal.replace(/[^0-9.]/g, '');
+                            }
+                            prevInput.focus();
+                            prevInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                        return;
+                    } else if (key === '.') {
+                        if (!valorActual.includes('.')) {
+                            if (valorActual === '' || valorActual === '-') {
+                                activeInput.value += '0' + key;
+                            } else {
+                                activeInput.value += key;
                             }
                         }
                     } else {
-                        if (valorActual === '0' && key !== '.') {
-                            activeInput.value = key;
+                        if (isCurrencyInput) {
+                            let digits = valorActual.replace(/[^0-9.]/g, '');
+                            if (digits === '0') digits = '';
+                            digits += key;
+                            activeInput.value = digits;
                         } else {
-                            activeInput.value += key;
+                            if (valorActual === '0' && key !== '.') {
+                                activeInput.value = key;
+                            } else {
+                                activeInput.value += key;
+                            }
                         }
                     }
+                    
+                    dispararActualizaciones();
+                });
+            }
+        });
+
+        // Formatear automáticamente al perder el foco en campos monetarios
+        document.addEventListener('focusout', (e) => {
+            const targetInput = e.target.closest('[data-teclado]');
+            if (targetInput) {
+                const isCurrencyInput = targetInput.id.includes('venta') || (targetInput.placeholder && targetInput.placeholder.includes('$'));
+                if (isCurrencyInput && typeof window.formatCurrencyInput === 'function') {
+                    window.formatCurrencyInput(targetInput);
                 }
-                
-                activeInput.dispatchEvent(new Event('input', { bubbles: true }));
-                if (typeof window.calcularDiario === 'function') {
-                    window.calcularDiario();
-                }
-                if (typeof window.autoGuardarPresupuesto === 'function') {
-                    window.autoGuardarPresupuesto();
-                }
-            });
+            }
         });
     }
 
