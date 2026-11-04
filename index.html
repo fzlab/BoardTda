@@ -408,7 +408,6 @@
             initPwaInstaller();
             initCatalogModal();
             initLoginForm();
-            initFullscreenEnforcer();
             initOrientationListener();
 
             currentUserRole = localStorage.getItem('fzboard_user_role') || 'gerencial';
@@ -422,22 +421,6 @@
                 document.getElementById('loginModal').classList.add('hidden');
             }
         });
-
-        // --- PANTALLA COMPLETA AUTOMÁTICA EN EL INDEX ---
-        function initFullscreenEnforcer() {
-            const enterFullscreen = () => {
-                if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
-                    document.documentElement.requestFullscreen().catch(err => {
-                        console.log("Fullscreen automático bloqueado por el navegador hasta una interacción.", err);
-                    });
-                }
-            };
-            // Intentar activar fullscreen inmediatamente al cargar
-            enterFullscreen();
-            // Y asegurar activación al primer toque/clic si el navegador lo requería
-            document.addEventListener('click', enterFullscreen, { once: true });
-            document.addEventListener('touchstart', enterFullscreen, { once: true });
-        }
 
         // --- GESTIÓN DE LOGIN MANUAL CON SUPABASE ---
         function initLoginForm() {
@@ -860,21 +843,27 @@
             }
         }
 
-        // --- FUNCIÓN DE ROTACIÓN CON SCREEN ORIENTATION API Y PANTALLA COMPLETA ---
+        // --- FUNCIÓN DE ROTACIÓN Y PANTALLA COMPLETA CONDICIONAL ---
         window.toggleIframeOrientation = async () => {
             try {
-                if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
-                    await document.documentElement.requestFullscreen().catch(err => console.log("Fullscreen request error:", err));
-                }
+                const isLandscape = screen.orientation ? screen.orientation.type.includes('landscape') : window.innerWidth > window.innerHeight;
 
-                if (screen.orientation && screen.orientation.lock) {
-                    if (screen.orientation.type.includes('portrait')) {
-                        await screen.orientation.lock('landscape');
-                    } else {
-                        await screen.orientation.lock('portrait');
+                if (!isLandscape) {
+                    // Pasar a Horizontal -> Entrar a pantalla completa y bloquear horizontal
+                    if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+                        await document.documentElement.requestFullscreen().catch(err => console.log("Fullscreen request error:", err));
+                    }
+                    if (screen.orientation && screen.orientation.lock) {
+                        await screen.orientation.lock('landscape').catch(err => console.log("Orientation lock error:", err));
                     }
                 } else {
-                    console.log("Orientación bloqueada por API no disponible.");
+                    // Regresar a Vertical -> Salir de pantalla completa y bloquear vertical
+                    if (screen.orientation && screen.orientation.lock) {
+                        await screen.orientation.lock('portrait').catch(err => console.log("Orientation lock error:", err));
+                    }
+                    if (document.fullscreenElement && document.exitFullscreen) {
+                        await document.exitFullscreen().catch(err => console.log("Exit fullscreen error:", err));
+                    }
                 }
             } catch (err) {
                 console.log("El bloqueo de orientación o pantalla completa no está soportado:", err);
