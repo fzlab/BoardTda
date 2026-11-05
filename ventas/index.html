@@ -548,6 +548,9 @@
       </div>
   </div>
   <script>
+    // Detección de dispositivo (Móvil vs PC)
+    const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.matchMedia('(pointer: coarse)').matches;
+
     // Configuración de Supabase
     const SUPABASE_URL = "https://mifbcyxtafeacwkzqzsq.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_O6EAbkSba1NQPq08k_7bHg_PZ_x4ZU5";
@@ -706,7 +709,7 @@
                 if (data.minisolove_pto !== undefined) minisolovepto = data.minisolove_pto;
                 if (data.shell_true) shellTrueData = data.shell_true;
 
-                guardarLocalStorage(false); // Guardar en caché sin re-disparar upsert
+                guardarLocalStorage(false);
                 generarTablaModalPresupuesto();
                 cargarDatosDia();
                 calcularSemanal();
@@ -741,6 +744,18 @@
     });
 
     window.onload = async function() {
+      // Si es PC, habilitar teclado físico removiendo readonly y configurando inputmode
+      if (!isMobileDevice) {
+          document.querySelectorAll('input[data-teclado]').forEach(input => {
+              input.removeAttribute('readonly');
+              if (input.id.includes('venta')) {
+                  input.setAttribute('inputmode', 'decimal');
+              } else {
+                  input.setAttribute('inputmode', 'numeric');
+              }
+          });
+      }
+
       inicializarEstructuras();
       cargarLocalStorage();
       generarTablaModalPresupuesto();
@@ -1116,6 +1131,11 @@
     function generarTablaModalPresupuesto() {
       const tbody = document.getElementById("tbody-modal-pto");
       tbody.innerHTML = "";
+      
+      const readonlyAttr = isMobileDevice ? 'readonly' : '';
+      const inputModeVenta = isMobileDevice ? 'inputmode="none"' : 'inputmode="decimal"';
+      const inputModeNum = isMobileDevice ? 'inputmode="none"' : 'inputmode="numeric"';
+
       diasSemana.forEach((dia, index) => {
         const pto = presupuestoData[dia] || { venta: 0, tickets: 0, piezas: 0 };
         const tr = document.createElement("tr");
@@ -1123,20 +1143,20 @@
         tr.innerHTML = `
           <td class="py-2 px-1 font-semibold text-slate-800 dark:text-slate-200">${dia}</td>
           <td class="py-1 px-1 text-center">
-            <input type="text" id="pto-input-venta-${dia}" data-teclado inputmode="none" readonly value="${pto.venta ? fmtMoney(pto.venta) : ''}" placeholder="$0.00" 
+            <input type="text" id="pto-input-venta-${dia}" data-teclado ${inputModeVenta} ${readonlyAttr} value="${pto.venta ? fmtMoney(pto.venta) : ''}" placeholder="$0.00" 
               class="w-full text-center font-bold text-teal-800 dark:text-teal-300 outline-none py-1.5 text-xs bg-teal-50/50 dark:bg-teal-950/30 rounded-lg transition-all"
               oninput="autoGuardarPresupuesto()"
               onblur="formatCurrencyInput(this)"
               onkeydown="handleEnterKey(event, '${nextDia ? 'pto-input-venta-' + nextDia : 'pto-input-minisolove'}')">
           </td>
           <td class="py-1 px-1 text-center">
-            <input type="text" id="pto-input-tickets-${dia}" data-teclado inputmode="none" readonly value="${pto.tickets || ''}" placeholder="0"
+            <input type="text" id="pto-input-tickets-${dia}" data-teclado ${inputModeNum} ${readonlyAttr} value="${pto.tickets || ''}" placeholder="0"
               class="w-full text-center font-bold text-teal-800 dark:text-teal-300 outline-none py-1.5 text-xs bg-teal-50/50 dark:bg-teal-950/30 rounded-lg transition-all"
               oninput="autoGuardarPresupuesto()"
               onkeydown="handleEnterKey(event, '${nextDia ? 'pto-input-tickets-' + nextDia : 'pto-input-minisolove'}')">
           </td>
           <td class="py-1 px-1 text-center">
-            <input type="text" id="pto-input-piezas-${dia}" data-teclado inputmode="none" readonly value="${pto.piezas || ''}" placeholder="0"
+            <input type="text" id="pto-input-piezas-${dia}" data-teclado ${inputModeNum} ${readonlyAttr} value="${pto.piezas || ''}" placeholder="0"
               class="w-full text-center font-bold text-teal-800 dark:text-teal-300 outline-none py-1.5 text-xs bg-teal-50/50 dark:bg-teal-950/30 rounded-lg transition-all"
               oninput="autoGuardarPresupuesto()"
               onkeydown="handleEnterKey(event, '${nextDia ? 'pto-input-piezas-' + nextDia : 'pto-input-minisolove'}')">
@@ -1148,7 +1168,7 @@
       trMiniso.innerHTML = `
         <td colspan="1" class="py-3 font-bold text-slate-800 dark:text-slate-200">MinisoLove (%)</td>
         <td colspan="3" class="py-1 px-1 text-center">
-          <input type="text" id="pto-input-minisolove" data-teclado inputmode="none" readonly value="${minisolovepto ? minisolovepto : ''}" placeholder="0"
+          <input type="text" id="pto-input-minisolove" data-teclado ${inputModeNum} ${readonlyAttr} value="${minisolovepto ? minisolovepto : ''}" placeholder="0"
             class="w-full text-center font-bold text-teal-800 dark:text-teal-300 outline-none py-1.5 text-xs bg-teal-50/50 dark:bg-teal-950/30 rounded-lg transition-all"
             oninput="autoGuardarPresupuesto()">
         </td>
@@ -1520,6 +1540,14 @@
       }
     }
   </script>
-  <script src="../src/teclado.js"></script>
+
+  <!-- Carga condicional del script de teclado virtual (solo en dispositivos móviles/táctiles) -->
+  <script>
+    if (isMobileDevice) {
+        const tecladoScript = document.createElement('script');
+        tecladoScript.src = '../src/teclado.js';
+        document.body.appendChild(tecladoScript);
+    }
+  </script>
 </body>
 </html>
