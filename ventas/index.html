@@ -91,9 +91,12 @@
     </header>
 
     <div class="controls-bar bg-white/60 dark:bg-slate-800/60 backdrop-blur-md px-4 py-3 border-b border-slate-200 dark:border-slate-700/60 flex flex-col gap-2.5 relative z-40">
-      <!-- Fila: Estado de Conexión y Botón Actualizar -->
+      <!-- Fila: Estado de Conexión, Hora de última actualización y Botón Actualizar -->
       <div class="flex items-center justify-between pb-1 border-b border-slate-200 dark:border-slate-700/60">
-          <span id="conexionStatus" class="inline-flex items-center gap-1 text-[10px] text-amber-500 font-bold uppercase tracking-wider"><i class="fa-solid fa-circle-dot"></i> Conectando...</span>
+          <div class="flex flex-col">
+              <span id="conexionStatus" class="inline-flex items-center gap-1 text-[10px] text-amber-500 font-bold uppercase tracking-wider"><i class="fa-solid fa-circle-dot"></i> Conectando...</span>
+              <span id="lblUltimaActualizacion" class="text-[9px] text-slate-500 dark:text-slate-400 font-medium">Última actualización: --:--</span>
+          </div>
           <button onclick="actualizarDatosManual()" class="py-1 px-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700/40 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700/50 rounded-lg transition-all font-medium text-[10px] flex items-center justify-center gap-1 cursor-pointer" title="Actualizar datos">
               <i id="iconActualizar" class="fa-solid fa-rotate text-[9px]"></i> Actualizar
           </button>
@@ -555,8 +558,8 @@
     const SUPABASE_URL = "https://mifbcyxtafeacwkzqzsq.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_O6EAbkSba1NQPq08k_7bHg_PZ_x4ZU5";
     const STORE_CODE = "T0151";
-    const OFFLINE_QUEUE_KEY = 'cola_ventas_offline';
-    const CACHE_KEY = "retail_dashboard_0151_merida_tailwind";
+    const OFFLINE_QUEUE_KEY = 'cola_ventas_offline_filas';
+    const CACHE_KEY = "retail_dashboard_0151_filas";
 
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -607,6 +610,8 @@
       blindBox: { stock: 0, objetivo: 0, venta: 0, pct: 0 },
       trendyToys: { pct: 0 }
     };
+    let ultimaActualizacionTimestamp = null;
+    let debounceTimer = null;
 
     function getWeekIdentifier() {
         const now = new Date();
@@ -621,15 +626,13 @@
     function obtenerColaPendiente() { return JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || '[]'); }
     function guardarColaPendiente(cola) { localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(cola)); }
 
-    function agregarAColaOffline(payload) {
+    function agregarAColaOffline(payloads) {
         const cola = obtenerColaPendiente();
-        const weekId = payload.week_identifier;
-        const existingIdx = cola.findIndex(item => item.week_identifier === weekId);
-        if (existingIdx !== -1) {
-            cola[existingIdx] = payload;
-        } else {
-            cola.push(payload);
-        }
+        payloads.forEach(p => {
+            const idx = cola.findIndex(item => item.dia === p.dia);
+            if (idx !== -1) cola[idx] = p;
+            else cola.push(p);
+        });
         guardarColaPendiente(cola);
         actualizarEstadoConexionUI();
     }
@@ -651,41 +654,86 @@
         }
     }
 
-    async function sincronizarConSupabase(payload) {
+    function actualizarHoraActualizacionUI(isoString) {
+        const lbl = document.getElementById('lblUltimaActualizacion');
+        if (!lbl) return;
+        if (!isoString) {
+            lbl.textContent = "Última actualización: --:--";
+            return;
+        }
+        const date = new Date(isoString);
+        if (isNaN(date.getTime())) {
+            lbl.textContent = "Última actualización: --:--";
+            return;
+        }
+        const horaFormateada = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+        lbl.textContent = `Última actualización: ${horaFormateada}`;
+    }
+
+    function construirPayloadsParaGuardar() {
+        const weekId = getWeekIdentifier();
+        const nowIso = new Date().toISOString();
+        ultimaActualizacionTimestamp = nowIso;
+        actualizarHoraActualizacionUI(nowIso);
+
+        return diasSemana.map(dia => {
+            const pto = presupuestoData[dia] || { venta: 0, tickets: 0, piezas: 0 };
+            const real = seguimientoDiarioData[dia] || { venta: 0, tickets: 0, piezas: 0, minisolovereal: 0 };
+            return {
+                store_code: STORE_CODE,
+                week_identifier: weekId,
+                dia: dia,
+                pto_venta: pto.venta,
+                pto_tickets: pto.tickets,
+                pto_piezas: pto.piezas,
+                real_venta: real.venta,
+                real_tickets: real.tickets,
+                real_piezas: real.piezas,
+                real_minisolovereal: real.minisolovereal,
+                minisolove_pto: minisolovepto,
+                st_vp_stock: shellTrueData.vinylPlush.stock,
+                st_vp_obj: shellTrueData.vinylPlush.objetivo,
+                st_vp_venta: shellTrueData.vinylPlush.venta,
+                st_vp_pct: shellTrueData.vinylPlush.pct,
+                st_bb_stock: shellTrueData.blindBox.stock,
+                st_bb_obj: shellTrueData.blindBox.objetivo,
+                st_bb_venta: shellTrueData.blindBox.venta,
+                st_bb_pct: shellTrueData.blindBox.pct,
+                updated_at: nowIso
+            };
+        });
+    }
+
+    async function sincronizarConSupabase(payloads) {
         if (!navigator.onLine) {
-            agregarAColaOffline(payload);
+            agregarAColaOffline(payloads);
             return;
         }
         try {
             const { error } = await supabaseClient
                 .from('t0151_ventas_semanales')
-                .upsert([payload], { onConflict: 'store_code,week_identifier' });
+                .upsert(payloads, { onConflict: 'store_code,week_identifier,dia' });
             if (error) throw error;
             actualizarEstadoConexionUI();
         } catch (err) {
             console.error("Error al sincronizar con Supabase:", err);
-            agregarAColaOffline(payload);
+            agregarAColaOffline(payloads);
         }
     }
 
     async function procesarSincronizacionOffline() {
         const cola = obtenerColaPendiente();
         if (cola.length === 0 || !navigator.onLine) return;
-        const colaFallida = [];
-
-        for (const payload of cola) {
-            try {
-                const { error } = await supabaseClient
-                    .from('t0151_ventas_semanales')
-                    .upsert([payload], { onConflict: 'store_code,week_identifier' });
-                if (error) {
-                    colaFallida.push(payload);
-                }
-            } catch (err) {
-                colaFallida.push(payload);
+        try {
+            const { error } = await supabaseClient
+                .from('t0151_ventas_semanales')
+                .upsert(cola, { onConflict: 'store_code,week_identifier,dia' });
+            if (!error) {
+                localStorage.removeItem(OFFLINE_QUEUE_KEY);
             }
+        } catch (err) {
+            console.error("Error procesando cola offline:", err);
         }
-        guardarColaPendiente(colaFallida);
         actualizarEstadoConexionUI();
     }
 
@@ -700,19 +748,55 @@
                 .from('t0151_ventas_semanales')
                 .select('*')
                 .eq('store_code', STORE_CODE)
-                .eq('week_identifier', weekId)
-                .maybeSingle();
+                .eq('week_identifier', weekId);
 
-            if (!error && data) {
-                if (data.presupuesto) presupuestoData = data.presupuesto;
-                if (data.seguimiento) seguimientoDiarioData = data.seguimiento;
-                if (data.minisolove_pto !== undefined) minisolovepto = data.minisolove_pto;
-                if (data.shell_true) shellTrueData = data.shell_true;
+            if (!error && data && data.length > 0) {
+                let maxTimestamp = null;
+                data.forEach(row => {
+                    const d = row.dia;
+                    if (d) {
+                        presupuestoData[d] = {
+                            venta: row.pto_venta || 0,
+                            tickets: row.pto_tickets || 0,
+                            piezas: row.pto_piezas || 0
+                        };
+                        seguimientoDiarioData[d] = {
+                            venta: row.real_venta || 0,
+                            tickets: row.real_tickets || 0,
+                            piezas: row.real_piezas || 0,
+                            minisolovereal: row.real_minisolovereal || 0
+                        };
+                        if (row.minisolove_pto !== undefined) minisolovepto = row.minisolove_pto;
+                        shellTrueData.vinylPlush = {
+                            stock: row.st_vp_stock || 0,
+                            objetivo: row.st_vp_obj || 0,
+                            venta: row.st_vp_venta || 0,
+                            pct: row.st_vp_pct || 0
+                        };
+                        shellTrueData.blindBox = {
+                            stock: row.st_bb_stock || 0,
+                            objetivo: row.st_bb_obj || 0,
+                            venta: row.st_bb_venta || 0,
+                            pct: row.st_bb_pct || 0
+                        };
+                    }
+                    if (row.updated_at) {
+                        if (!maxTimestamp || new Date(row.updated_at) > new Date(maxTimestamp)) {
+                            maxTimestamp = row.updated_at;
+                        }
+                    }
+                });
 
+                calcularTrendyToys();
                 guardarLocalStorage(false);
                 generarTablaModalPresupuesto();
                 cargarDatosDia();
                 calcularSemanal();
+
+                if (maxTimestamp) {
+                    ultimaActualizacionTimestamp = maxTimestamp;
+                    actualizarHoraActualizacionUI(maxTimestamp);
+                }
             }
         } catch (err) {
             console.error("Error al cargar datos remotos:", err);
@@ -734,6 +818,65 @@
         }
     }
 
+    function iniciarSuscripcionRealtime() {
+        const weekId = getWeekIdentifier();
+        supabaseClient
+          .channel('cambios-ventas-t0151-filas')
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 't0151_ventas_semanales',
+              filter: `store_code=eq.${STORE_CODE}`
+            },
+            (payload) => {
+                if (payload.new && payload.new.week_identifier === weekId) {
+                    const row = payload.new;
+                    const d = row.dia;
+                    if (d) {
+                        presupuestoData[d] = {
+                            venta: row.pto_venta || 0,
+                            tickets: row.pto_tickets || 0,
+                            piezas: row.pto_piezas || 0
+                        };
+                        seguimientoDiarioData[d] = {
+                            venta: row.real_venta || 0,
+                            tickets: row.real_tickets || 0,
+                            piezas: row.real_piezas || 0,
+                            minisolovereal: row.real_minisolovereal || 0
+                        };
+                        if (row.minisolove_pto !== undefined) minisolovepto = row.minisolove_pto;
+                        shellTrueData.vinylPlush = {
+                            stock: row.st_vp_stock || 0,
+                            objetivo: row.st_vp_obj || 0,
+                            venta: row.st_vp_venta || 0,
+                            pct: row.st_vp_pct || 0
+                        };
+                        shellTrueData.blindBox = {
+                            stock: row.st_bb_stock || 0,
+                            objetivo: row.st_bb_obj || 0,
+                            venta: row.st_bb_venta || 0,
+                            pct: row.st_bb_pct || 0
+                        };
+
+                        calcularTrendyToys();
+                        guardarLocalStorage(false);
+                        generarTablaModalPresupuesto();
+                        cargarDatosDia();
+                        calcularSemanal();
+
+                        if (row.updated_at) {
+                            ultimaActualizacionTimestamp = row.updated_at;
+                            actualizarHoraActualizacionUI(row.updated_at);
+                        }
+                    }
+                }
+            }
+          )
+          .subscribe();
+    }
+
     window.addEventListener('online', async () => {
         await procesarSincronizacionOffline();
         await cargarDatosRemotos();
@@ -744,7 +887,6 @@
     });
 
     window.onload = async function() {
-      // Si es PC, habilitar teclado físico removiendo readonly y configurando inputmode
       if (!isMobileDevice) {
           document.querySelectorAll('input[data-teclado]').forEach(input => {
               input.removeAttribute('readonly');
@@ -770,6 +912,8 @@
       } else {
           actualizarEstadoConexionUI();
       }
+
+      iniciarSuscripcionRealtime();
     };
 
     function initClock() {
@@ -1489,7 +1633,7 @@
 
     function guardarLocalStorage(sync = true) {
       const weekId = getWeekIdentifier();
-      const payload = { 
+      const localPayload = { 
         store_code: STORE_CODE,
         week_identifier: weekId,
         presupuesto: presupuestoData, 
@@ -1498,10 +1642,14 @@
         shell_true: shellTrueData,
         updated_at: new Date().toISOString()
       };
-      localStorage.setItem(CACHE_KEY, JSON.stringify(payload));
+      localStorage.setItem(CACHE_KEY, JSON.stringify(localPayload));
       
       if (sync) {
-          sincronizarConSupabase(payload);
+          clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(() => {
+              const payloads = construirPayloadsParaGuardar();
+              sincronizarConSupabase(payloads);
+          }, 2000); // Debounce de 2 segundos desde la última pulsación
       }
     }
 
@@ -1533,6 +1681,10 @@
             shellTrueData = { ...parsed.shellTrue };
           } else if (parsed.shell_true) {
             shellTrueData = { ...parsed.shell_true };
+          }
+          if (parsed.updated_at) {
+              ultimaActualizacionTimestamp = parsed.updated_at;
+              actualizarHoraActualizacionUI(parsed.updated_at);
           }
         } catch (e) {
           console.error("Error al cargar localStorage", e);
