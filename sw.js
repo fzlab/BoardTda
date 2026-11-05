@@ -7,6 +7,7 @@ const STATIC_ASSETS = [
     './src/icons/corte-96.png',
     './src/icons/notas-96.png'
     './src/icons/tickets-96.png'
+    './src/icons/ventas-96.png'
     './fonts/PlusJakartaSans-Regular.ttf',
     './fonts/PlusJakartaSans-SemiBold.ttf',
     './index.html',
