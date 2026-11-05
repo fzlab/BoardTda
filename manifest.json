@@ -1,6 +1,6 @@
 
 {
-  "name": "FZ Board TDA",
+  "name": "Board TDA 151",
   "short_name": "Board TDA",
   "description": "Dashboard centralizador de proyectos",
   "start_url": "./index.html",
@@ -48,12 +48,24 @@
       ]
     },
     {
-      "name": "Corte de Cajas",
-      "short_name": "Corte",
+      "name": "Corte de Cajas ",
+      "short_name": "Corte Cajas",
       "url": "./corte/index.html",
       "icons": [
         {
           "src": "./src/icons/corte-96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Ventas Diarias",
+      "short_name": "Ventas",
+      "url": "./ventas/index.html",
+      "icons": [
+        {
+          "src": "./src/icons/ventas-96.png",
           "sizes": "96x96",
           "type": "image/png"
         }
