@@ -439,7 +439,7 @@
             const input = document.getElementById('inputNuevaTarea');
             const texto = input.value.trim();
             if (!texto) return;
-            checklistEditItems.push({ texto, completado: false });
+            checklistEditItems.push({ id: 'item_' + Date.now() + Math.random().toString(36).substr(2, 4), texto, completado: false });
             input.value = '';
             renderizarChecklistModal();
         }
@@ -457,11 +457,11 @@
             }
             container.innerHTML = checklistEditItems.map((item, idx) => `
                 <div class="flex items-center justify-between bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/50 px-2.5 py-1.5 rounded-xl text-xs">
-                    <div class="flex items-center gap-2">
-                        <input type="checkbox" ${item.completado ? 'checked' : ''} onchange="checklistEditItems[${idx}].completado = this.checked;" class="w-4 h-4 accent-teal-500 rounded">
-                        <span class="${item.completado ? 'line-through text-slate-400' : 'text-slate-800 dark:text-slate-200'}">${item.texto}</span>
+                    <div class="flex items-center gap-2 flex-1 min-w-0">
+                        <input type="checkbox" ${item.completado ? 'checked' : ''} onchange="checklistEditItems[${idx}].completado = this.checked;" class="w-4 h-4 accent-teal-500 rounded shrink-0">
+                        <span class="truncate ${item.completado ? 'line-through text-slate-400' : 'text-slate-800 dark:text-slate-200'}">${item.texto}</span>
                     </div>
-                    <button type="button" onclick="eliminarItemChecklist(${idx})" class="text-rose-500 hover:text-rose-700 p-1"><i class="fa-solid fa-trash-can"></i></button>
+                    <button type="button" onclick="eliminarItemChecklist(${idx})" class="text-rose-500 hover:text-rose-700 p-1 shrink-0"><i class="fa-solid fa-trash-can"></i></button>
                 </div>
             `).join('');
         }
@@ -516,31 +516,33 @@
             return fecha.toLocaleString('es-ES', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
         }
 
-        function convertirHtmlAWhatsApp(htmlContent) {
-            if (!htmlContent) return '';
-            let tempDiv = document.createElement('div');
-            tempDiv.innerHTML = htmlContent;
+        function convertirContenidoAWhatsApp(nota) {
+            const catObj = categoriasData.find(c => c.id == nota.categoria_id);
+            const nombreCat = catObj ? catObj.nombre : 'Sin categoría';
+            const tituloTexto = nota.titulo ? `*${nota.titulo}*` : '';
+            const categoriaTexto = `📂 _Categoría: ${nombreCat}_`;
 
-            tempDiv.querySelectorAll('b, strong').forEach(el => { el.outerHTML = `*${el.textContent}*`; });
-            tempDiv.querySelectorAll('i, em').forEach(el => { el.outerHTML = `_${el.textContent}_`; });
-            tempDiv.querySelectorAll('u').forEach(el => { el.outerHTML = `~${el.textContent}~`; });
-            tempDiv.querySelectorAll('h1, h2').forEach(el => { el.outerHTML = `*${el.textContent.toUpperCase()}*\n`; });
-            tempDiv.querySelectorAll('div').forEach(el => { el.outerHTML = `${el.innerHTML}\n`; });
+            let cuerpoTexto = '';
+            if (nota.checklist_items && nota.checklist_items.length > 0) {
+                cuerpoTexto = nota.checklist_items.map(item => `${item.completado ? '☑' : '☐'} ${item.texto}`).join('\n');
+            } else if (nota.contenido) {
+                let tempDiv = document.createElement('div');
+                tempDiv.innerHTML = nota.contenido;
+                tempDiv.querySelectorAll('b, strong').forEach(el => { el.outerHTML = `*${el.textContent}*`; });
+                tempDiv.querySelectorAll('i, em').forEach(el => { el.outerHTML = `_${el.textContent}_`; });
+                tempDiv.querySelectorAll('u').forEach(el => { el.outerHTML = `~${el.textContent}~`; });
+                tempDiv.querySelectorAll('h1, h2').forEach(el => { el.outerHTML = `*${el.textContent.toUpperCase()}*\n`; });
+                tempDiv.querySelectorAll('div').forEach(el => { el.outerHTML = `${el.innerHTML}\n`; });
+                cuerpoTexto = tempDiv.textContent.replace(/\n\s*\n/g, '\n').trim();
+            }
 
-            return tempDiv.textContent.replace(/\n\s*\n/g, '\n').trim();
+            return `${tituloTexto}\n${categoriaTexto}\n\n${cuerpoTexto}`.trim();
         }
 
         function compartirNotaWhatsApp(id) {
             const nota = notasData.find(n => n.id == id);
             if (!nota) return;
-            const catObj = categoriasData.find(c => c.id == nota.categoria_id);
-            const nombreCat = catObj ? catObj.nombre : 'Sin categoría';
-
-            const tituloTexto = nota.titulo ? `*${nota.titulo}*` : '';
-            const categoriaTexto = `📂 _Categoría: ${nombreCat}_`;
-            const contenidoFormateado = convertirHtmlAWhatsApp(nota.contenido || '');
-
-            let mensajeFinal = `${tituloTexto}\n${categoriaTexto}\n\n${contenidoFormateado}`.trim();
+            const mensajeFinal = convertirContenidoAWhatsApp(nota);
             const urlWhatsApp = `https://api.whatsapp.com/send?text=${encodeURIComponent(mensajeFinal)}`;
             window.open(urlWhatsApp, '_blank');
         }
@@ -630,7 +632,53 @@
             } else {
                 actualizarEstadoConexionUI();
             }
+
+            // Inicializar Supabase Realtime para sincronización multi-dispositivo en vivo
+            inicializarRealtime();
         };
+
+        function inicializarRealtime() {
+            supabaseClient
+                .channel('t0151_realtime_channel')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'notas' }, payload => {
+                    manejarCambioRealtimeNota(payload);
+                })
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'categorias' }, payload => {
+                    manejarCambioRealtimeCategoria(payload);
+                })
+                .subscribe();
+        }
+
+        function manejarCambioRealtimeNota(payload) {
+            const { eventType, new: newRecord, old: oldRecord } = payload;
+            if (eventType === 'INSERT') {
+                if (!notasData.some(n => n.id === newRecord.id)) {
+                    notasData.unshift(newRecord);
+                }
+            } else if (eventType === 'UPDATE') {
+                const index = notasData.findIndex(n => n.id === newRecord.id);
+                if (index !== -1) {
+                    notasData[index] = newRecord;
+                } else {
+                    notasData.unshift(newRecord);
+                }
+            } else if (eventType === 'DELETE') {
+                notasData = notasData.filter(n => n.id !== oldRecord.id);
+            }
+            notasData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            localStorage.setItem(NOTAS_CACHE_KEY, JSON.stringify(notasData));
+            aplicarFiltrosLocales();
+        }
+
+        async function manejarCambioRealtimeCategoria(payload) {
+            const resCats = await supabaseClient.from('categorias').select('*').order('nombre', { ascending: true });
+            if (!resCats.error) {
+                categoriasData = resCats.data || [];
+                localStorage.setItem(CATEGORIAS_CACHE_KEY, JSON.stringify(categoriasData));
+                populateSelectsCategorias();
+                aplicarFiltrosLocales();
+            }
+        }
 
         async function actualizarDatosManual() {
             const icono = document.getElementById('iconActualizar');
@@ -686,28 +734,16 @@
                     const colorNota = nota.color_nota || 'default';
                     seleccionarColorNota(colorNota);
 
-                    const contenidoHtml = nota.contenido || '';
-                    if (contenidoHtml.includes('type="checkbox"')) {
+                    if (nota.checklist_items && nota.checklist_items.length > 0) {
                         document.getElementById('inputEsLista').value = 'true';
                         document.getElementById('wrapNotaTexto').classList.add('hidden');
                         document.getElementById('wrapNotaLista').classList.remove('hidden');
                         document.getElementById('btnAlternarLista').textContent = 'Cambiar a Nota de Texto';
-                        
-                        const temp = document.createElement('div');
-                        temp.innerHTML = contenidoHtml;
-                        checklistEditItems = [];
-                        temp.querySelectorAll('div').forEach(div => {
-                            const chk = div.querySelector('input[type="checkbox"]');
-                            const span = div.querySelector('span');
-                            if (span) {
-                                const isChecked = chk && (chk.hasAttribute('checked') || chk.checked);
-                                checklistEditItems.push({ texto: span.textContent, completado: isChecked });
-                            }
-                        });
+                        checklistEditItems = JSON.parse(JSON.stringify(nota.checklist_items));
                         renderizarChecklistModal();
                     } else {
                         document.getElementById('inputEsLista').value = 'false';
-                        document.getElementById('inputContenido').innerHTML = contenidoHtml;
+                        document.getElementById('inputContenido').innerHTML = nota.contenido || '';
                         document.getElementById('wrapNotaLista').classList.add('hidden');
                         document.getElementById('wrapNotaTexto').classList.remove('hidden');
                         document.getElementById('btnAlternarLista').textContent = 'Cambiar a Lista de Tareas';
@@ -751,26 +787,19 @@
                 recBadge.classList.add('hidden');
             }
 
-            let contenidoHtml = nota.contenido || '';
-            if (contenidoHtml.includes('type="checkbox"')) {
-                const temp = document.createElement('div');
-                temp.innerHTML = contenidoHtml;
-                temp.querySelectorAll('div').forEach((div, idx) => {
-                    const chk = div.querySelector('input[type="checkbox"]');
-                    const span = div.querySelector('span');
-                    if (chk && span) {
-                        const isChecked = chk.hasAttribute('checked') || chk.checked;
-                        div.className = "flex items-center gap-2 py-0.5";
-                        div.innerHTML = `
-                            <input type="checkbox" ${isChecked ? 'checked="checked"' : ''} onchange="toggleItemChecklistModalVer('${nota.id}', ${idx}, this.checked)" class="w-4 h-4 accent-teal-500 rounded cursor-pointer">
-                            <span class="${isChecked ? 'line-through text-slate-400' : 'text-slate-800 dark:text-slate-200'}">${span.textContent}</span>
-                        `;
-                    }
-                });
-                contenidoHtml = temp.innerHTML;
+            let htmlContenidoRender = '';
+            if (nota.checklist_items && nota.checklist_items.length > 0) {
+                htmlContenidoRender = `<div class="space-y-1.5">` + nota.checklist_items.map((item, idx) => `
+                    <div class="flex items-center gap-2 py-0.5">
+                        <input type="checkbox" ${item.completado ? 'checked' : ''} onchange="toggleItemChecklist('${nota.id}', ${idx})" class="w-4 h-4 accent-teal-500 rounded cursor-pointer shrink-0">
+                        <span class="${item.completado ? 'line-through text-slate-400' : 'text-slate-800 dark:text-slate-200'}">${item.texto}</span>
+                    </div>
+                `).join('') + `</div>`;
+            } else {
+                htmlContenidoRender = nota.contenido || '';
             }
 
-            document.getElementById('verNotaContenido').innerHTML = contenidoHtml;
+            document.getElementById('verNotaContenido').innerHTML = htmlContenidoRender;
 
             const modalContentEl = document.getElementById('modalVerNotaContent');
             const colorClases = obtenerClasesColorNota(nota.color_nota);
@@ -779,42 +808,24 @@
             document.getElementById('modalVerNota').style.display = 'flex';
         }
 
-        async function toggleItemChecklistModalVer(notaId, indexItem, nuevoEstado) {
+        async function toggleItemChecklist(notaId, itemIndex) {
             const nota = notasData.find(n => n.id == notaId);
-            if (!nota) return;
+            if (!nota || !nota.checklist_items) return;
 
-            const temp = document.createElement('div');
-            temp.innerHTML = nota.contenido;
-            const items = temp.querySelectorAll('div');
-            if (items[indexItem]) {
-                const chk = items[indexItem].querySelector('input[type="checkbox"]');
-                const span = items[indexItem].querySelector('span');
-                if (chk) {
-                    if (nuevoEstado) {
-                        chk.setAttribute('checked', 'checked');
-                        chk.checked = true;
-                    } else {
-                        chk.removeAttribute('checked');
-                        chk.checked = false;
-                    }
-                }
-                if (span) {
-                    if (nuevoEstado) {
-                        span.className = "line-through text-slate-400";
-                    } else {
-                        span.className = "text-slate-800 dark:text-slate-200";
-                    }
-                }
-            }
+            nota.checklist_items[itemIndex].completado = !nota.checklist_items[itemIndex].completado;
+            nota.updated_at = new Date().toISOString();
 
-            nota.contenido = temp.innerHTML;
             localStorage.setItem(NOTAS_CACHE_KEY, JSON.stringify(notasData));
             aplicarFiltrosLocales();
 
+            if (document.getElementById('modalVerNota').style.display === 'flex' && document.getElementById('verNotaIdActual').value == notaId) {
+                abrirModalVerNota(notaId);
+            }
+
             const payload = {
                 id: nota.id,
-                contenido: nota.contenido,
-                updated_at: new Date().toISOString()
+                checklist_items: nota.checklist_items,
+                updated_at: nota.updated_at
             };
 
             if (!navigator.onLine) {
@@ -823,9 +834,12 @@
             }
 
             try {
-                await supabaseClient.from('notas').update({ contenido: nota.contenido, updated_at: payload.updated_at }).eq('id', nota.id);
+                await supabaseClient.from('notas').update({ 
+                    checklist_items: nota.checklist_items, 
+                    updated_at: payload.updated_at 
+                }).eq('id', nota.id);
             } catch (err) {
-                console.error("Error al actualizar checklist en vivo:", err);
+                console.error("Error al actualizar checklist:", err);
             }
         }
 
@@ -843,30 +857,38 @@
             
             if (!categoria_id) categoria_id = null;
 
-            let contenido = '';
+            let contenido = null;
+            let checklist_items = [];
+
             if (es_lista) {
                 if (checklistEditItems.length === 0) {
                     mostrarAlerta('Agrega al menos un elemento a la lista de tareas.');
                     return;
                 }
-                contenido = checklistEditItems.map(i => `
-                    <div class="flex items-center gap-2 py-0.5">
-                        <input type="checkbox" ${i.completado ? 'checked="checked"' : ''} class="w-4 h-4 accent-teal-500 rounded pointer-events-none">
-                        <span class="${i.completado ? 'line-through text-slate-400' : 'text-slate-800 dark:text-slate-200'}">${i.texto}</span>
-                    </div>
-                `).join('');
+                checklist_items = checklistEditItems;
             } else {
                 contenido = document.getElementById('inputContenido').innerHTML.trim();
             }
 
-            if (!titulo && (!contenido || contenido === '<br>')) {
-                mostrarAlerta('La nota debe tener un título o algún contenido.');
+            if (!titulo && (!contenido || contenido === '<br>') && checklist_items.length === 0) {
+                mostrarAlerta('La nota debe tener un título, contenido o elementos en la lista.');
                 return;
+            }
+
+            // Control de conflictos: Verificar updated_at si es edición
+            if (editId && navigator.onLine) {
+                const { data: serverRecord } = await supabaseClient.from('notas').select('updated_at').eq('id', editId).single();
+                const localNote = notasData.find(n => n.id == editId);
+                if (serverRecord && localNote && serverRecord.updated_at > localNote.updated_at) {
+                    const continuar = confirm("⚠️ Conflicto detectado: Esta nota fue modificada en otro dispositivo recientemente. ¿Deseas sobrescribir los cambios con tu versión?");
+                    if (!continuar) return;
+                }
             }
 
             const payload = {
                 titulo: titulo || 'Sin título',
-                contenido,
+                contenido: es_lista ? null : contenido,
+                checklist_items: es_lista ? checklist_items : [],
                 categoria_id,
                 color_nota,
                 recordatorio: recordatorioVal ? new Date(recordatorioVal).toISOString() : null,
@@ -925,14 +947,15 @@
             if (!nota) return;
             const nuevoFav = !nota.favorito;
             nota.favorito = nuevoFav;
+            nota.updated_at = new Date().toISOString();
 
             if (!navigator.onLine) {
-                agregarAColaOffline('EDITAR', 'NOTA', { id, favorito: nuevoFav });
+                agregarAColaOffline('EDITAR', 'NOTA', { id, favorito: nuevoFav, updated_at: nota.updated_at });
                 localStorage.setItem(NOTAS_CACHE_KEY, JSON.stringify(notasData));
                 aplicarFiltrosLocales();
                 return;
             }
-            await supabaseClient.from('notas').update({ favorito: nuevoFav }).eq('id', id);
+            await supabaseClient.from('notas').update({ favorito: nuevoFav, updated_at: nota.updated_at }).eq('id', id);
             localStorage.setItem(NOTAS_CACHE_KEY, JSON.stringify(notasData));
             aplicarFiltrosLocales();
         }
@@ -942,7 +965,7 @@
             const btnPapelera = document.getElementById('btnPapelera');
             if (enVistaPapelera) {
                 btnPapelera.className = "py-2 px-3 bg-rose-500/20 border border-rose-500/40 text-rose-600 dark:text-rose-400 rounded-xl transition-all font-semibold text-xs shadow-md flex items-center justify-center gap-1.5 cursor-pointer col-span-2";
-                btnPapelera.innerHTML = `<i class="fa-solid fa-arrow-left"></i> Regresar <span  class="hidden"></span>`;
+                btnPapelera.innerHTML = `<i class="fa-solid fa-arrow-left"></i> Regresar`;
             } else {
                 btnPapelera.className = "py-2 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700/50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/60 rounded-xl transition-all font-semibold text-xs flex items-center justify-center gap-1.5 cursor-pointer";
                 btnPapelera.innerHTML = `<i class="fa-solid fa-trash-can text-rose-500"></i> Papelera <span id="badgePapeleraCount" class="hidden ml-1 px-1.5 py-0.2 bg-rose-500 text-white rounded-full text-[9px]">0</span>`;
@@ -954,14 +977,15 @@
             const nota = notasData.find(n => n.id == id);
             if (!nota) return;
             nota.en_papelera = true;
+            nota.updated_at = new Date().toISOString();
 
             if (!navigator.onLine) {
-                agregarAColaOffline('EDITAR', 'NOTA', { id, en_papelera: true });
+                agregarAColaOffline('EDITAR', 'NOTA', { id, en_papelera: true, updated_at: nota.updated_at });
                 localStorage.setItem(NOTAS_CACHE_KEY, JSON.stringify(notasData));
                 aplicarFiltrosLocales();
                 return;
             }
-            await supabaseClient.from('notas').update({ en_papelera: true }).eq('id', id);
+            await supabaseClient.from('notas').update({ en_papelera: true, updated_at: nota.updated_at }).eq('id', id);
             localStorage.setItem(NOTAS_CACHE_KEY, JSON.stringify(notasData));
             aplicarFiltrosLocales();
         }
@@ -970,14 +994,15 @@
             const nota = notasData.find(n => n.id == id);
             if (!nota) return;
             nota.en_papelera = false;
+            nota.updated_at = new Date().toISOString();
 
             if (!navigator.onLine) {
-                agregarAColaOffline('EDITAR', 'NOTA', { id, en_papelera: false });
+                agregarAColaOffline('EDITAR', 'NOTA', { id, en_papelera: false, updated_at: nota.updated_at });
                 localStorage.setItem(NOTAS_CACHE_KEY, JSON.stringify(notasData));
                 aplicarFiltrosLocales();
                 return;
             }
-            await supabaseClient.from('notas').update({ en_papelera: false }).eq('id', id);
+            await supabaseClient.from('notas').update({ en_papelera: false, updated_at: nota.updated_at }).eq('id', id);
             localStorage.setItem(NOTAS_CACHE_KEY, JSON.stringify(notasData));
             aplicarFiltrosLocales();
         }
@@ -1142,7 +1167,6 @@
             container.innerHTML = '';
 
             if (lista.length === 0) {
-                // CORRECCIÓN APLICADA AQUÍ: style="column-span: all;" para que ocupe todo el ancho del multi-column
                 container.innerHTML = `
                     <div class="col-span-full py-8 text-center space-y-2" style="column-span: all;">
                         <div class="w-10 h-10 bg-teal-500/10 text-teal-600 dark:text-teal-400 rounded-full flex items-center justify-center mx-auto border border-teal-500/20">
@@ -1168,6 +1192,18 @@
                         <div class="flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 font-semibold bg-amber-500/10 px-2 py-0.5 rounded-md w-fit border border-amber-500/20">
                             <i class="fa-solid fa-bell"></i> ${formatearFechaRecordatorio(nota.recordatorio)}
                         </div>`;
+                }
+
+                let renderContenidoCard = '';
+                if (nota.checklist_items && nota.checklist_items.length > 0) {
+                    renderContenidoCard = `<div class="space-y-1">` + nota.checklist_items.map((item, idx) => `
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" ${item.completado ? 'checked' : ''} onchange="toggleItemChecklist('${nota.id}', ${idx})" class="w-3.5 h-3.5 accent-teal-500 rounded cursor-pointer shrink-0">
+                            <span class="truncate ${item.completado ? 'line-through text-slate-400' : 'text-slate-700 dark:text-slate-300'}">${item.texto}</span>
+                        </div>
+                    `).join('') + `</div>`;
+                } else {
+                    renderContenidoCard = `<div class="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 leading-relaxed overflow-hidden max-h-28 space-y-1">${nota.contenido || ''}</div>`;
                 }
 
                 const card = document.createElement('div');
@@ -1201,7 +1237,7 @@
                             </div>
                         </div>
                         ${recordatorioHtml}
-                        <div class="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 leading-relaxed overflow-hidden max-h-28 space-y-1">${nota.contenido || ''}</div>
+                        <div class="text-[11px] sm:text-xs">${renderContenidoCard}</div>
                     </div>
                     <div class="pt-2 border-t border-slate-200/50 dark:border-slate-700/50 space-y-1.5">
                         <div class="flex justify-center">
@@ -1237,7 +1273,8 @@
             if (textoBuscador) {
                 filtrados = filtrados.filter(n =>
                     (n.titulo && n.titulo.toLowerCase().includes(textoBuscador)) ||
-                    (n.contenido && n.contenido.toLowerCase().includes(textoBuscador))
+                    (n.contenido && n.contenido.toLowerCase().includes(textoBuscador)) ||
+                    (n.checklist_items && n.checklist_items.some(item => item.texto.toLowerCase().includes(textoBuscador)))
                 );
             }
 
