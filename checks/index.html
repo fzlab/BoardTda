@@ -87,7 +87,7 @@
                     <i data-lucide="sun" class="w-3.5 h-3.5 light-icon hidden"></i>
                 </button>
 
-                <!-- Borrar Todo (Ocupa 2 filas de altura) -->
+                <!-- Borrar Todo -->
                 <button onclick="confirmarBorrarTodo()" class="w-7 h-full row-span-2 flex items-center justify-center rounded-full bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 transition-all shadow-sm cursor-pointer" title="Borrar todos los datos almacenados">
                     <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> 
                 </button>
@@ -285,6 +285,21 @@
     </div>
   </div>
 
+  <!-- Overlay / Modal de Carga para Análisis y Subida de PDF -->
+  <div id="loadingOverlay" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[10030] flex items-center justify-center p-4 hidden">
+      <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 w-full max-w-xs shadow-2xl text-center space-y-4">
+          <div class="w-12 h-12 bg-teal-500/10 border border-teal-500/20 text-teal-600 dark:text-teal-400 rounded-full flex items-center justify-center mx-auto">
+              <i class="fa-solid fa-spinner fa-spin text-xl"></i>
+          </div>
+          <div class="space-y-1">
+              <h4 class="text-sm font-bold text-slate-900 dark:text-slate-100">Procesando Check Remoto</h4>
+              <p id="loadingOverlayText" class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Analizando PDF y subiendo archivo al servidor...
+              </p>
+          </div>
+      </div>
+  </div>
+
   <!-- Modal de Alerta: Ya se tienen registrados los 2 checks del mes -->
   <div id="modalAvisoExtra" class="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[10015] flex items-center justify-center p-4 hidden">
       <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 w-full max-w-sm shadow-2xl text-center space-y-4">
@@ -425,6 +440,16 @@
     let checksData = [];
     let historialData = [];
     let checkIdParaEliminar = null;
+
+    // Control de Overlay de Carga
+    function mostrarCarga(mensaje = "Analizando PDF y subiendo archivo al servidor...") {
+        document.getElementById('loadingOverlayText').textContent = mensaje;
+        document.getElementById('loadingOverlay').classList.remove('hidden');
+    }
+
+    function ocultarCarga() {
+        document.getElementById('loadingOverlay').classList.add('hidden');
+    }
 
     // Cola Offline específica para la web de checks
     function obtenerColaPendiente() { return JSON.parse(localStorage.getItem('cola_checks_offline') || '[]'); }
@@ -853,9 +878,9 @@
                     calificacion: item.calificacion,
                     pdfName: item.pdf_name || '',
                     pdfPath: item.pdf_path || '',
-                    pdfData: null, // Los PDFs se descargan desde Supabase Storage
                     enviadas: item.enviadas || 'no',
-                    aceptadas: item.aceptadas || 'no'
+                    aceptadas: item.aceptadas || 'no',
+                    updated_at: item.updated_at
                 }));
                 await dbClearStore(STORE_CHECKS);
                 for (const c of checksData) {
@@ -884,6 +909,84 @@
 
         renderizarApp();
         actualizarEstadoConexionUI();
+    }
+
+    // Inicializar WebSockets de Supabase Realtime
+    function inicializarRealtime() {
+        supabaseClient
+            .channel('checks_realtime_channel')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'checks_remotos' }, payload => {
+                const { eventType, new: newRec, old: oldRec } = payload;
+                if (eventType === 'INSERT') {
+                    const item = {
+                        id: newRec.id,
+                        numeroCheck: newRec.numero_check,
+                        fecha: newRec.fecha,
+                        calificacion: newRec.calificacion,
+                        pdfName: newRec.pdf_name || '',
+                        pdfPath: newRec.pdf_path || '',
+                        enviadas: newRec.enviadas || 'no',
+                        aceptadas: newRec.aceptadas || 'no',
+                        updated_at: newRec.updated_at
+                    };
+                    if (!checksData.some(c => c.id === item.id)) checksData.unshift(item);
+                } else if (eventType === 'UPDATE') {
+                    const item = {
+                        id: newRec.id,
+                        numeroCheck: newRec.numero_check,
+                        fecha: newRec.fecha,
+                        calificacion: newRec.calificacion,
+                        pdfName: newRec.pdf_name || '',
+                        pdfPath: newRec.pdf_path || '',
+                        enviadas: newRec.enviadas || 'no',
+                        aceptadas: newRec.aceptadas || 'no',
+                        updated_at: newRec.updated_at
+                    };
+                    const idx = checksData.findIndex(c => c.id === item.id);
+                    if (idx !== -1) checksData[idx] = item;
+                    else checksData.unshift(item);
+                } else if (eventType === 'DELETE') {
+                    checksData = checksData.filter(c => c.id !== oldRec.id);
+                }
+                checksData.sort((a, b) => b.id.localeCompare(a.id));
+                dbClearStore(STORE_CHECKS).then(() => {
+                    checksData.forEach(c => dbPut(STORE_CHECKS, c));
+                });
+                renderizarApp();
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'historial_checks' }, payload => {
+                const { eventType, new: newRec, old: oldRec } = payload;
+                if (eventType === 'INSERT') {
+                    const item = {
+                        id: newRec.id,
+                        titulo: newRec.titulo,
+                        fechaGuardado: newRec.fecha_guardado,
+                        checks: newRec.checks,
+                        calificacionFinal: newRec.calificacion_final,
+                        aplicaBono: newRec.aplica_bono
+                    };
+                    if (!historialData.some(h => h.id === item.id)) historialData.unshift(item);
+                } else if (eventType === 'UPDATE') {
+                    const item = {
+                        id: newRec.id,
+                        titulo: newRec.titulo,
+                        fechaGuardado: newRec.fecha_guardado,
+                        checks: newRec.checks,
+                        calificacionFinal: newRec.calificacion_final,
+                        aplicaBono: newRec.aplica_bono
+                    };
+                    const idx = historialData.findIndex(h => h.id === item.id);
+                    if (idx !== -1) historialData[idx] = item;
+                    else historialData.unshift(item);
+                } else if (eventType === 'DELETE') {
+                    historialData = historialData.filter(h => h.id !== oldRec.id);
+                }
+                historialData.sort((a, b) => b.fechaGuardado.localeCompare(a.fechaGuardado));
+                dbClearStore(STORE_HISTORIAL).then(() => {
+                    historialData.forEach(h => dbPut(STORE_HISTORIAL, h));
+                });
+            })
+            .subscribe();
     }
 
     function togglePdfOpciones(esSi) {
@@ -1017,12 +1120,14 @@
             const fileInput = document.getElementById('inputPdfFile');
             if (fileInput.files.length > 0) {
                 const file = fileInput.files[0];
+                mostrarCarga("Analizando PDF y extrayendo datos...");
                 await procesarPdfYGuardar(file, editId, numeroCheck);
                 return;
             } else {
                 if (editId) {
                     const checkExistente = checksData.find(c => c.id == editId);
                     if (checkExistente) {
+                        mostrarCarga("Guardando cambios...");
                         await finalizarGuardadoCheck(editId, numeroCheck, checkExistente.fecha, checkExistente.calificacion, checkExistente.pdfName, checkExistente.pdfPath);
                         return;
                     }
@@ -1044,6 +1149,7 @@
                 return;
             }
 
+            mostrarCarga("Guardando registro...");
             await finalizarGuardadoCheck(editId, numeroCheck, fecha, calificacion, '', '');
         }
     }
@@ -1078,37 +1184,53 @@
             let pdfPath = '';
 
             if (navigator.onLine) {
-                // Limpia el nombre para que sea seguro en cualquier sistema
+                mostrarCarga("Subiendo archivo PDF al servidor...");
                 const nombreSeguro = pdfName.replace(/[^\w.\-]+/g, '_');
                 const filePath = `${Date.now()}_${nombreSeguro}`;
                 
-                // Realizamos la subida y capturamos el objeto 'error'
                 const { data, error } = await supabaseClient.storage
                     .from('checks-pdfs')
                     .upload(filePath, file);
 
                 if (error) {
+                    ocultarCarga();
                     console.error("Error al subir PDF a Supabase Storage:", error);
                     mostrarAlerta("Error al subir el PDF al bucket: " + (error.message || JSON.stringify(error)));
-                    return; // Detenemos el guardado si falla la subida del archivo físico
+                    return;
                 }
                 
                 pdfPath = filePath;
             } else {
+                ocultarCarga();
                 mostrarAlerta("No hay conexión a internet. No se puede subir el archivo PDF al bucket en modo offline.");
                 return;
             }
 
+            mostrarCarga("Guardando en la base de datos...");
             await finalizarGuardadoCheck(editId, numeroCheck, fechaIso, calificacion, pdfName, pdfPath);
 
         } catch (err) {
+            ocultarCarga();
             console.error("Error al procesar el archivo PDF:", err);
             mostrarAlerta('No se pudo procesar el archivo PDF. Asegúrese de que sea un documento válido.');
         }
     }
 
     async function finalizarGuardadoCheck(editId, numeroCheck, fecha, calificacion, pdfName, pdfPath) {
+        // Control de Concurrencia: Validar updated_at en Supabase antes de guardar si es edición online
+        if (editId && navigator.onLine) {
+            const { data: serverRecord } = await supabaseClient.from('checks_remotos').select('updated_at').eq('id', editId).single();
+            const localCheck = checksData.find(c => c.id == editId);
+            if (serverRecord && localCheck && localCheck.updated_at && serverRecord.updated_at > localCheck.updated_at) {
+                ocultarCarga();
+                const continuar = confirm("⚠️ Conflicto detectado: Este check fue modificado recientemente en otro dispositivo. ¿Deseas sobrescribir los cambios con tu versión?");
+                if (!continuar) return;
+                mostrarCarga("Guardando registro...");
+            }
+        }
+
         let registro;
+        const nowIso = new Date().toISOString();
         if (editId) {
             const index = checksData.findIndex(c => c.id == editId);
             if (index !== -1) {
@@ -1118,7 +1240,8 @@
                     fecha,
                     calificacion,
                     pdfName: pdfName || checksData[index].pdfName,
-                    pdfPath: pdfPath || checksData[index].pdfPath
+                    pdfPath: pdfPath || checksData[index].pdfPath,
+                    updated_at: nowIso
                 };
                 registro = checksData[index];
             }
@@ -1131,7 +1254,8 @@
                 pdfName: pdfName || '',
                 pdfPath: pdfPath || '',
                 enviadas: 'no',
-                aceptadas: 'no'
+                aceptadas: 'no',
+                updated_at: nowIso
             };
             checksData.unshift(registro);
         }
@@ -1152,7 +1276,8 @@
             pdf_name: registro.pdfName,
             pdf_path: registro.pdfPath,
             enviadas: registro.enviadas,
-            aceptadas: registro.aceptadas
+            aceptadas: registro.aceptadas,
+            updated_at: registro.updated_at
         };
 
         if (!navigator.onLine) {
@@ -1170,51 +1295,48 @@
             }
         }
 
+        ocultarCarga();
         cerrarModalCheck();
         renderizarApp();
     }
 
     async function descargarPdfCheck(id) {
-    const check = checksData.find(c => c.id == id);
-    if (!check || !check.pdfPath) {
-        mostrarAlerta('Este check no cuenta con un PDF adjunto en la nube.');
-        return;
-    }
-
-    try {
-        // 1. Descargar el archivo directamente como binario usando el SDK de Supabase
-        const { data, error } = await supabaseClient.storage
-            .from('checks-pdfs')
-            .download(check.pdfPath);
-
-        if (error) {
-            console.error("Error al descargar desde Supabase:", error);
-            mostrarAlerta("No se pudo descargar el archivo: " + (error.message || JSON.stringify(error)));
+        const check = checksData.find(c => c.id == id);
+        if (!check || !check.pdfPath) {
+            mostrarAlerta('Este check no cuenta con un PDF adjunto en la nube.');
             return;
         }
 
-        // 2. Crear un objeto Blob local de tipo PDF
-        const blob = new Blob([data], { type: 'application/pdf' });
-        const blobUrl = URL.createObjectURL(blob);
+        try {
+            const { data, error } = await supabaseClient.storage
+                .from('checks-pdfs')
+                .download(check.pdfPath);
 
-        // 3. Crear un enlace temporal invisible para forzar la descarga en móviles
-        const a = document.createElement('a');
-        a.href = blobUrl;
-        a.download = check.pdfName || 'Check_Remoto.pdf';
-        document.body.appendChild(a);
-        a.click();
+            if (error) {
+                console.error("Error al descargar desde Supabase:", error);
+                mostrarAlerta("No se pudo descargar el archivo: " + (error.message || JSON.stringify(error)));
+                return;
+            }
 
-        // 4. Limpiar los recursos de la memoria tras iniciar la descarga
-        setTimeout(() => {
-            document.body.removeChild(a);
-            URL.revokeObjectURL(blobUrl);
-        }, 200);
+            const blob = new Blob([data], { type: 'application/pdf' });
+            const blobUrl = URL.createObjectURL(blob);
 
-    } catch (e) {
-        console.error('Error inesperado al descargar el PDF:', e);
-        mostrarAlerta('Ocurrió un error al intentar descargar el PDF.');
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = check.pdfName || 'Check_Remoto.pdf';
+            document.body.appendChild(a);
+            a.click();
+
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(blobUrl);
+            }, 200);
+
+        } catch (e) {
+            console.error('Error inesperado al descargar el PDF:', e);
+            mostrarAlerta('Ocurrió un error al intentar descargar el PDF.');
+        }
     }
-}
 
     async function cambiarEstadoCheck(id, campo, valor) {
         const check = checksData.find(c => c.id == id);
@@ -1223,6 +1345,7 @@
             if (campo === 'enviadas' && valor === 'no') {
                 check.aceptadas = 'no';
             }
+            check.updated_at = new Date().toISOString();
             try {
                 await dbPut(STORE_CHECKS, check);
             } catch (e) {
@@ -1233,7 +1356,8 @@
             const dbPayload = {
                 id: check.id,
                 enviadas: check.enviadas,
-                aceptadas: check.aceptadas
+                aceptadas: check.aceptadas,
+                updated_at: check.updated_at
             };
 
             if (!navigator.onLine) {
@@ -1304,6 +1428,9 @@
         } else {
             actualizarEstadoConexionUI();
         }
+
+        // Inicializar WebSockets de Supabase Realtime
+        inicializarRealtime();
     };
 
     function renderizarApp() {
