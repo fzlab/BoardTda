@@ -300,6 +300,26 @@
       </div>
   </div>
 
+  <!-- Modal de Confirmación: Check de Mes Anterior al Historial -->
+  <div id="modalPastCheckHistorial" class="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[10025] flex items-center justify-center p-4 hidden">
+      <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 w-full max-w-sm shadow-2xl text-center space-y-4">
+          <div class="w-10 h-10 bg-amber-500/10 border border-amber-500/20 text-amber-500 rounded-full flex items-center justify-center mx-auto">
+              <i data-lucide="bookmark-plus" class="w-5 h-5"></i>
+          </div>
+          <p class="text-xs font-semibold text-slate-700 dark:text-slate-200 leading-relaxed">
+              La fecha del check no corresponde al mes actual, este check se agregará al historial.
+          </p>
+          <div class="flex justify-center items-center gap-2 w-full">
+              <button onclick="cancelarPastCheckHistorial()" class="py-2 px-4 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl hover:bg-slate-300 dark:hover:bg-slate-600 transition-all font-semibold text-xs cursor-pointer shrink-0">
+                  Cancelar
+              </button>
+              <button onclick="confirmarPastCheckHistorial()" class="py-2 px-4 bg-teal-500/10 border border-teal-500/30 text-teal-600 dark:text-teal-400 rounded-xl hover:bg-teal-500/20 transition-all font-semibold text-xs cursor-pointer shrink-0">
+                  Confirmar
+              </button>
+          </div>
+      </div>
+  </div>
+
   <!-- Modal de Alerta: Ya se tienen registrados los 2 checks del mes -->
   <div id="modalAvisoExtra" class="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[10015] flex items-center justify-center p-4 hidden">
       <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 w-full max-w-sm shadow-2xl text-center space-y-4">
@@ -440,6 +460,7 @@
     let checksData = [];
     let historialData = [];
     let checkIdParaEliminar = null;
+    let pendingPastCheck = null; // Almacena temporalmente el check de mes anterior pendiente de confirmar
 
     // Control de Overlay de Carga
     function mostrarCarga(mensaje = "Analizando PDF y subiendo archivo al servidor...") {
@@ -1128,7 +1149,7 @@
                     const checkExistente = checksData.find(c => c.id == editId);
                     if (checkExistente) {
                         mostrarCarga("Guardando cambios...");
-                        await finalizarGuardadoCheck(editId, numeroCheck, checkExistente.fecha, checkExistente.calificacion, checkExistente.pdfName, checkExistente.pdfPath);
+                        await verificarMesYGuardar({ editId, numeroCheck, fecha: checkExistente.fecha, calificacion: checkExistente.calificacion, pdfName: checkExistente.pdfName, pdfPath: checkExistente.pdfPath });
                         return;
                     }
                 }
@@ -1150,7 +1171,128 @@
             }
 
             mostrarCarga("Guardando registro...");
-            await finalizarGuardadoCheck(editId, numeroCheck, fecha, calificacion, '', '');
+            await verificarMesYGuardar({ editId, numeroCheck, fecha, calificacion, pdfName: '', pdfPath: '' });
+        }
+    }
+
+    // Función que valida la fecha del check antes de decidir si va al mes actual, futuro o historial
+    async function verificarMesYGuardar({ editId, numeroCheck, fecha, calificacion, pdfName, pdfPath }) {
+        const partes = fecha.split('-');
+        if (partes.length !== 3) {
+            await finalizarGuardadoCheck(editId, numeroCheck, fecha, calificacion, pdfName, pdfPath);
+            return;
+        }
+
+        const cYear = parseInt(partes[0], 10);
+        const cMonth = parseInt(partes[1], 10);
+
+        const now = new Date();
+        const curYear = now.getFullYear();
+        const curMonth = now.getMonth() + 1; // 1 - 12
+
+        // Validar fecha futura
+        if (cYear > curYear || (cYear === curYear && cMonth > curMonth)) {
+            ocultarCarga();
+            mostrarAlerta("No se puede registrar un check en el futuro. Verifique la fecha seleccionada.");
+            return;
+        }
+
+        // Validar fecha de un mes anterior -> Se va al historial
+        if (cYear < curYear || (cYear === curYear && cMonth < curMonth)) {
+            ocultarCarga();
+            pendingPastCheck = { editId, numeroCheck, fecha, calificacion, pdfName };
+            document.getElementById('modalPastCheckHistorial').classList.remove('hidden');
+            lucide.createIcons();
+            return;
+        }
+
+        // Mes actual -> Proceso normal
+        await finalizarGuardadoCheck(editId, numeroCheck, fecha, calificacion, pdfName, pdfPath);
+    }
+
+    function cancelarPastCheckHistorial() {
+        document.getElementById('modalPastCheckHistorial').classList.add('hidden');
+        pendingPastCheck = null;
+    }
+
+    async function confirmarPastCheckHistorial() {
+        document.getElementById('modalPastCheckHistorial').classList.add('hidden');
+        if (!pendingPastCheck) return;
+
+        mostrarCarga("Guardando check en el historial...");
+
+        const { numeroCheck, fecha, calificacion, pdfName } = pendingPastCheck;
+        
+        const parts = fecha.split('-');
+        const cYear = parseInt(parts[0], 10);
+        const cMonthNum = parseInt(parts[1], 10);
+        const mesesNombre = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        const nombreMesAnio = `${mesesNombre[cMonthNum - 1]} ${cYear}`;
+        const idMes = `mes_${cYear}_${String(cMonthNum).padStart(2, '0')}`;
+
+        let mesRegistro = historialData.find(h => h.id === idMes);
+
+        const nuevoCheckHistorico = {
+            id: 'check_' + Date.now(),
+            numeroCheck: numeroCheck || '1',
+            fecha: fecha,
+            calificacion: calificacion,
+            pdfName: pdfName || '',
+            enviadas: 'no',
+            aceptadas: 'no'
+        };
+
+        if (mesRegistro) {
+            mesRegistro.checks.push(nuevoCheckHistorico);
+        } else {
+            mesRegistro = {
+                id: idMes,
+                titulo: nombreMesAnio,
+                fechaGuardado: new Date().toISOString(),
+                checks: [nuevoCheckHistorico],
+                calificacionFinal: '0.00',
+                aplicaBono: false
+            };
+            historialData.unshift(mesRegistro);
+        }
+
+        const totalChecks = mesRegistro.checks.length;
+        const suma = mesRegistro.checks.reduce((acc, c) => acc + parseFloat(c.calificacion || 0), 0);
+        const promedio = totalChecks > 0 ? suma / totalChecks : 0;
+        const aplicaBono = totalChecks > 0 && mesRegistro.checks.every(c => c.aceptadas === 'si');
+        let califFinal = promedio;
+        if (aplicaBono) {
+            califFinal = Math.min(10.00, promedio + 0.5);
+        }
+        mesRegistro.calificacionFinal = califFinal.toFixed(2);
+        mesRegistro.aplicaBono = aplicaBono;
+
+        try {
+            await dbPut(STORE_HISTORIAL, mesRegistro);
+
+            const payloadHistorialDB = {
+                id: mesRegistro.id,
+                titulo: mesRegistro.titulo,
+                fecha_guardado: mesRegistro.fechaGuardado,
+                checks: mesRegistro.checks,
+                calificacion_final: parseFloat(mesRegistro.calificacionFinal),
+                aplica_bono: mesRegistro.aplicaBono
+            };
+
+            if (navigator.onLine) {
+                await supabaseClient.from('historial_checks').upsert([payloadHistorialDB]);
+            } else {
+                agregarAColaOffline('CREAR_HISTORIAL', payloadHistorialDB);
+            }
+
+            ocultarCarga();
+            cerrarModalCheck();
+            pendingPastCheck = null;
+            mostrarAlerta('El check fue guardado exitosamente en el historial correspondiente.');
+        } catch (e) {
+            ocultarCarga();
+            console.error("Error al guardar check en historial:", e);
+            mostrarAlerta('Ocurrió un error al guardar el check en el historial.');
         }
     }
 
@@ -1172,7 +1314,7 @@
             }
 
             let fechaIso = new Date().toISOString().slice(0, 10);
-            const dateMatch = fullText.match(/(?:Finalizado(?:\s+en)?:?)\s*(\d{2}\/\d{2}\/\d{4})/i) || fullText.match(/\b(\d{2}\/\d{2}\/\d{4})\b/);
+            const dateMatch = fullText.match(/(?:Finalizado(?:\s+en)?:?)\s*(\d{2}\/\d{2}\/\d{4})/i) || fullText.match(/\b(\d{2}\/\d{4})\b/) || fullText.match(/\b(\d{2}\/\d{2}\/\d{4})\b/);
             if (dateMatch) {
                 const parts = dateMatch[1].split('/');
                 if (parts.length === 3) {
@@ -1183,31 +1325,46 @@
             const pdfName = file.name;
             let pdfPath = '';
 
-            if (navigator.onLine) {
-                mostrarCarga("Subiendo archivo PDF al servidor...");
-                const nombreSeguro = pdfName.replace(/[^\w.\-]+/g, '_');
-                const filePath = `${Date.now()}_${nombreSeguro}`;
-                
-                const { data, error } = await supabaseClient.storage
-                    .from('checks-pdfs')
-                    .upload(filePath, file);
+            // Primero verificamos el mes de la fecha obtenida antes de subir al bucket
+            const partsF = fechaIso.split('-');
+            const cYear = parseInt(partsF[0], 10);
+            const cMonth = parseInt(partsF[1], 10);
+            const now = new Date();
+            const curYear = now.getFullYear();
+            const curMonth = now.getMonth() + 1;
 
-                if (error) {
+            const esMesActual = (cYear === curYear && cMonth === curMonth);
+
+            if (esMesActual) {
+                if (navigator.onLine) {
+                    mostrarCarga("Subiendo archivo PDF al servidor...");
+                    const nombreSeguro = pdfName.replace(/[^\w.\-]+/g, '_');
+                    const filePath = `${Date.now()}_${nombreSeguro}`;
+                    
+                    const { data, error } = await supabaseClient.storage
+                        .from('checks-pdfs')
+                        .upload(filePath, file);
+
+                    if (error) {
+                        ocultarCarga();
+                        console.error("Error al subir PDF a Supabase Storage:", error);
+                        mostrarAlerta("Error al subir el PDF al bucket: " + (error.message || JSON.stringify(error)));
+                        return;
+                    }
+                    
+                    pdfPath = filePath;
+                } else {
                     ocultarCarga();
-                    console.error("Error al subir PDF a Supabase Storage:", error);
-                    mostrarAlerta("Error al subir el PDF al bucket: " + (error.message || JSON.stringify(error)));
+                    mostrarAlerta("No hay conexión a internet. No se puede subir el archivo PDF al bucket en modo offline.");
                     return;
                 }
-                
-                pdfPath = filePath;
             } else {
-                ocultarCarga();
-                mostrarAlerta("No hay conexión a internet. No se puede subir el archivo PDF al bucket en modo offline.");
-                return;
+                // Si no es el mes actual, se indica que no se subirá al bucket y se procesará por verificación de mes
+                pdfPath = ''; 
             }
 
-            mostrarCarga("Guardando en la base de datos...");
-            await finalizarGuardadoCheck(editId, numeroCheck, fechaIso, calificacion, pdfName, pdfPath);
+            mostrarCarga("Verificando fecha y guardando...");
+            await verificarMesYGuardar({ editId, numeroCheck, fecha: fechaIso, calificacion, pdfName, pdfPath });
 
         } catch (err) {
             ocultarCarga();
@@ -1217,7 +1374,6 @@
     }
 
     async function finalizarGuardadoCheck(editId, numeroCheck, fecha, calificacion, pdfName, pdfPath) {
-        // Control de Concurrencia: Validar updated_at en Supabase antes de guardar si es edición online
         if (editId && navigator.onLine) {
             const { data: serverRecord } = await supabaseClient.from('checks_remotos').select('updated_at').eq('id', editId).single();
             const localCheck = checksData.find(c => c.id == editId);
@@ -1429,7 +1585,6 @@
             actualizarEstadoConexionUI();
         }
 
-        // Inicializar WebSockets de Supabase Realtime
         inicializarRealtime();
     };
 
@@ -1603,6 +1758,7 @@
                         <div class="flex items-center gap-2">
                             <span class="font-bold text-slate-800 dark:text-slate-200 text-xs">${nombreCheck}</span>
                             <span class="text-[11px] text-slate-500 dark:text-slate-400">(${fechaFmt})</span>
+                            ${c.pdfName ? `<span class="px-1.5 py-0.5 rounded text-[9px] bg-teal-500/10 text-teal-600 dark:text-teal-400 font-medium"><i class="fa-solid fa-file-pdf"></i> ${c.pdfName}</span>` : ''}
                         </div>
                         <div class="text-right">
                             <span class="text-xs font-extrabold text-teal-600 dark:text-teal-400">Calificación: ${parseFloat(c.calificacion).toFixed(1)}</span>
