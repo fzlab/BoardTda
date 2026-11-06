@@ -2,10 +2,10 @@
 
 {
 
-  "name": "Board TDA 151",
-
-  "short_name": "Board TDA",
-
+  "name": "GitHub Board",
+  "_comment": "Name original es Board TDA 151",
+  "short_name": "GitH.Board",
+  "_comment": "Short_name original Board TDA",
   "description": "Dashboard centralizador de proyectos",
 
   "start_url": "./index.html",
