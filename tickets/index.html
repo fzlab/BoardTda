@@ -2,7 +2,7 @@
 <html lang="es" class="h-full bg-slate-900">
 <head>
   <meta charset="UTF-8">
-<link rel="stylesheet" href="../fonts.css">
+  <link rel="stylesheet" href="../fonts.css">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Gestor de Tickets - T0151 G.P Mérida</title>
   
@@ -141,14 +141,14 @@
         <div class="pt-2 border-t border-slate-200 dark:border-slate-700/60 text-xs space-y-2">
           <!-- Buscador por Folio -->
           <div class="relative">
-            <input type="text" id="filtroBuscador" placeholder="Buscar # Ticket o Descripción..." oninput="filtrarTickets()" class="w-full bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/50 rounded-xl px-2.5 py-1.5 text-slate-800 dark:text-slate-200 outline-none focus:border-teal-500">
+            <input type="text" id="filtroBuscador" placeholder="Buscar # Ticket o Descripción..." oninput="aplicarFiltrosLocales()" class="w-full bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/50 rounded-xl px-2.5 py-1.5 text-slate-800 dark:text-slate-200 outline-none focus:border-teal-500">
           </div>
           
-          <!-- Responsable y Estatus en la misma línea (mitad de tamaño cada uno) -->
+          <!-- Responsable y Estatus en la misma línea -->
           <div class="grid grid-cols-2 gap-2">
             <!-- Filtro por Responsable -->
             <div>
-              <input type="hidden" id="filtroResponsable" value="" onchange="filtrarTickets()">
+              <input type="hidden" id="filtroResponsable" value="" onchange="aplicarFiltrosLocales()">
               <div class="dropdown relative inline-block w-full">
                 <button type="button" id="btn_filtroResponsable" class="w-full h-7 flex items-center justify-between px-2 rounded-xl text-[11px] font-semibold bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 transition-colors" onclick="toggleDropdown(event, 'menu_filtroResponsable')">
                   <span id="text_filtroResponsable" class="truncate">Responsable</span> <i class="fa-solid fa-chevron-down" style="font-size: 9px; margin-left: 2px;"></i>
@@ -159,7 +159,7 @@
 
             <!-- Filtro por Estatus -->
             <div>
-              <input type="hidden" id="filtroEstatus" value="" onchange="filtrarTickets()">
+              <input type="hidden" id="filtroEstatus" value="" onchange="aplicarFiltrosLocales()">
               <div class="dropdown relative inline-block w-full">
                 <button type="button" id="btn_filtroEstatus" class="w-full h-7 flex items-center justify-between px-2 rounded-xl text-[11px] font-semibold bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 transition-colors" onclick="toggleDropdown(event, 'menu_filtroEstatus')">
                   <span id="text_filtroEstatus" class="truncate">Estatus</span> <i class="fa-solid fa-chevron-down" style="font-size: 9px; margin-left: 2px;"></i>
@@ -174,15 +174,15 @@
             Selecciona un rango de fechas
           </div>
 
-          <!-- Rango de Fechas: Desde y Hasta en la misma línea (en blanco por defecto) -->
+          <!-- Rango de Fechas: Desde y Hasta en la misma línea -->
           <div class="grid grid-cols-2 gap-2">
             <div class="flex items-center gap-1 bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/50 rounded-xl px-2 py-1">
               <span class="text-[10px] font-semibold text-slate-400 shrink-0">Desde:</span>
-              <input type="date" id="filtroFechaInicio" onchange="filtrarTickets()" class="w-full bg-transparent text-slate-800 dark:text-slate-200 outline-none text-[11px]" title="Fecha Inicio">
+              <input type="date" id="filtroFechaInicio" onchange="aplicarFiltrosLocales()" class="w-full bg-transparent text-slate-800 dark:text-slate-200 outline-none text-[11px]" title="Fecha Inicio">
             </div>
             <div class="flex items-center gap-1 bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/50 rounded-xl px-2 py-1">
               <span class="text-[10px] font-semibold text-slate-400 shrink-0">Hasta:</span>
-              <input type="date" id="filtroFechaFin" onchange="filtrarTickets()" class="w-full bg-transparent text-slate-800 dark:text-slate-200 outline-none text-[11px]" title="Fecha Fin">
+              <input type="date" id="filtroFechaFin" onchange="aplicarFiltrosLocales()" class="w-full bg-transparent text-slate-800 dark:text-slate-200 outline-none text-[11px]" title="Fecha Fin">
             </div>
           </div>
         </div>
@@ -306,7 +306,7 @@
               <button onclick="cerrarModalConfirmacion(false)" class="py-2 px-4 bg-teal-500/10 border border-teal-500/30 text-teal-600 dark:text-teal-400 rounded-xl hover:bg-teal-500/20 transition-all font-semibold text-xs shadow-md cursor-pointer shrink-0">
                   Cancelar
               </button>
-              <button onclick="cerrarModalConfirmacion(true)" class="py-2 px-4 bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 rounded-xl hover:bg-red-500/20 transition-all font-semibold text-xs shadow-md cursor-pointer shrink-0">
+              <button onclick="cerrarModalConfirmacion(true)" class="py-2 px-4 bg-red-500/10 border border-red-500/30 text-red-600 rounded-xl hover:bg-red-500/20 transition-all font-semibold text-xs shadow-md cursor-pointer shrink-0">
                   Confirmar
               </button>
           </div>
@@ -492,10 +492,9 @@
 
       if (navigator.onLine) {
         await procesarSincronizacionOffline();
+        await cargarDatosRemotos();
       }
       
-      await filtrarTickets();
-
       if (icono) {
         setTimeout(() => {
           icono.classList.remove('fa-spin');
@@ -554,26 +553,21 @@
 
       guardarColaPendiente(colaFallida);
 
-      if (colaFallida.length === 0) {
+      if (colaFallida.length === 0 && cola.length > 0) {
         mostrarAlerta('¡Conexión reestablecida! Todos los cambios locales fueron sincronizados con la Base de Datos.');
       }
       actualizarEstadoConexionUI();
-      await filtrarTickets();
+      await cargarDatosRemotos();
     }
 
-    window.addEventListener('online', () => {
-      procesarSincronizacionOffline();
-    });
-    window.addEventListener('offline', () => {
-      actualizarEstadoConexionUI();
-    });
+    window.addEventListener('online', () => { procesarSincronizacionOffline(); });
+    window.addEventListener('offline', () => { actualizarEstadoConexionUI(); });
 
-    // Carga inicial optimizada con lectura desde localStorage (fechas en blanco por defecto)
+    // Carga inicial optimizada con lectura desde localStorage y Supabase Realtime
     window.onload = async function() {
       initClock();
       populateSelects();
       
-      // 1. Cargar datos locales de inmediato para visualización offline instantánea
       const datosLocales = localStorage.getItem(TICKETS_CACHE_KEY);
       if (datosLocales) {
         try {
@@ -584,14 +578,57 @@
         }
       }
 
-      // 2. Si hay conexión, sincronizamos y obtenemos datos frescos
       if (navigator.onLine) {
         await procesarSincronizacionOffline();
-        await filtrarTickets();
+        await cargarDatosRemotos();
       } else {
         actualizarEstadoConexionUI();
       }
+
+      // Inicializar Supabase Realtime para sincronización multi-dispositivo en vivo
+      inicializarRealtime();
     };
+
+    function inicializarRealtime() {
+      supabaseClient
+        .channel('tickets_realtime_channel')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, payload => {
+          manejarCambioRealtime(payload);
+        })
+        .subscribe();
+    }
+
+    function manejarCambioRealtime(payload) {
+      const { eventType, new: newRecord, old: oldRecord } = payload;
+      if (eventType === 'INSERT') {
+        if (!ticketsData.some(t => t.id === newRecord.id)) {
+          ticketsData.unshift(newRecord);
+        }
+      } else if (eventType === 'UPDATE') {
+        const index = ticketsData.findIndex(t => t.id === newRecord.id);
+        if (index !== -1) {
+          ticketsData[index] = newRecord;
+        } else {
+          ticketsData.unshift(newRecord);
+        }
+      } else if (eventType === 'DELETE') {
+        ticketsData = ticketsData.filter(t => t.id !== oldRecord.id);
+      }
+      ticketsData.sort((a, b) => new Date(b.created_at || b.fecha) - new Date(a.created_at || a.fecha));
+      localStorage.setItem(TICKETS_CACHE_KEY, JSON.stringify(ticketsData));
+      aplicarFiltrosLocales();
+    }
+
+    async function cargarDatosRemotos() {
+      if (!navigator.onLine) return;
+      const { data, error } = await supabaseClient.from('tickets').select('*').order('created_at', { ascending: false });
+      if (!error && data) {
+        ticketsData = data;
+        localStorage.setItem(TICKETS_CACHE_KEY, JSON.stringify(ticketsData));
+        aplicarFiltrosLocales();
+      }
+      actualizarEstadoConexionUI();
+    }
 
     function abrirModalTicket(id = null) {
       document.getElementById('modalTicket').style.display = 'flex';
@@ -637,7 +674,7 @@
     }
 
     // -------------------------------------------------------------
-    // OPERACIONES CRUD CON SOPORTE ONLINE / OFFLINE
+    // OPERACIONES CRUD CON CONTROL DE CONCURRENCIA Y OFFLINE
     // -------------------------------------------------------------
     async function guardarTicket() {
       const editId = document.getElementById('editTicketId').value;
@@ -674,12 +711,25 @@
         }
       }
 
-      const payload = { folio, fecha, responsable, falla, estatus, notas: notasNuevas };
+      // Control de Concurrencia: Verificar updated_at en Supabase antes de guardar si es edición
+      if (editId && navigator.onLine) {
+        const { data: serverRecord } = await supabaseClient.from('tickets').select('updated_at').eq('id', editId).single();
+        const localTicket = ticketsData.find(t => t.id == editId);
+        if (serverRecord && localTicket && serverRecord.updated_at > localTicket.updated_at) {
+          const continuar = confirm("⚠️ Conflicto detectado: Este ticket fue modificado en otro dispositivo recientemente. ¿Deseas sobrescribir los cambios con tu versión?");
+          if (!continuar) return;
+        }
+      }
 
-      // Limpiar filtros de búsqueda/estatus para asegurar que el usuario visualice inmediatamente el cambio
-      document.getElementById('filtroBuscador').value = '';
-      document.getElementById('filtroEstatus').value = '';
-      document.getElementById('text_filtroEstatus').textContent = 'Estatus';
+      const payload = { 
+        folio, 
+        fecha, 
+        responsable, 
+        falla, 
+        estatus, 
+        notas: notasNuevas,
+        updated_at: new Date().toISOString()
+      };
 
       cerrarModalTicket();
 
@@ -691,6 +741,7 @@
           if (idx !== -1) ticketsData[idx] = { ...ticketsData[idx], ...payload };
         } else {
           payload.id = 'temp_' + Date.now();
+          payload.created_at = new Date().toISOString();
           agregarAColaOffline('CREAR', payload);
           ticketsData.unshift(payload);
         }
@@ -866,7 +917,7 @@
       });
     }
 
-    // Función auxiliar para aplicar filtros de manera local
+    // Filtrado local en memoria (ultra rápido, sin peticiones repetitivas a Supabase)
     function aplicarFiltrosLocales() {
       const textoBuscador = document.getElementById('filtroBuscador').value.trim().toLowerCase();
       const filtroResp = document.getElementById('filtroResponsable').value;
@@ -887,56 +938,6 @@
           (t.falla && t.falla.toLowerCase().includes(textoBuscador))
         );
       }
-      renderizarTickets(filtrados);
-    }
-
-    async function filtrarTickets() {
-      const textoBuscador = document.getElementById('filtroBuscador').value.trim().toLowerCase();
-      const filtroResp = document.getElementById('filtroResponsable').value;
-      const filtroEst = document.getElementById('filtroEstatus').value;
-      const fechaIni = document.getElementById('filtroFechaInicio').value;
-      const fechaFin = document.getElementById('filtroFechaFin').value;
-
-      if (!navigator.onLine) {
-        aplicarFiltrosLocales();
-        return;
-      }
-
-      let query = supabaseClient.from('tickets').select('*').order('created_at', { ascending: false });
-
-      if (filtroResp) query = query.eq('responsable', filtroResp);
-      if (filtroEst) query = query.eq('estatus', filtroEst);
-      if (fechaIni) query = query.gte('fecha', fechaIni);
-      if (fechaFin) query = query.lte('fecha', fechaFin);
-
-      const { data, error } = await query;
-
-      const statusEl = document.getElementById('conexionStatus');
-      if (error) {
-        console.error("Error al consultar la Base de Datos:", error);
-        if (statusEl) {
-          statusEl.className = "inline-flex items-center gap-1 text-[11px] text-red-500";
-          statusEl.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> Error de conexión`;
-        }
-        aplicarFiltrosLocales();
-        return;
-      }
-
-      actualizarEstadoConexionUI();
-
-      ticketsData = data || [];
-
-      // Guardar en caché local los datos frescos de Supabase
-      localStorage.setItem(TICKETS_CACHE_KEY, JSON.stringify(ticketsData));
-
-      let filtrados = ticketsData;
-      if (textoBuscador) {
-        filtrados = ticketsData.filter(t => 
-          (t.folio && t.folio.toString().toLowerCase().includes(textoBuscador)) || 
-          (t.falla && t.falla.toLowerCase().includes(textoBuscador))
-        );
-      }
-
       renderizarTickets(filtrados);
     }
   </script>
