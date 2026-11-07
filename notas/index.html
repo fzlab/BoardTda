@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-900">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../fonts.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Notas - T0151</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- SDK de Supabase v2 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            accent: '#0d9488'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        html, body { overscroll-behavior-y: contain; }
+        -webkit-tap-highlight-color: transparent;
+        body { user-select: none; -webkit-user-select: none; }
+        input, select, textarea, [contenteditable] { user-select: text; -webkit-user-select: text; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+        .dark ::-webkit-scrollbar-thumb { background: #334155; }
+        body, .card, .topbar, input, select, button {
+            transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+        }
+        .note-card h1, #verNotaContenido h1, #inputContenido h1 { font-size: 1.2rem; font-weight: bold; line-height: 1.3; margin: 0.2rem 0; }
+        .note-card h2, #verNotaContenido h2, #inputContenido h2 { font-size: 1.1rem; font-weight: bold; line-height: 1.3; margin: 0.2rem 0; }        
+        .notes-grid {
+            column-count: 2;
+            column-gap: 0.5rem;
+        }
+        @media (min-width: 640px) { .notes-grid { column-count: 2; column-gap: 0.75rem; } }
+        @media (min-width: 1024px) { .notes-grid { column-count: 3; column-gap: 0.75rem; } }
+        @media (min-width: 1280px) { .notes-grid { column-count: 4; column-gap: 0.75rem; } }
+        .note-card {
+            break-inside: avoid;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body class="h-full bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 flex flex-col font-sans overflow-hidden antialiased">
+    <div class="main-content flex-1 flex flex-col overflow-y-auto">        
+        <!-- Barra superior -->
+        <header class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-700/60 px-3 py-2 flex items-center justify-between shrink-0 z-50">
+            <div class="flex items-center space-x-2.5">
+                <!-- Botón de Inicio con icono House -->
+            <a href="../index.html" class="flex flex-col items-center justify-center px-2.5 py-1 bg-teal-500/10 hover:bg-teal-500/20 rounded-xl border border-teal-500/30 text-teal-600 dark:text-teal-400 text-[10px] font-semibold transition-colors cursor-pointer shadow-sm" title="Ir al Inicio">
+                <i data-lucide="house" class="w-4 h-4 mb-0.5"></i>
+                <span>INICIO</span>
+            </a>
+                <div>
+                    <h1 class="font-bold text-base leading-tight text-slate-900 dark:text-slate-100">Notas & Pendientes</h1>
+                    <p class="text-[11px] text-teal-600 dark:text-teal-400 flex items-center gap-1 font-medium">
+                        <span class="w-1.5 h-1.5 rounded-full bg-teal-500 dark:bg-teal-400 inline-block"></span> T0151 - Gran Plaza Mérida
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <!-- Widget del reloj -->
+                <div class="flex flex-col items-end px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700/60 text-right">
+                    <span id="liveClock" class="text-xs font-mono font-semibold text-teal-700 dark:text-teal-300">00:00:00</span>
+                    <span id="liveDate" class="text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-wider">--,--</span>
+                </div>
+                <!-- Botón Oscuro / Claro -->
+                <button id="btn-theme-toggle" class="w-7 h-7 flex items-center justify-center rounded-full bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 transition-colors" title="Cambiar modo">
+                    <i id="theme-icon" data-lucide="sun-moon" class="w-3.5 h-3.5 dark-icon"></i>
+                    <i data-lucide="sun" class="w-3.5 h-3.5 light-icon hidden"></i>
+                </button>
+            </div>
+        </header>
+        <!-- Contenido Principal -->
+        <div class="p-3 max-w-7xl mx-auto w-full space-y-4 flex-1 relative z-10">            
+            <!-- Barra de Acciones, Filtros y Estado Offline -->
+            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl p-3 shadow-md space-y-2.5">
+                <!-- Fila Superior: Estado de la Base de Datos y Botón Actualizar alineados -->
+                <div class="flex items-center justify-between pb-1 border-b border-slate-200 dark:border-slate-700/60">
+                    <span id="conexionStatus" class="inline-flex items-center gap-1 text-[10px] text-amber-500 font-bold uppercase tracking-wider"><i class="fa-solid fa-circle-dot"></i> Conectando...</span>
+                    <button onclick="actualizarDatosManual()" class="py-1 px-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700/40 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700/50 rounded-lg transition-all font-medium text-[10px] flex items-center justify-center gap-1 cursor-pointer" title="Actualizar datos">
+                        <i id="iconActualizar" class="fa-solid fa-rotate text-[9px]"></i> Actualizar
+                    </button>
+                </div>
+                <div class="space-y-2">
+                    <!-- Fila de Botones Secundarios (Categorías y Papelera) -->
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="abrirModalCategoria()" class="py-2 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700/50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/60 rounded-xl transition-all font-semibold text-xs flex items-center justify-center gap-1.5 cursor-pointer">
+                            <i class="fa-solid fa-folder-plus text-teal-600 dark:text-teal-400"></i> Categorías
+                        </button>
+                        <button onclick="toggleVistaPapelera()" id="btnPapelera" class="py-2 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700/50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/60 rounded-xl transition-all font-semibold text-xs flex items-center justify-center gap-1.5 cursor-pointer">
+                            <i class="fa-solid fa-trash-can text-rose-500"></i> Papelera <span id="badgePapeleraCount" class="hidden ml-1 px-1.5 py-0.2 bg-rose-500 text-white rounded-full text-[9px]">0</span>
+                        </button>
+                    </div>
+                    <!-- Botón Principal (Nueva Nota) -->
+                    <div>
+                        <button onclick="abrirModalNota()" class="w-full py-2.5 px-4 bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 text-teal-700 dark:text-teal-300 rounded-xl transition-all font-bold text-xs shadow-sm flex items-center justify-center gap-2 cursor-pointer">
+                            <i class="fa-solid fa-plus text-teal-600 dark:text-teal-400"></i> Nueva Nota
+                        </button>
+                    </div>
+                </div>
+                <!-- Buscador y Filtros -->
+                <div class="grid grid-cols-3 gap-1.5 pt-2 border-t border-slate-200 dark:border-slate-700/60 text-xs">
+                    <!-- Buscador -->
+                    <div class="relative min-w-0">
+                        <input type="text" id="filtroBuscador" placeholder="Buscar..." oninput="filtrarNotas()" class="w-full bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/50 rounded-xl px-2 py-1.5 text-slate-800 dark:text-slate-200 outline-none focus:border-teal-500 text-[10px] sm:text-[11px] leading-tight">
+                    </div>
+                    <!-- Filtro por Categoría -->
+                    <div class="min-w-0">
+                        <input type="hidden" id="filtroCategoria" value="" onchange="filtrarNotas()">
+                        <div class="dropdown relative inline-block w-full">
+                            <button type="button" id="btn_filtroCategoria" class="w-full h-7 flex items-center justify-between px-1.5 sm:px-2 rounded-xl text-[10px] font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-900/40 dark:hover:bg-slate-700/60 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/60 transition-colors" onclick="toggleDropdown(event, 'menu_filtroCategoria')">
+                                <span id="text_filtroCategoria" class="truncate">Categorías</span> <i class="fa-solid fa-chevron-down text-[8px] ml-0.5 shrink-0"></i>
+                            </button>
+                            <div id="menu_filtroCategoria" class="dropdown-content hidden absolute left-0 mt-1 bg-white dark:bg-slate-800 w-full shadow-xl border border-slate-200 dark:border-slate-700 rounded-xl z-[9999] py-1 text-left"></div>
+                        </div>
+                    </div>
+                    <!-- Filtro por Estatus y Fechas -->
+                    <div class="min-w-0">
+                        <input type="hidden" id="filtroEstatus" value="" onchange="filtrarNotas()">
+                        <div class="dropdown relative inline-block w-full">
+                            <button type="button" id="btn_filtroEstatus" class="w-full h-7 flex items-center justify-between px-1.5 sm:px-2 rounded-xl text-[10px] font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-900/40 dark:hover:bg-slate-700/60 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/60 transition-colors" onclick="toggleDropdown(event, 'menu_filtroEstatus')">
+                                <span id="text_filtroEstatus" class="truncate">Estatus</span> <i class="fa-solid fa-chevron-down text-[8px] ml-0.5 shrink-0"></i>
+                            </button>
+                            <div id="menu_filtroEstatus" class="dropdown-content hidden absolute left-0 mt-1 bg-white dark:bg-slate-800 w-full shadow-xl border border-slate-200 dark:border-slate-700 rounded-xl z-[9999] py-1 text-left">
+                                <button type="button" onclick="seleccionarOpcionDropdown('filtroEstatus', 'text_filtroEstatus', 'menu_filtroEstatus', '', 'Todos')" class="w-full px-3 py-2 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60">Todos</button>
+                                <button type="button" onclick="seleccionarOpcionDropdown('filtroEstatus', 'text_filtroEstatus', 'menu_filtroEstatus', 'favorito', '⭐ Favoritas')" class="w-full px-3 py-2 text-left text-xs font-semibold text-amber-600 dark:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-700/60">⭐ Favoritas</button>
+                                <button type="button" onclick="seleccionarOpcionDropdown('filtroEstatus', 'text_filtroEstatus', 'menu_filtroEstatus', 'con_recordatorio', '🔔 Con Recordatorio')" class="w-full px-3 py-2 text-left text-xs font-semibold text-teal-600 dark:text-teal-400 hover:bg-slate-100 dark:hover:bg-slate-700/60">🔔 Con Recordatorio</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contenedor Estilo Keep -->
+            <div id="seccionesContainer" class="space-y-4">
+                <div id="seccionFavoritasContainer" class="space-y-2 hidden">
+                    <h3 class="text-xs font-bold text-amber-500 dark:text-amber-400 uppercase tracking-wider px-1 flex items-center gap-1">
+                        <i class="fa-solid fa-star text-[10px]"></i> Favoritas
+                    </h3>
+                    <div id="notasFavoritasContainer" class="notes-grid w-full"></div>
+                </div>
+                <div id="seccionOtrasContainer" class="space-y-2">
+                    <h3 id="tituloSeccionOtras" class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider px-1 hidden">Otras</h3>
+                    <div id="notasContainer" class="notes-grid w-full">
+                        <!-- Se llena dinámicamente -->
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Modal Ver / Maximizar Nota -->
+    <div class="modal fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[10000] flex items-center justify-center p-4" id="modalVerNota" style="display: none;">
+        <div id="modalVerNotaContent" class="modal-content border rounded-2xl p-5 w-full max-w-lg shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <input type="hidden" id="verNotaIdActual">
+            <div class="flex items-center justify-between border-b border-slate-200/50 dark:border-slate-700/50 pb-3">
+                <span id="verNotaCategoriaBadge" class="px-2.5 py-0.5 rounded-full font-semibold bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20 text-xs">Sin categoría</span>
+                <div class="flex items-center gap-1.5">
+                    <button id="btnVerCompartir" onclick="" class="p-1.5 bg-teal-500/10 border border-teal-500/30 text-teal-600 dark:text-teal-400 rounded-lg hover:bg-teal-500/20 text-xs font-semibold flex items-center justify-center cursor-pointer" title="Compartir nota por WhatsApp">
+                        <i class="fa-solid fa-share-nodes text-[11px]"></i>
+                    </button>
+                    <button id="btnVerEditar" onclick="" class="p-1.5 bg-teal-500/10 border border-teal-500/30 text-teal-600 dark:text-teal-400 rounded-lg hover:bg-teal-500/20 text-xs font-semibold flex items-center justify-center cursor-pointer" title="Editar nota">
+                        <i class="fa-solid fa-pen text-[11px]"></i>
+                    </button>
+                    <span class="close-modal text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer text-xl font-bold px-1" onclick="cerrarModalVerNota()">×</span>
+                </div>
+            </div>
+            <div class="space-y-3">
+                <h3 id="verNotaTitulo" class="text-base font-bold text-slate-900 dark:text-slate-100"></h3>
+                <div id="verNotaRecordatorioBadge" class="hidden text-xs text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1.5">
+                    <i class="fa-solid fa-clock"></i> <span id="verNotaRecordatorioText"></span>
+                </div>
+                <div id="verNotaContenido" class="text-xs text-slate-700 dark:text-slate-300 leading-relaxed space-y-1"></div>
+            </div>
+            <div class="mt-4 flex justify-end">
+                <button onclick="cerrarModalVerNota()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold rounded-xl text-xs cursor-pointer">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Crear / Editar Nota -->
+    <div class="modal fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[10000] flex items-center justify-center p-4" id="modalNota" style="display: none;">
+        <div class="modal-content bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 w-full max-w-md shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-3">
+                <h3 id="modalNotaTitulo" class="text-base font-bold text-slate-900 dark:text-slate-100">Crear Nota</h3>
+                <span class="close-modal text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer text-xl font-bold" onclick="cerrarModalNota()">×</span>
+            </div>
+            <input type="hidden" id="editNotaId">
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="font-semibold text-slate-600 dark:text-slate-400 block mb-1">Título</label>
+                    <input type="text" id="inputTitulo" placeholder="Título de la nota..." class="w-full bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/50 rounded-xl px-3 py-2 font-bold text-slate-800 dark:text-slate-200 outline-none">
+                </div>
+                <div>
+                    <label class="font-semibold text-slate-600 dark:text-slate-400 block mb-1">Categoría</label>
+                    <input type="hidden" id="inputCategoriaId" value="">
+                    <div class="dropdown relative inline-block w-full">
+                        <button type="button" id="btn_inputCategoria" class="w-full h-8 flex items-center justify-between px-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-900/40 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/50 transition-colors" onclick="toggleDropdown(event, 'menu_inputCategoria')">
+                            <span id="text_inputCategoria" class="truncate">Sin categoría</span> <i class="fa-solid fa-chevron-down" style="font-size: 9px; margin-left: 2px;"></i>
+                        </button>
+                        <div id="menu_inputCategoria" class="dropdown-content hidden absolute left-0 mt-1 bg-white dark:bg-slate-800 w-full shadow-xl border border-slate-200 dark:border-slate-700 rounded-xl z-[9999] py-1 text-left"></div>
+                    </div>
+                </div>
+                <div>
+                    <label class="font-semibold text-slate-600 dark:text-slate-400 block mb-1">Recordatorio / Fecha Límite</label>
+                    <input type="datetime-local" id="inputRecordatorio" class="w-full bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/50 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-200 outline-none">
+                </div>
+                <div>
+                    <label class="font-semibold text-slate-600 dark:text-slate-400 block mb-1">Color de Nota</label>
+                    <input type="hidden" id="inputColorNota" value="default">
+                    <div class="flex items-center gap-2 pt-1" id="paletteContainer">
+                        <button type="button" onclick="seleccionarColorNota('default')" class="w-6 h-6 rounded-full bg-white dark:bg-slate-700 border-2 border-slate-300 dark:border-slate-600 hover:scale-110 transition-transform shadow-sm" data-color="default" title="Predeterminado"></button>
+                        <button type="button" onclick="seleccionarColorNota('slate')" class="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-600 border-2 border-transparent hover:scale-110 transition-transform shadow-sm" data-color="slate" title="Gris"></button>
+                        <button type="button" onclick="seleccionarColorNota('amber')" class="w-6 h-6 rounded-full bg-amber-100 dark:bg-amber-950/60 border-2 border-transparent hover:scale-110 transition-transform shadow-sm" data-color="amber" title="Amarillo"></button>
+                        <button type="button" onclick="seleccionarColorNota('emerald')" class="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-950/60 border-2 border-transparent hover:scale-110 transition-transform shadow-sm" data-color="emerald" title="Verde"></button>
+                        <button type="button" onclick="seleccionarColorNota('teal')" class="w-6 h-6 rounded-full bg-teal-100 dark:bg-teal-950/60 border-2 border-transparent hover:scale-110 transition-transform shadow-sm" data-color="teal" title="Teal"></button>
+                        <button type="button" onclick="seleccionarColorNota('rose')" class="w-6 h-6 rounded-full bg-rose-100 dark:bg-rose-950/60 border-2 border-transparent hover:scale-110 transition-transform shadow-sm" data-color="rose" title="Rosa"></button>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="font-semibold text-slate-600 dark:text-slate-400">Contenido / Tareas</label>
+                        <button type="button" onclick="alternarModoLista()" id="btnAlternarLista" class="text-[11px] text-teal-600 dark:text-teal-400 font-semibold hover:underline">Cambiar a Lista de Tareas</button>
+                    </div>
+                    <input type="hidden" id="inputEsLista" value="false">
+                    
+                    <div id="wrapNotaTexto">
+                        <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700/60 rounded-t-xl px-2 py-1.5 text-slate-600 dark:text-slate-300 text-xs">
+                            <button type="button" onclick="aplicarFormato('formatBlock', '<h1>')" class="px-2 py-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded font-bold" title="Encabezado 1">H1</button>
+                            <button type="button" onclick="aplicarFormato('formatBlock', '<h2>')" class="px-2 py-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded font-bold" title="Encabezado 2">H2</button>
+                            <span class="w-[1px] h-4 bg-slate-300 dark:bg-slate-700 mx-1"></span>
+                            <button type="button" id="btnBold" onclick="aplicarFormato('bold')" class="px-2.5 py-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded font-bold transition-colors" title="Negrita"><i class="fa-solid fa-bold"></i></button>
+                            <button type="button" id="btnItalic" onclick="aplicarFormato('italic')" class="px-2.5 py-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded italic transition-colors" title="Cursiva"><i class="fa-solid fa-italic"></i></button>
+                            <button type="button" id="btnUnderline" onclick="aplicarFormato('underline')" class="px-2.5 py-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded underline transition-colors" title="Subrayado"><i class="fa-solid fa-underline"></i></button>
+                        </div>
+                        <div id="inputContenido" contenteditable="true" onkeyup="actualizarEstadoBotonesFormat()" onmouseup="actualizarEstadoBotonesFormat()" class="w-full bg-slate-50 dark:bg-slate-900/40 border border-t-0 border-slate-200 dark:border-slate-700/50 rounded-b-xl px-3 py-2.5 text-slate-800 dark:text-slate-200 outline-none leading-relaxed min-h-[120px] max-h-[220px] overflow-y-auto"></div>
+                    </div>
+
+                    <div id="wrapNotaLista" class="hidden space-y-1.5">
+                        <div class="flex gap-2">
+                            <input type="text" id="inputNuevaTarea" placeholder="Añadir elemento de lista..." class="flex-1 bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/50 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-200 outline-none" onkeypress="if(event.key==='Enter'){event.preventDefault(); agregarItemChecklist();}">
+                            <button type="button" onclick="agregarItemChecklist()" class="px-3 py-2 bg-teal-500/10 border border-teal-500/30 text-teal-600 dark:text-teal-400 rounded-xl font-semibold">Agregar</button>
+                        </div>
+                        <div id="checklistItemsContainer" class="space-y-1 max-h-40 overflow-y-auto pr-1"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 flex justify-end gap-2">
+                <button onclick="cerrarModalNota()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold rounded-xl text-xs">Cancelar</button>
+                <button onclick="guardarNota()" class="px-4 py-2 bg-teal-500/10 border border-teal-500/30 text-teal-600 dark:text-teal-400 rounded-lg hover:bg-teal-500/25 shadow-md font-semibold">Guardar Nota</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Gestionar Categorías -->
+    <div class="modal fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[10000] flex items-center justify-center p-4" id="modalCategoria" style="display: none;">
+        <div class="modal-content bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 w-full max-w-sm shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-3">
+                <h3 class="text-base font-bold text-slate-900 dark:text-slate-100">Gestionar Categorías</h3>
+                <span class="close-modal text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer text-xl font-bold" onclick="cerrarModalCategoria()">×</span>
+            </div>
+            <div class="space-y-3 text-xs">
+                <div class="flex gap-2">
+                    <input type="text" id="nuevaCategoriaNombre" placeholder="Nueva categoría..." class="flex-1 bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/50 rounded-xl px-3 py-2 font-semibold text-slate-800 dark:text-slate-200 outline-none" onkeypress="if(event.key==='Enter'){event.preventDefault(); crearCategoria();}">
+                    <button onclick="crearCategoria()" class="px-3 py-2 bg-teal-500/10 border border-teal-500/30 text-teal-600 dark:text-teal-400 rounded-xl font-semibold shadow-sm">Agregar</button>
+                </div>
+                <div id="listaCategoriasContainer" class="space-y-1.5 max-h-48 overflow-y-auto pr-1"></div>
+            </div>
+            <div class="mt-4 flex justify-end">
+                <button onclick="cerrarModalCategoria()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold rounded-xl text-xs">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Alerta -->
+    <div id="alertModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[10010] flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 w-full max-w-sm shadow-2xl text-center space-y-4">
+            <div class="w-10 h-10 bg-teal-500/10 border border-teal-500/20 text-teal-600 dark:text-teal-400 rounded-full flex items-center justify-center mx-auto">
+                <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+            </div>
+            <p id="alertModalText" class="text-xs font-semibold text-slate-700 dark:text-slate-200 leading-relaxed">Mensaje</p>
+            <button onclick="cerrarModalAlerta()" class="py-2 px-4 rounded-xl bg-teal-500/10 hover:bg-teal-500/20 text-teal-600 dark:text-teal-400 border border-teal-500/30 text-xs shadow-md font-semibold cursor-pointer">Aceptar</button>
+        </div>
+    </div>
+
+    <!-- Modal Confirmación -->
+    <div id="confirmModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[10005] flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 w-full max-w-sm shadow-2xl text-center space-y-4">
+            <div class="w-10 h-10 bg-rose-500/10 border border-rose-500/20 text-rose-500 rounded-full flex items-center justify-center mx-auto">
+                <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+            </div>
+            <p id="confirmModalText" class="text-xs font-semibold text-slate-700 dark:text-slate-200 leading-relaxed">¿Desea continuar?</p>
+            <div class="flex justify-center items-center gap-2 w-full">
+                <button onclick="cerrarModalConfirmacion(false)" class="py-2 px-4 bg-teal-500/10 border border-teal-500/30 text-teal-600 dark:text-teal-400 rounded-xl hover:bg-teal-500/20 transition-all font-semibold text-xs shadow-md cursor-pointer shrink-0">Cancelar</button>
+                <button onclick="cerrarModalConfirmacion(true)" class="py-2 px-4 bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 rounded-xl hover:bg-red-500/20 transition-all font-semibold text-xs shadow-md cursor-pointer shrink-0">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = "https://mifbcyxtafeacwkzqzsq.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_O6EAbkSba1NQPq08k_7bHg_PZ_x4ZU5";
+        const NOTAS_CACHE_KEY = 'keep_notes_cache_data';
+        const CATEGORIAS_CACHE_KEY = 'keep_categories_cache_data';
+        
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        let notasData = [];
+        let categoriasData = [];
+        let enVistaPapelera = false;
+        let checklistEditItems = [];
+
+        const btnThemeToggle = document.getElementById('btn-theme-toggle');
+        const htmlElement = document.documentElement;
+        function setTheme(isDark) {
+            if (isDark) {
+                htmlElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                htmlElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            lucide.createIcons();
+        }
+        const savedTheme = localStorage.getItem('theme');
+        setTheme(savedTheme !== 'light');
+        btnThemeToggle.addEventListener('click', () => {
+            setTheme(!htmlElement.classList.contains('dark'));
+        });
+        lucide.createIcons();
+
+        window.onclick = function(event) {
+            if (!event.target.closest('.dropdown')) {
+                const dropdowns = document.getElementsByClassName("dropdown-content");
+                for (let i = 0; i < dropdowns.length; i++) {
+                    let openDropdown = dropdowns[i];
+                    if (!openDropdown.classList.contains('hidden')) openDropdown.classList.add('hidden');
+                }
+            }
+        }
+        function toggleDropdown(event, dropdownId) {
+            event.stopPropagation();
+            const dropdowns = document.getElementsByClassName("dropdown-content");
+            for (let i = 0; i < dropdowns.length; i++) {
+                if (dropdowns[i].id !== dropdownId) dropdowns[i].classList.add('hidden');
+            }
+            document.getElementById(dropdownId).classList.toggle('hidden');
+        }
+        function seleccionarOpcionDropdown(inputId, spanId, menuId, valor, labelTexto) {
+            const input = document.getElementById(inputId);
+            const span = document.getElementById(spanId);
+            if (input && span) {
+                input.value = valor;
+                span.textContent = labelTexto;
+                input.dispatchEvent(new Event('change'));
+            }
+            document.getElementById(menuId).classList.add('hidden');
+        }
+
+        function aplicarFormato(command, value = null) {
+            document.execCommand(command, false, value);
+            document.getElementById('inputContenido').focus();
+            actualizarEstadoBotonesFormat();
+        }
+
+        function actualizarEstadoBotonesFormat() {
+            try {
+                const isBold = document.queryCommandState('bold');
+                const isItalic = document.queryCommandState('italic');
+                const isUnderline = document.queryCommandState('underline');
+
+                const btnBold = document.getElementById('btnBold');
+                const btnItalic = document.getElementById('btnItalic');
+                const btnUnderline = document.getElementById('btnUnderline');
+
+                if (btnBold) {
+                    if (isBold) btnBold.classList.add('bg-teal-500/20', 'text-teal-600', 'dark:text-teal-400');
+                    else btnBold.classList.remove('bg-teal-500/20', 'text-teal-600', 'dark:text-teal-400');
+                }
+                if (btnItalic) {
+                    if (isItalic) btnItalic.classList.add('bg-teal-500/20', 'text-teal-600', 'dark:text-teal-400');
+                    else btnItalic.classList.remove('bg-teal-500/20', 'text-teal-600', 'dark:text-teal-400');
+                }
+                if (btnUnderline) {
+                    if (isUnderline) btnUnderline.classList.add('bg-teal-500/20', 'text-teal-600', 'dark:text-teal-400');
+                    else btnUnderline.classList.remove('bg-teal-500/20', 'text-teal-600', 'dark:text-teal-400');
+                }
+            } catch (e) {}
+        }
+
+        function seleccionarColorNota(color) {
+            document.getElementById('inputColorNota').value = color;
+            const buttons = document.querySelectorAll('#paletteContainer button');
+            buttons.forEach(btn => {
+                if (btn.getAttribute('data-color') === color) {
+                    btn.classList.add('ring-2', 'ring-teal-500', 'scale-110');
+                } else {
+                    btn.classList.remove('ring-2', 'ring-teal-500', 'scale-110');
+                }
+            });
+        }
+
+        function alternarModoLista() {
+            const esListaInput = document.getElementById('inputEsLista');
+            const wrapTexto = document.getElementById('wrapNotaTexto');
+            const wrapLista = document.getElementById('wrapNotaLista');
+            const btnAlternar = document.getElementById('btnAlternarLista');
+
+            if (esListaInput.value === 'false') {
+                esListaInput.value = 'true';
+                wrapTexto.classList.add('hidden');
+                wrapLista.classList.remove('hidden');
+                btnAlternar.textContent = 'Cambiar a Nota de Texto';
+                renderizarChecklistModal();
+            } else {
+                esListaInput.value = 'false';
+                wrapLista.classList.add('hidden');
+                wrapTexto.classList.remove('hidden');
+                btnAlternar.textContent = 'Cambiar a Lista de Tareas';
+            }
+        }
+
+        function agregarItemChecklist() {
+            const input = document.getElementById('inputNuevaTarea');
+            const texto = input.value.trim();
+            if (!texto) return;
+            checklistEditItems.push({ id: 'item_' + Date.now() + Math.random().toString(36).substr(2, 4), texto, completado: false });
+            input.value = '';
+            renderizarChecklistModal();
+        }
+
+        function eliminarItemChecklist(index) {
+            checklistEditItems.splice(index, 1);
+            renderizarChecklistModal();
+        }
+
+        function renderizarChecklistModal() {
+            const container = document.getElementById('checklistItemsContainer');
+            if (checklistEditItems.length === 0) {
+                container.innerHTML = `<p class="text-slate-400 text-xs text-center py-2">No hay elementos en la lista.</p>`;
+                return;
+            }
+            container.innerHTML = checklistEditItems.map((item, idx) => `
+                <div class="flex items-center justify-between bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/50 px-2.5 py-1.5 rounded-xl text-xs">
+                    <div class="flex items-center gap-2 flex-1 min-w-0">
+                        <input type="checkbox" ${item.completado ? 'checked' : ''} onchange="checklistEditItems[${idx}].completado = this.checked;" class="w-4 h-4 accent-teal-500 rounded shrink-0">
+                        <span class="truncate ${item.completado ? 'line-through text-slate-400' : 'text-slate-800 dark:text-slate-200'}">${item.texto}</span>
+                    </div>
+                    <button type="button" onclick="eliminarItemChecklist(${idx})" class="text-rose-500 hover:text-rose-700 p-1 shrink-0"><i class="fa-solid fa-trash-can"></i></button>
+                </div>
+            `).join('');
+        }
+
+        function populateSelectsCategorias() {
+            let htmlFiltro = `<button type="button" onclick="seleccionarOpcionDropdown('filtroCategoria', 'text_filtroCategoria', 'menu_filtroCategoria', '', 'Todas')" class="w-full px-3 py-2 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60">Todas</button>`;
+            htmlFiltro += `<button type="button" onclick="seleccionarOpcionDropdown('filtroCategoria', 'text_filtroCategoria', 'menu_filtroCategoria', 'sin_categoria', 'Sin categoría')" class="w-full px-3 py-2 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60">Sin categoría</button>`;
+            
+            categoriasData.forEach(cat => {
+                htmlFiltro += `<button type="button" onclick="seleccionarOpcionDropdown('filtroCategoria', 'text_filtroCategoria', 'menu_filtroCategoria', '${cat.id}', '${cat.nombre}')" class="w-full px-3 py-2 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60">${cat.nombre}</button>`;
+            });
+            document.getElementById('menu_filtroCategoria').innerHTML = htmlFiltro;
+
+            let htmlModal = `<button type="button" onclick="seleccionarOpcionDropdown('inputCategoriaId', 'text_inputCategoria', 'menu_inputCategoria', '', 'Sin categoría')" class="w-full px-3 py-2 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60">Sin categoría</button>`;
+            categoriasData.forEach(cat => {
+                htmlModal += `<button type="button" onclick="seleccionarOpcionDropdown('inputCategoriaId', 'text_inputCategoria', 'menu_inputCategoria', '${cat.id}', '${cat.nombre}')" class="w-full px-3 py-2 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60">${cat.nombre}</button>`;
+            });
+            document.getElementById('menu_inputCategoria').innerHTML = htmlModal;
+        }
+
+        let confirmCallback = null;
+        function mostrarAlerta(texto) {
+            document.getElementById('alertModalText').innerText = texto;
+            document.getElementById('alertModal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+        function cerrarModalAlerta() { document.getElementById('alertModal').classList.add('hidden'); }
+        function mostrarConfirmacion(texto, callback) {
+            document.getElementById('confirmModalText').innerHTML = texto;
+            document.getElementById('confirmModal').classList.remove('hidden');
+            confirmCallback = callback;
+            lucide.createIcons();
+        }
+        function cerrarModalConfirmacion(res) {
+            document.getElementById('confirmModal').classList.add('hidden');
+            if (confirmCallback) { confirmCallback(res); confirmCallback = null; }
+        }
+
+        function initClock() {
+            const updateClock = () => {
+                const now = new Date();
+                document.getElementById('liveClock').textContent = now.toLocaleTimeString();
+                document.getElementById('liveDate').textContent = now.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+            };
+            updateClock();
+            setInterval(updateClock, 1000);
+        }
+
+        function formatearFechaRecordatorio(fechaStr) {
+            if (!fechaStr) return '';
+            const fecha = new Date(fechaStr);
+            return fecha.toLocaleString('es-ES', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+
+        function convertirContenidoAWhatsApp(nota) {
+            const catObj = categoriasData.find(c => c.id == nota.categoria_id);
+            const nombreCat = catObj ? catObj.nombre : 'Sin categoría';
+            const tituloTexto = nota.titulo ? `*${nota.titulo}*` : '';
+            const categoriaTexto = `📂 _Categoría: ${nombreCat}_`;
+
+            let cuerpoTexto = '';
+            if (nota.checklist_items && nota.checklist_items.length > 0) {
+                cuerpoTexto = nota.checklist_items.map(item => `${item.completado ? '☑' : '☐'} ${item.texto}`).join('\n');
+            } else if (nota.contenido) {
+                let tempDiv = document.createElement('div');
+                tempDiv.innerHTML = nota.contenido;
+                tempDiv.querySelectorAll('b, strong').forEach(el => { el.outerHTML = `*${el.textContent}*`; });
+                tempDiv.querySelectorAll('i, em').forEach(el => { el.outerHTML = `_${el.textContent}_`; });
+                tempDiv.querySelectorAll('u').forEach(el => { el.outerHTML = `~${el.textContent}~`; });
+                tempDiv.querySelectorAll('h1, h2').forEach(el => { el.outerHTML = `*${el.textContent.toUpperCase()}*\n`; });
+                tempDiv.querySelectorAll('div').forEach(el => { el.outerHTML = `${el.innerHTML}\n`; });
+                cuerpoTexto = tempDiv.textContent.replace(/\n\s*\n/g, '\n').trim();
+            }
+
+            return `${tituloTexto}\n${categoriaTexto}\n\n${cuerpoTexto}`.trim();
+        }
+
+        function compartirNotaWhatsApp(id) {
+            const nota = notasData.find(n => n.id == id);
+            if (!nota) return;
+            const mensajeFinal = convertirContenidoAWhatsApp(nota);
+            const urlWhatsApp = `https://api.whatsapp.com/send?text=${encodeURIComponent(mensajeFinal)}`;
+            window.open(urlWhatsApp, '_blank');
+        }
+
+        function obtenerColaPendiente() { return JSON.parse(localStorage.getItem('cola_keep_offline') || '[]'); }
+        function guardarColaPendiente(cola) { localStorage.setItem('cola_keep_offline', JSON.stringify(cola)); }
+        
+        function agregarAColaOffline(accion, tipo, payload) {
+            const cola = obtenerColaPendiente();
+            cola.push({ idTemp: Date.now(), accion, tipo, payload });
+            guardarColaPendiente(cola);
+            actualizarEstadoConexionUI();
+        }
+
+        function actualizarEstadoConexionUI() {
+            const statusEl = document.getElementById('conexionStatus');
+            const cola = obtenerColaPendiente();
+            
+            const countPapelera = notasData.filter(n => n.en_papelera).length;
+            const badgePapelera = document.getElementById('badgePapeleraCount');
+            if (countPapelera > 0) {
+                badgePapelera.textContent = countPapelera;
+                badgePapelera.classList.remove('hidden');
+            } else {
+                badgePapelera.classList.add('hidden');
+            }
+
+            if (!navigator.onLine) {
+                statusEl.className = "inline-flex items-center gap-1 text-[10px] text-amber-500 font-bold uppercase tracking-wider";
+                statusEl.innerHTML = `<i class="fa-solid fa-wifi"></i> Sin Conexión (${cola.length})`;
+            } else if (cola.length > 0) {
+                statusEl.className = "inline-flex items-center gap-1 text-[10px] text-amber-500 font-bold uppercase tracking-wider animate-pulse";
+                statusEl.innerHTML = `<i class="fa-solid fa-arrows-rotate fa-spin"></i> Sincronizando (${cola.length})...`;
+            } else {
+                statusEl.className = "inline-flex items-center gap-1 text-[10px] text-emerald-500 font-semibold uppercase tracking-wider";
+                statusEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> Base de Datos: En Línea`;
+            }
+        }
+
+        async function procesarSincronizacionOffline() {
+            const cola = obtenerColaPendiente();
+            if (cola.length === 0 || !navigator.onLine) return;
+            const colaFallida = [];
+
+            for (const item of cola) {
+                let error = null;
+                const tabla = item.tipo === 'NOTA' ? 'notas' : 'categorias';
+
+                if (item.accion === 'CREAR') {
+                    const { id, ...data } = item.payload;
+                    const { error: err } = await supabaseClient.from(tabla).insert([data]);
+                    error = err;
+                } else if (item.accion === 'EDITAR') {
+                    const { error: err } = await supabaseClient.from(tabla).update(item.payload).eq('id', item.payload.id);
+                    error = err;
+                } else if (item.accion === 'ELIMINAR') {
+                    const { error: err } = await supabaseClient.from(tabla).delete().eq('id', item.payload.id);
+                    error = err;
+                }
+                if (error) colaFallida.push(item);
+            }
+            guardarColaPendiente(colaFallida);
+            actualizarEstadoConexionUI();
+            if (colaFallida.length === 0 && cola.length > 0) {
+                mostrarAlerta('¡Cambios locales sincronizados con éxito!');
+            }
+            await cargarDatosRemotos();
+        }
+
+        window.addEventListener('online', () => { procesarSincronizacionOffline(); });
+        window.addEventListener('offline', () => { actualizarEstadoConexionUI(); });
+
+        window.onload = async function() {
+            initClock();
+            
+            const cacheNotas = localStorage.getItem(NOTAS_CACHE_KEY);
+            const cacheCats = localStorage.getItem(CATEGORIAS_CACHE_KEY);
+            if (cacheCats) categoriasData = JSON.parse(cacheCats);
+            if (cacheNotas) notasData = JSON.parse(cacheNotas);
+
+            populateSelectsCategorias();
+            aplicarFiltrosLocales();
+
+            if (navigator.onLine) {
+                await procesarSincronizacionOffline();
+                await cargarDatosRemotos();
+            } else {
+                actualizarEstadoConexionUI();
+            }
+
+            // Inicializar Supabase Realtime para sincronización multi-dispositivo en vivo
+            inicializarRealtime();
+        };
+
+        function inicializarRealtime() {
+            supabaseClient
+                .channel('t0151_realtime_channel')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'notas' }, payload => {
+                    manejarCambioRealtimeNota(payload);
+                })
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'categorias' }, payload => {
+                    manejarCambioRealtimeCategoria(payload);
+                })
+                .subscribe();
+        }
+
+        function manejarCambioRealtimeNota(payload) {
+            const { eventType, new: newRecord, old: oldRecord } = payload;
+            if (eventType === 'INSERT') {
+                if (!notasData.some(n => n.id === newRecord.id)) {
+                    notasData.unshift(newRecord);
+                }
+            } else if (eventType === 'UPDATE') {
+                const index = notasData.findIndex(n => n.id === newRecord.id);
+                if (index !== -1) {
+                    notasData[index] = newRecord;
+                } else {
+                    notasData.unshift(newRecord);
+                }
+            } else if (eventType === 'DELETE') {
+                notasData = notasData.filter(n => n.id !== oldRecord.id);
+            }
+            notasData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            localStorage.setItem(NOTAS_CACHE_KEY, JSON.stringify(notasData));
+            aplicarFiltrosLocales();
+        }
+
+        async function manejarCambioRealtimeCategoria(payload) {
+            const resCats = await supabaseClient.from('categorias').select('*').order('nombre', { ascending: true });
+            if (!resCats.error) {
+                categoriasData = resCats.data || [];
+                localStorage.setItem(CATEGORIAS_CACHE_KEY, JSON.stringify(categoriasData));
+                populateSelectsCategorias();
+                aplicarFiltrosLocales();
+            }
+        }
+
+        async function actualizarDatosManual() {
+            const icono = document.getElementById('iconActualizar');
+            if (icono) icono.classList.add('fa-spin');
+            if (navigator.onLine) {
+                await procesarSincronizacionOffline();
+            }
+            await cargarDatosRemotos();
+            if (icono) {
+                setTimeout(() => icono.classList.remove('fa-spin'), 500);
+            }
+        }
+
+        async function cargarDatosRemotos() {
+            if (!navigator.onLine) {
+                aplicarFiltrosLocales();
+                return;
+            }
+            const resCats = await supabaseClient.from('categorias').select('*').order('nombre', { ascending: true });
+            if (!resCats.error) {
+                categoriasData = resCats.data || [];
+                localStorage.setItem(CATEGORIAS_CACHE_KEY, JSON.stringify(categoriasData));
+            }
+
+            const resNotas = await supabaseClient.from('notas').select('*').order('created_at', { ascending: false });
+            if (!resNotas.error) {
+                notasData = resNotas.data || [];
+                localStorage.setItem(NOTAS_CACHE_KEY, JSON.stringify(notasData));
+            }
+
+            populateSelectsCategorias();
+            aplicarFiltrosLocales();
+            actualizarEstadoConexionUI();
+        }
+
+        function abrirModalNota(id = null) {
+            document.getElementById('modalNota').style.display = 'flex';
+            populateSelectsCategorias();
+            checklistEditItems = [];
+            
+            if (id !== null) {
+                const nota = notasData.find(n => n.id == id);
+                if (nota) {
+                    document.getElementById('modalNotaTitulo').innerText = 'Editar Nota';
+                    document.getElementById('editNotaId').value = nota.id;
+                    document.getElementById('inputTitulo').value = nota.titulo || '';
+                    document.getElementById('inputCategoriaId').value = nota.categoria_id || '';
+                    document.getElementById('inputRecordatorio').value = nota.recordatorio ? nota.recordatorio.slice(0, 16) : '';
+                    
+                    const catObj = categoriasData.find(c => c.id == nota.categoria_id);
+                    document.getElementById('text_inputCategoria').textContent = catObj ? catObj.nombre : 'Sin categoría';
+                    
+                    const colorNota = nota.color_nota || 'default';
+                    seleccionarColorNota(colorNota);
+
+                    if (nota.checklist_items && nota.checklist_items.length > 0) {
+                        document.getElementById('inputEsLista').value = 'true';
+                        document.getElementById('wrapNotaTexto').classList.add('hidden');
+                        document.getElementById('wrapNotaLista').classList.remove('hidden');
+                        document.getElementById('btnAlternarLista').textContent = 'Cambiar a Nota de Texto';
+                        checklistEditItems = JSON.parse(JSON.stringify(nota.checklist_items));
+                        renderizarChecklistModal();
+                    } else {
+                        document.getElementById('inputEsLista').value = 'false';
+                        document.getElementById('inputContenido').innerHTML = nota.contenido || '';
+                        document.getElementById('wrapNotaLista').classList.add('hidden');
+                        document.getElementById('wrapNotaTexto').classList.remove('hidden');
+                        document.getElementById('btnAlternarLista').textContent = 'Cambiar a Lista de Tareas';
+                    }
+                }
+            } else {
+                document.getElementById('modalNotaTitulo').innerText = 'Crear Nota';
+                document.getElementById('editNotaId').value = '';
+                document.getElementById('inputTitulo').value = '';
+                document.getElementById('inputContenido').innerHTML = '';
+                document.getElementById('inputCategoriaId').value = '';
+                document.getElementById('inputRecordatorio').value = '';
+                document.getElementById('text_inputCategoria').textContent = 'Sin categoría';
+                seleccionarColorNota('default');
+                document.getElementById('inputEsLista').value = 'false';
+                document.getElementById('wrapNotaLista').classList.add('hidden');
+                document.getElementById('wrapNotaTexto').classList.remove('hidden');
+                document.getElementById('btnAlternarLista').textContent = 'Cambiar a Lista de Tareas';
+            }
+            actualizarEstadoBotonesFormat();
+        }
+        function cerrarModalNota() { document.getElementById('modalNota').style.display = 'none'; }
+
+        function abrirModalVerNota(id) {
+            const nota = notasData.find(n => n.id == id);
+            if (!nota) return;
+            const catObj = categoriasData.find(c => c.id == nota.categoria_id);
+            const nombreCat = catObj ? catObj.nombre : 'Sin categoría';
+
+            document.getElementById('verNotaIdActual').value = nota.id;
+            document.getElementById('verNotaTitulo').textContent = nota.titulo || 'Sin título';
+            document.getElementById('verNotaCategoriaBadge').textContent = nombreCat;
+            document.getElementById('btnVerCompartir').setAttribute('onclick', `compartirNotaWhatsApp('${nota.id}')`);
+            document.getElementById('btnVerEditar').setAttribute('onclick', `cerrarModalVerNota(); abrirModalNota('${nota.id}')`);
+            
+            const recBadge = document.getElementById('verNotaRecordatorioBadge');
+            if (nota.recordatorio) {
+                document.getElementById('verNotaRecordatorioText').textContent = formatearFechaRecordatorio(nota.recordatorio);
+                recBadge.classList.remove('hidden');
+            } else {
+                recBadge.classList.add('hidden');
+            }
+
+            let htmlContenidoRender = '';
+            if (nota.checklist_items && nota.checklist_items.length > 0) {
+                htmlContenidoRender = `<div class="space-y-1.5">` + nota.checklist_items.map((item, idx) => `
+                    <div class="flex items-center gap-2 py-0.5">
+                        <input type="checkbox" ${item.completado ? 'checked' : ''} onchange="toggleItemChecklist('${nota.id}', ${idx})" class="w-4 h-4 accent-teal-500 rounded cursor-pointer shrink-0">
+                        <span class="${item.completado ? 'line-through text-slate-400' : 'text-slate-800 dark:text-slate-200'}">${item.texto}</span>
+                    </div>
+                `).join('') + `</div>`;
+            } else {
+                htmlContenidoRender = nota.contenido || '';
+            }
+
+            document.getElementById('verNotaContenido').innerHTML = htmlContenidoRender;
+
+            const modalContentEl = document.getElementById('modalVerNotaContent');
+            const colorClases = obtenerClasesColorNota(nota.color_nota);
+            modalContentEl.className = `modal-content border rounded-2xl p-5 w-full max-w-lg shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto transition-colors ${colorClases}`;
+
+            document.getElementById('modalVerNota').style.display = 'flex';
+        }
+
+        async function toggleItemChecklist(notaId, itemIndex) {
+            const nota = notasData.find(n => n.id == notaId);
+            if (!nota || !nota.checklist_items) return;
+
+            nota.checklist_items[itemIndex].completado = !nota.checklist_items[itemIndex].completado;
+            nota.updated_at = new Date().toISOString();
+
+            localStorage.setItem(NOTAS_CACHE_KEY, JSON.stringify(notasData));
+            aplicarFiltrosLocales();
+
+            if (document.getElementById('modalVerNota').style.display === 'flex' && document.getElementById('verNotaIdActual').value == notaId) {
+                abrirModalVerNota(notaId);
+            }
+
+            const payload = {
+                id: nota.id,
+                checklist_items: nota.checklist_items,
+                updated_at: nota.updated_at
+            };
+
+            if (!navigator.onLine) {
+                agregarAColaOffline('EDITAR', 'NOTA', payload);
+                return;
+            }
+
+            try {
+                await supabaseClient.from('notas').update({ 
+                    checklist_items: nota.checklist_items, 
+                    updated_at: payload.updated_at 
+                }).eq('id', nota.id);
+            } catch (err) {
+                console.error("Error al actualizar checklist:", err);
+            }
+        }
+
+        function cerrarModalVerNota() {
+            document.getElementById('modalVerNota').style.display = 'none';
+        }
+
+        async function guardarNota() {
+            const editId = document.getElementById('editNotaId').value;
+            const titulo = document.getElementById('inputTitulo').value.trim();
+            const recordatorioVal = document.getElementById('inputRecordatorio').value;
+            let categoria_id = document.getElementById('inputCategoriaId').value.trim();
+            const color_nota = document.getElementById('inputColorNota').value || 'default';
+            const es_lista = document.getElementById('inputEsLista').value === 'true';
+            
+            if (!categoria_id) categoria_id = null;
+
+            let contenido = null;
+            let checklist_items = [];
+
+            if (es_lista) {
+                if (checklistEditItems.length === 0) {
+                    mostrarAlerta('Agrega al menos un elemento a la lista de tareas.');
+                    return;
+                }
+                checklist_items = checklistEditItems;
+            } else {
+                contenido = document.getElementById('inputContenido').innerHTML.trim();
+            }
+
+            if (!titulo && (!contenido || contenido === '<br>') && checklist_items.length === 0) {
+                mostrarAlerta('La nota debe tener un título, contenido o elementos en la lista.');
+                return;
+            }
+
+            // Control de conflictos: Verificar updated_at si es edición
+            if (editId && navigator.onLine) {
+                const { data: serverRecord } = await supabaseClient.from('notas').select('updated_at').eq('id', editId).single();
+                const localNote = notasData.find(n => n.id == editId);
+                if (serverRecord && localNote && serverRecord.updated_at > localNote.updated_at) {
+                    const continuar = confirm("⚠️ Conflicto detectado: Esta nota fue modificada en otro dispositivo recientemente. ¿Deseas sobrescribir los cambios con tu versión?");
+                    if (!continuar) return;
+                }
+            }
+
+            const payload = {
+                titulo: titulo || 'Sin título',
+                contenido: es_lista ? null : contenido,
+                checklist_items: es_lista ? checklist_items : [],
+                categoria_id,
+                color_nota,
+                recordatorio: recordatorioVal ? new Date(recordatorioVal).toISOString() : null,
+                updated_at: new Date().toISOString()
+            };
+
+            cerrarModalNota();
+
+            if (!navigator.onLine) {
+                if (editId) {
+                    payload.id = editId;
+                    agregarAColaOffline('EDITAR', 'NOTA', payload);
+                    const idx = notasData.findIndex(n => n.id == editId);
+                    if (idx !== -1) notasData[idx] = { ...notasData[idx], ...payload };
+                } else {
+                    payload.id = 'temp_' + Date.now();
+                    payload.created_at = new Date().toISOString();
+                    payload.favorito = false;
+                    payload.en_papelera = false;
+                    agregarAColaOffline('CREAR', 'NOTA', payload);
+                    notasData.unshift(payload);
+                }
+                localStorage.setItem(NOTAS_CACHE_KEY, JSON.stringify(notasData));
+                aplicarFiltrosLocales();
+                return;
+            }
+
+            try {
+                if (editId) {
+                    const { data, error } = await supabaseClient.from('notas').update(payload).eq('id', editId).select();
+                    if (error) throw error;
+                    if (data && data[0]) {
+                        const idx = notasData.findIndex(n => n.id == editId);
+                        if (idx !== -1) notasData[idx] = { ...notasData[idx], ...data[0] };
+                    }
+                } else {
+                    payload.favorito = false;
+                    payload.en_papelera = false;
+                    const { data, error } = await supabaseClient.from('notas').insert([payload]).select();
+                    if (error) throw error;
+                    if (data && data[0]) {
+                        notasData.unshift(data[0]);
+                    }
+                }
+                notasData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                localStorage.setItem(NOTAS_CACHE_KEY, JSON.stringify(notasData));
+                aplicarFiltrosLocales();
+            } catch (err) {
+                console.error("Error al guardar nota online:", err);
+                mostrarAlerta("Error al guardar en Supabase: " + (err.message || err));
+            }
+        }
+
+        async function toggleFavorito(id) {
+            const nota = notasData.find(n => n.id == id);
+            if (!nota) return;
+            const nuevoFav = !nota.favorito;
+            nota.favorito = nuevoFav;
+            nota.updated_at = new Date().toISOString();
+
+            if (!navigator.onLine) {
+                agregarAColaOffline('EDITAR', 'NOTA', { id, favorito: nuevoFav, updated_at: nota.updated_at });
+                localStorage.setItem(NOTAS_CACHE_KEY, JSON.stringify(notasData));
+                aplicarFiltrosLocales();
+                return;
+            }
+            await supabaseClient.from('notas').update({ favorito: nuevoFav, updated_at: nota.updated_at }).eq('id', id);
+            localStorage.setItem(NOTAS_CACHE_KEY, JSON.stringify(notasData));
+            aplicarFiltrosLocales();
+        }
+
+        function toggleVistaPapelera() {
+            enVistaPapelera = !enVistaPapelera;
+            const btnPapelera = document.getElementById('btnPapelera');
+            if (enVistaPapelera) {
+                btnPapelera.className = "py-2 px-3 bg-rose-500/20 border border-rose-500/40 text-rose-600 dark:text-rose-400 rounded-xl transition-all font-semibold text-xs shadow-md flex items-center justify-center gap-1.5 cursor-pointer col-span-2";
+                btnPapelera.innerHTML = `<i class="fa-solid fa-arrow-left"></i> Regresar`;
+            } else {
+                btnPapelera.className = "py-2 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700/50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/60 rounded-xl transition-all font-semibold text-xs flex items-center justify-center gap-1.5 cursor-pointer";
+                btnPapelera.innerHTML = `<i class="fa-solid fa-trash-can text-rose-500"></i> Papelera <span id="badgePapeleraCount" class="hidden ml-1 px-1.5 py-0.2 bg-rose-500 text-white rounded-full text-[9px]">0</span>`;
+            }
+            aplicarFiltrosLocales();
+        }
+
+        async function enviarAPapelera(id) {
+            const nota = notasData.find(n => n.id == id);
+            if (!nota) return;
+            nota.en_papelera = true;
+            nota.updated_at = new Date().toISOString();
+
+            if (!navigator.onLine) {
+                agregarAColaOffline('EDITAR', 'NOTA', { id, en_papelera: true, updated_at: nota.updated_at });
+                localStorage.setItem(NOTAS_CACHE_KEY, JSON.stringify(notasData));
+                aplicarFiltrosLocales();
+                return;
+            }
+            await supabaseClient.from('notas').update({ en_papelera: true, updated_at: nota.updated_at }).eq('id', id);
+            localStorage.setItem(NOTAS_CACHE_KEY, JSON.stringify(notasData));
+            aplicarFiltrosLocales();
+        }
+
+        async function restaurarNotaPapelera(id) {
+            const nota = notasData.find(n => n.id == id);
+            if (!nota) return;
+            nota.en_papelera = false;
+            nota.updated_at = new Date().toISOString();
+
+            if (!navigator.onLine) {
+                agregarAColaOffline('EDITAR', 'NOTA', { id, en_papelera: false, updated_at: nota.updated_at });
+                localStorage.setItem(NOTAS_CACHE_KEY, JSON.stringify(notasData));
+                aplicarFiltrosLocales();
+                return;
+            }
+            await supabaseClient.from('notas').update({ en_papelera: false, updated_at: nota.updated_at }).eq('id', id);
+            localStorage.setItem(NOTAS_CACHE_KEY, JSON.stringify(notasData));
+            aplicarFiltrosLocales();
+        }
+
+        function eliminarDefinitivo(id) {
+            mostrarConfirmacion('¿Desea eliminar esta nota permanentemente?', async (aceptado) => {
+                if (!aceptado) return;
+                if (!navigator.onLine) {
+                    agregarAColaOffline('ELIMINAR', 'NOTA', { id });
+                    notasData = notasData.filter(n => n.id != id);
+                    localStorage.setItem(NOTAS_CACHE_KEY, JSON.stringify(notasData));
+                    aplicarFiltrosLocales();
+                    return;
+                }
+                try {
+                    const { error } = await supabaseClient.from('notas').delete().eq('id', id);
+                    if (error) throw error;
+                    notasData = notasData.filter(n => n.id != id);
+                    localStorage.setItem(NOTAS_CACHE_KEY, JSON.stringify(notasData));
+                    aplicarFiltrosLocales();
+                } catch (err) {
+                    console.error("Error al eliminar definitivo:", err);
+                }
+            });
+        }
+
+        function abrirModalCategoria() {
+            document.getElementById('modalCategoria').style.display = 'flex';
+            renderizarListaCategoriasModal();
+        }
+        function cerrarModalCategoria() { document.getElementById('modalCategoria').style.display = 'none'; }
+
+        function renderizarListaCategoriasModal() {
+            const container = document.getElementById('listaCategoriasContainer');
+            if (categoriasData.length === 0) {
+                container.innerHTML = `<p class="text-slate-400 text-center py-2">No hay categorías creadas.</p>`;
+                return;
+            }
+            container.innerHTML = categoriasData.map(cat => `
+                <div class="flex items-center justify-between bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/50 p-2 rounded-xl">
+                    <span class="font-semibold text-slate-800 dark:text-slate-200">${cat.nombre}</span>
+                    <div class="flex items-center gap-1">
+                        <button onclick="editarCategoriaPrompt('${cat.id}', '${cat.nombre.replace(/'/g, "\\'")}')" class="text-teal-600 hover:text-teal-800 dark:text-teal-400 p-1 text-xs" title="Editar categoría"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="eliminarCategoria('${cat.id}')" class="text-red-500 hover:text-red-700 p-1 text-xs" title="Eliminar categoría"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function crearCategoria() {
+            const input = document.getElementById('nuevaCategoriaNombre');
+            const nombre = input.value.trim();
+            if (!nombre) { mostrarAlerta('Escribe el nombre de la categoría.'); return; }
+            
+            const nuevoId = 'temp_cat_' + Date.now();
+            const nuevaCat = { id: nuevoId, nombre };
+
+            categoriasData.push(nuevaCat);
+            categoriasData.sort((a, b) => a.nombre.localeCompare(b.nombre));
+            localStorage.setItem(CATEGORIAS_CACHE_KEY, JSON.stringify(categoriasData));
+            input.value = '';
+            renderizarListaCategoriasModal();
+            populateSelectsCategorias();
+            aplicarFiltrosLocales();
+
+            if (!navigator.onLine) {
+                agregarAColaOffline('CREAR', 'CATEGORIA', nuevaCat);
+                return;
+            }
+
+            try {
+                const { data, error } = await supabaseClient.from('categorias').insert([{ nombre }]).select();
+                if (error) throw error;
+                if (data && data[0]) {
+                    const idx = categoriasData.findIndex(c => c.id === nuevoId);
+                    if (idx !== -1) categoriasData[idx] = data[0];
+                    categoriasData.sort((a, b) => a.nombre.localeCompare(b.nombre));
+                    localStorage.setItem(CATEGORIAS_CACHE_KEY, JSON.stringify(categoriasData));
+                    populateSelectsCategorias();
+                    aplicarFiltrosLocales();
+                }
+            } catch (err) {
+                console.error("Error al crear categoría online:", err);
+                mostrarAlerta("Error al guardar categoría: " + (err.message || err));
+            }
+        }
+
+        async function editarCategoriaPrompt(id, nombreActual) {
+            const nuevoNombre = prompt("Editar nombre de la categoría:", nombreActual);
+            if (nuevoNombre === null) return;
+            const nombreTrim = nuevoNombre.trim();
+            if (!nombreTrim) {
+                mostrarAlerta("El nombre de la categoría no puede estar vacío.");
+                return;
+            }
+
+            const cat = categoriasData.find(c => c.id == id);
+            if (cat) cat.nombre = nombreTrim;
+            categoriasData.sort((a, b) => a.nombre.localeCompare(b.nombre));
+            localStorage.setItem(CATEGORIAS_CACHE_KEY, JSON.stringify(categoriasData));
+            renderizarListaCategoriasModal();
+            populateSelectsCategorias();
+            aplicarFiltrosLocales();
+
+            const payload = { id, nombre: nombreTrim };
+            if (!navigator.onLine) {
+                agregarAColaOffline('EDITAR', 'CATEGORIA', payload);
+                return;
+            }
+
+            try {
+                const { error } = await supabaseClient.from('categorias').update({ nombre: nombreTrim }).eq('id', id);
+                if (error) throw error;
+            } catch (err) {
+                console.error("Error al editar categoría online:", err);
+                mostrarAlerta("Error al actualizar categoría en Supabase.");
+            }
+        }
+
+        async function eliminarCategoria(id) {
+            mostrarConfirmacion('¿Desea eliminar esta categoría? Las notas asociadas quedarán como "Sin categoría".', async (aceptado) => {
+                if (!aceptado) return;
+
+                categoriasData = categoriasData.filter(c => c.id != id);
+                notasData.forEach(n => {
+                    if (n.categoria_id == id) n.categoria_id = null;
+                });
+                localStorage.setItem(CATEGORIAS_CACHE_KEY, JSON.stringify(categoriasData));
+                localStorage.setItem(NOTAS_CACHE_KEY, JSON.stringify(notasData));
+                renderizarListaCategoriasModal();
+                populateSelectsCategorias();
+                aplicarFiltrosLocales();
+
+                if (!navigator.onLine) {
+                    agregarAColaOffline('ELIMINAR', 'CATEGORIA', { id });
+                    return;
+                }
+
+                try {
+                    const { error } = await supabaseClient.from('categorias').delete().eq('id', id);
+                    if (error) throw error;
+                } catch (err) {
+                    console.error("Error al eliminar categoría online:", err);
+                    mostrarAlerta("Error al eliminar categoría en Supabase.");
+                }
+            });
+        }
+
+        function obtenerClasesColorNota(color) {
+            switch(color) {
+                case 'slate': return 'bg-slate-200/80 dark:bg-slate-700/70 border-slate-300 dark:border-slate-600';
+                case 'amber': return 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800/60';
+                case 'emerald': return 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/60';
+                case 'teal': return 'bg-teal-50 dark:bg-teal-950/40 border-teal-200 dark:border-teal-800/60';
+                case 'rose': return 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800/60';
+                default: return 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700/80';
+            }
+        }
+
+        function renderizarListaEnContenedor(lista, containerId, esPapelera = false) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+
+            if (lista.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full py-8 text-center space-y-2" style="column-span: all;">
+                        <div class="w-10 h-10 bg-teal-500/10 text-teal-600 dark:text-teal-400 rounded-full flex items-center justify-center mx-auto border border-teal-500/20">
+                            <i class="fa-solid fa-note-sticky text-base"></i>
+                        </div>
+                        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400">${esPapelera ? 'La papelera está vacía' : 'No hay notas en esta sección'}</p>
+                    </div>`;
+                return;
+            }
+
+            lista.forEach(nota => {
+                const catObj = categoriasData.find(c => c.id == nota.categoria_id);
+                const nombreCat = catObj ? catObj.nombre : 'Sin categoría';
+
+                const colorClases = obtenerClasesColorNota(nota.color_nota);
+                const starColorClass = nota.favorito 
+                    ? 'text-amber-500 dark:text-amber-400' 
+                    : 'text-slate-300 dark:text-slate-600 hover:text-amber-500 dark:hover:text-amber-400';
+
+                let recordatorioHtml = '';
+                if (nota.recordatorio) {
+                    recordatorioHtml = `
+                        <div class="flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 font-semibold bg-amber-500/10 px-2 py-0.5 rounded-md w-fit border border-amber-500/20">
+                            <i class="fa-solid fa-bell"></i> ${formatearFechaRecordatorio(nota.recordatorio)}
+                        </div>`;
+                }
+
+                let renderContenidoCard = '';
+                if (nota.checklist_items && nota.checklist_items.length > 0) {
+                    renderContenidoCard = `<div class="space-y-1">` + nota.checklist_items.map((item, idx) => `
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" ${item.completado ? 'checked' : ''} onchange="toggleItemChecklist('${nota.id}', ${idx})" class="w-3.5 h-3.5 accent-teal-500 rounded cursor-pointer shrink-0">
+                            <span class="truncate ${item.completado ? 'line-through text-slate-400' : 'text-slate-700 dark:text-slate-300'}">${item.texto}</span>
+                        </div>
+                    `).join('') + `</div>`;
+                } else {
+                    renderContenidoCard = `<div class="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 leading-relaxed overflow-hidden max-h-28 space-y-1">${nota.contenido || ''}</div>`;
+                }
+
+                const card = document.createElement('div');
+                card.className = `note-card ${colorClases} border rounded-2xl p-3 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-2.5 relative group`;
+                
+                let botonesAccionHtml = '';
+                if (esPapelera) {
+                    botonesAccionHtml = `
+                        <button onclick="restaurarNotaPapelera('${nota.id}')" class="py-1.5 px-2 bg-teal-500/10 hover:bg-teal-500/20 text-teal-600 dark:text-teal-400 border border-teal-500/20 rounded-lg transition-colors flex items-center justify-center gap-1.5 text-[10px] font-semibold" title="Restaurar nota"><i class="fa-solid fa-rotate-left"></i> Restaurar</button>
+                        <button onclick="eliminarDefinitivo('${nota.id}')" class="py-1.5 px-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/20 rounded-lg transition-colors flex items-center justify-center gap-1.5 text-[10px] font-semibold" title="Eliminar definitivamente"><i class="fa-solid fa-trash-can"></i> Eliminar</button>
+                    `;
+                } else {
+                    botonesAccionHtml = `
+                        <button onclick="abrirModalVerNota('${nota.id}')" class="py-1.5 px-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700/60 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/60 rounded-lg transition-colors flex items-center justify-center gap-1.5 text-[10px] font-semibold" title="Ver nota"><i class="fa-solid fa-expand text-[9px]"></i> Ver nota</button>
+                        <button onclick="compartirNotaWhatsApp('${nota.id}')" class="py-1.5 px-2 bg-teal-500/10 hover:bg-teal-500/20 text-teal-600 dark:text-teal-400 border border-teal-500/20 rounded-lg transition-colors flex items-center justify-center gap-1.5 text-[10px] font-semibold" title="Compartir"><i class="fa-solid fa-share-nodes text-[9px]"></i> Compartir</button>
+                        <button onclick="abrirModalNota('${nota.id}')" class="py-1.5 px-2 bg-teal-500/10 hover:bg-teal-500/20 text-teal-600 dark:text-teal-400 border border-teal-500/20 rounded-lg transition-colors flex items-center justify-center gap-1.5 text-[10px] font-semibold" title="Editar"><i class="fa-solid fa-pen text-[9px]"></i> Editar</button>
+                        <button onclick="enviarAPapelera('${nota.id}')" class="py-1.5 px-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/20 rounded-lg transition-colors flex items-center justify-center gap-1.5 text-[10px] font-semibold" title="Eliminar"><i class="fa-solid fa-trash-can text-[9px]"></i> Eliminar</button>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <div class="space-y-1.5">
+                        <div class="flex items-start justify-between gap-1.5">
+                            <h4 class="font-bold text-slate-900 dark:text-slate-100 text-xs sm:text-sm leading-snug">${nota.titulo || ''}</h4>
+                            <div class="flex items-center gap-1.5">
+                                ${!esPapelera ? `
+                                    <button onclick="toggleFavorito('${nota.id}')" class="${starColorClass} transition-colors shrink-0" title="Marcar como favorita / fijar">
+                                        <i class="fa-solid fa-star text-xs"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                        ${recordatorioHtml}
+                        <div class="text-[11px] sm:text-xs">${renderContenidoCard}</div>
+                    </div>
+                    <div class="pt-2 border-t border-slate-200/50 dark:border-slate-700/50 space-y-1.5">
+                        <div class="flex justify-center">
+                            <span class="px-2.5 py-0.5 rounded-full font-semibold bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20 text-[10px] tracking-wide whitespace-nowrap">${nombreCat}</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-1.5">
+                            ${botonesAccionHtml}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+        function aplicarFiltrosLocales() {
+            const textoBuscador = document.getElementById('filtroBuscador').value.trim().toLowerCase();
+            const filtroCat = document.getElementById('filtroCategoria').value;
+            const filtroEstatus = document.getElementById('filtroEstatus').value;
+
+            let filtrados = notasData.filter(n => enVistaPapelera ? n.en_papelera : !n.en_papelera);
+
+            if (filtroCat === 'sin_categoria') {
+                filtrados = filtrados.filter(n => !n.categoria_id);
+            } else if (filtroCat) {
+                filtrados = filtrados.filter(n => n.categoria_id === filtroCat);
+            }
+
+            if (filtroEstatus === 'favorito') {
+                filtrados = filtrados.filter(n => n.favorito);
+            } else if (filtroEstatus === 'con_recordatorio') {
+                filtrados = filtrados.filter(n => n.recordatorio !== null && n.recordatorio !== undefined && n.recordatorio !== '');
+            }
+
+            if (textoBuscador) {
+                filtrados = filtrados.filter(n =>
+                    (n.titulo && n.titulo.toLowerCase().includes(textoBuscador)) ||
+                    (n.contenido && n.contenido.toLowerCase().includes(textoBuscador)) ||
+                    (n.checklist_items && n.checklist_items.some(item => item.texto.toLowerCase().includes(textoBuscador)))
+                );
+            }
+
+            if (enVistaPapelera) {
+                document.getElementById('seccionFavoritasContainer').classList.add('hidden');
+                document.getElementById('tituloSeccionOtras').classList.add('hidden');
+                renderizarListaEnContenedor(filtrados, 'notasContainer', true);
+            } else {
+                const favoritas = filtrados.filter(n => n.favorito);
+                const otras = filtrados.filter(n => !n.favorito);
+
+                const seccionFavoritas = document.getElementById('seccionFavoritasContainer');
+                const tituloOtras = document.getElementById('tituloSeccionOtras');
+
+                if (favoritas.length > 0) {
+                    seccionFavoritas.classList.remove('hidden');
+                    renderizarListaEnContenedor(favoritas, 'notasFavoritasContainer', false);
+                } else {
+                    seccionFavoritas.classList.add('hidden');
+                }
+                if (favoritas.length > 0 && otras.length > 0) {
+                    tituloOtras.classList.remove('hidden');
+                } else {
+                    tituloOtras.classList.add('hidden');
+                }
+                renderizarListaEnContenedor(otras, 'notasContainer', false);
+            }
+            actualizarEstadoConexionUI();
+        }
+        function filtrarNotas() {
+            aplicarFiltrosLocales();
+        }
+    </script>
+</body>
+</html>
