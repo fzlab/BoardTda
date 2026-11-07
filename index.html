@@ -6,9 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Board TDA</title>
     <!-- Soporte PWA e iOS -->
-    <meta name="theme-color" content="#0f172a">
+    <meta name="theme-color" content="#f1f5f9">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="FZBoard TDA">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="description" content="Dashboard centralizador de proyectos web y PWAs">
@@ -692,12 +692,15 @@
         const btnThemeToggle = document.getElementById('themeToggle');
         const htmlElement = document.documentElement;
         function setTheme(isDark) {
+            const themeMeta = document.querySelector('meta[name="theme-color"]');
             if (isDark) {
                 htmlElement.classList.add('dark');
                 localStorage.setItem('theme', 'dark');
+                if (themeMeta) themeMeta.setAttribute('content', '#0f172a'); // Modo oscuro
             } else {
                 htmlElement.classList.remove('dark');
                 localStorage.setItem('theme', 'light');
+                if (themeMeta) themeMeta.setAttribute('content', '#f1f5f9'); // Modo claro (coincide con bg-slate-100)
             }
             lucide.createIcons();
         }
